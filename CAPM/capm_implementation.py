@@ -22,7 +22,7 @@ class CAPM:
     Implementation of CAPM pricing model.
     """
 
-    def __init__(self, stocks: list, start_date: str, end_date: str, data=None) -> None:
+    def __init__(self, stocks: list, start_date: str, end_date: str) -> None:
         """
         Initialisation class of the CAPM model.
         ---------------------------------------
