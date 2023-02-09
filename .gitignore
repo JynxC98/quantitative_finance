@@ -127,3 +127,7 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+# Test files
+test.py
+modern_portfolio_theory.py
