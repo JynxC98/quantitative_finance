@@ -20,6 +20,7 @@ def stock_monete_carlo(
 ) -> pd.DataFrame:
     """
     Implementation of monte-carlo simulation
+
     Parameters
     ----------
     mu: Mean of the stock
@@ -50,4 +51,6 @@ def stock_monete_carlo(
 
     return simulation_data
 
-    #
+
+if __name__ == "__main__":
+    print(stock_monete_carlo(300, 0.00034, 0.02))
