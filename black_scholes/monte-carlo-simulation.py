@@ -39,6 +39,8 @@ def stock_monete_carlo(
         prices = [S_0]
 
         for _ in range(n_iter):
+            # We don't add "t" because we are considering daily change
+
             stock_price = prices[-1] * np.exp(
                 (mu - 0.5 * pow(sigma, 2)) + sigma * np.random.normal()
             )
@@ -49,8 +51,16 @@ def stock_monete_carlo(
 
     simulation_data = pd.DataFrame(result).T
 
+    # plt.plot(simulation_data)
+    # plt.show()
+
+    simulation_data["mean"] = simulation_data.mean(axis=1)
+
+    plt.plot(simulation_data["mean"])
+    plt.show()
+
     return simulation_data
 
 
 if __name__ == "__main__":
-    print(stock_monete_carlo(300, 0.00034, 0.02))
+    print(stock_monete_carlo(50, 0.00034, 0.01))
