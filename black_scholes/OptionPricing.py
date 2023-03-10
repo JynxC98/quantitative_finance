@@ -17,7 +17,7 @@ class OptionPricing:
 
     NUM_ITERATIONS = 10000
 
-    def __init__(self, S0: float, E: float, rf: float, sigma: float) -> None:
+    def __init__(self, S0: float, T: int, E: float, rf: float, sigma: float) -> None:
         """
         Initialisation class of the option pricing simulation.
         """
@@ -36,5 +36,7 @@ class OptionPricing:
         )  # First columns stores the 0s and second column stores the payoff.
         return option_data
 
-    if __name__ == "__main__":
-        pass
+
+if __name__ == "__main__":
+    option = OptionPricing(100, 100, 1, 0.06, 0.2)
+    print(option.call_option_simulation())
