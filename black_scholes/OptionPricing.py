@@ -15,6 +15,8 @@ class OptionPricing:
     sigma: Volatility
     """
 
+    np.random.seed(100)
+
     NUM_ITERATIONS = 10000
 
     def __init__(self, S0: float, T: int, E: float, rf: float, sigma: float) -> None:
@@ -22,6 +24,7 @@ class OptionPricing:
         Initialisation class of the option pricing simulation.
         """
         self.S0 = S0
+        self.T = T
         self.E = E
         self.rf = rf
         self.sigma = sigma
@@ -34,6 +37,19 @@ class OptionPricing:
         option_data = np.zeros(
             [self.NUM_ITERATIONS, 2]
         )  # First columns stores the 0s and second column stores the payoff.
+
+        random_number = np.random.normal(
+            0, 1, [1, self.NUM_ITERATIONS]
+        )  # 1 dimensional array with as many items as the iterations
+
+        stock_price = self.S0 * np.exp(
+            self.T * (self.rf - 0.5 * pow(self.sigma, 2))
+            + self.sigma
+            + np.sqrt(self.T) * random_number
+        )
+        option_data[:, 1] = stock_price - self.E
+
+        average = np.sum(np.amax(option_data, axis=1)) / float(self.NUM_ITERATIONS)
         return option_data
 
 
