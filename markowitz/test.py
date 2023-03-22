@@ -156,7 +156,7 @@ def show_optimal_portfolio(opt, rets, portfolio_rets, portfolio_vols):
 
 if __name__ == "__main__":
     dataset = download_data()
-    show_data(dataset)
+    # show_data(dataset)
     log_daily_returns = calculate_return(dataset)
     # show_statistics(log_daily_returns)
 
