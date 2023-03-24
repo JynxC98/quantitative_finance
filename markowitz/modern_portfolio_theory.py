@@ -214,7 +214,8 @@ if __name__ == "__main__":
     END_DATE = datetime.now()
     START_DATE = END_DATE - timedelta(days=365 * 10)
 
-    portfolio = Portfolio(stocks=STOCKS, start=START_DATE, end=END_DATE)
-    # portfolio.show_data()
+    portfolio = Portfolio(
+        stocks=STOCKS, start=START_DATE, end=END_DATE
+    )  # We take the data of past 10 years.
 
     portfolio.display_and_print_portfolio()
