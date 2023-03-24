@@ -25,21 +25,21 @@ def minimise_function(weights, returns) -> np.array:
     )  # The maximum of f(x) is the minimum of -f(x)
 
 
-def statistics(weights, returns, n=252) -> np.array:
+def statistics(weights, returns, n_days=252) -> np.array:
     """
     Calculates the required statistics for optimisation function.
     Parameters
     ----------
     weights: Portfolio weights
     returns: Log daily returns
-    n: Number of trading days
+    n_days: Number of trading days
     """
 
-    portfolio_return = np.sum(np.dot(returns.mean(), weights.T)) * n
+    portfolio_return = np.sum(np.dot(returns.mean(), weights.T)) * n_days
     portfolio_volatility = np.sqrt(
         np.dot(
             weights,
-            np.dot(returns.cov() * n, weights.T),
+            np.dot(returns.cov() * n_days, weights.T),
         )
     )
     return np.array(
@@ -209,12 +209,12 @@ class Portfolio:
 
 
 if __name__ == "__main__":
-    stocks = ["AAPL", "WMT", "TSLA", "GE", "AMZN", "DB"]
+    STOCKS = ["AAPL", "WMT", "TSLA", "GE", "AMZN", "DB"]
 
     END_DATE = datetime.now()
     START_DATE = END_DATE - timedelta(days=365 * 10)
 
-    portfolio = Portfolio(stocks=stocks, start=START_DATE, end=END_DATE)
+    portfolio = Portfolio(stocks=STOCKS, start=START_DATE, end=END_DATE)
     # portfolio.show_data()
 
     portfolio.display_and_print_portfolio()
