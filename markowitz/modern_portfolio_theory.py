@@ -182,6 +182,7 @@ class Portfolio:
         the portfolio shows the optimal return and risk.
         """
         optimal = self.optimize_portfolio()
+        _ = self.show_data()
         portfolio_data = self.portfolio_data
         result = {}
         for stock, optimum_weight in zip(self.stocks, optimal):
