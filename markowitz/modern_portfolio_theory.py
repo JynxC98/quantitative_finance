@@ -11,11 +11,12 @@ import numpy as np
 import pandas as pd
 import yfinance as yf
 from alive_progress import alive_bar
-import scipy.optimize as optimization
+import scipy.optimize as optimize
 
 warnings.filterwarnings("ignore")
 
 
+# The functions outside the `Portfolio` class are used to feed into the `scipy.optimise model`
 def minimise_function(weights, returns) -> np.array:
     """
     Minimisation class for the given function
@@ -166,7 +167,7 @@ class Portfolio:
         # The weights can at the most be 1.
         bounds = tuple((0, 1) for _ in range(len(self.stocks)))
 
-        optimum = optimization.minimize(
+        optimum = optimize.minimize(
             fun=func,
             x0=np.array(self.weights[0]),
             args=returns,
