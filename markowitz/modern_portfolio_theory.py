@@ -209,6 +209,8 @@ class Portfolio:
         )
         plt.show()
 
+        # Need to add VaR model for the optimal portfolio.
+
 
 if __name__ == "__main__":
     STOCKS = ["AAPL", "WMT", "TSLA", "GE", "AMZN", "DB"]
