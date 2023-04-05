@@ -130,4 +130,4 @@ dmypy.json
 
 # Test files
 test.py
-modern_portfolio_theory.py
+.DS_Store
