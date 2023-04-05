@@ -48,25 +48,24 @@ def simulate_heston_model_euler(
     volatility = v_0 * np.ones([num_paths, 1])
 
     for _ in range(1, num_iterations + 1):
-        dW1 = np.random.normal(0, 1, size=(num_paths, 1)) * np.sqrt(step_size)
+        dW1 = np.random.randn(num_paths, 1) * np.sqrt(step_size)
 
-        dW2 = rho * dW1 + np.sqrt(1 - pow(rho, 2)) * np.random.normal(
-            0, 1, size=(num_paths, 1)
+        dW2 = rho * dW1 + np.sqrt(1 - pow(rho, 2)) * np.random.randn(
+            num_paths, 1
         ) * np.sqrt(step_size)
 
         # To find the next stock price, we need previous volatility.
         stock_price = stock_price * (
-            (1 + risk_free_rate) * step_size + np.sqrt(abs(volatility)) * dW1
+            (risk_free_rate) * step_size + np.sqrt(np.abs(volatility)) * dW1
         )
         volatility = volatility + (
             kappa * (theta - volatility) * step_size
-            + sigma * np.sqrt(abs(volatility)) * dW2
+            + sigma * np.sqrt(np.abs(volatility)) * dW2
         )
 
         total_stock_price += stock_price
 
     mean_stock_price = total_stock_price / num_iterations
-    print(mean_stock_price[0:5])
 
     payoff = np.exp(-risk_free_rate * time_to_maturity) * (
         np.maximum(mean_stock_price - strike_price, 0)
@@ -94,7 +93,7 @@ if __name__ == "__main__":
             risk_free_rate=0.05,
             time_to_maturity=1,
             strike_price=90,
-            num_paths=5000,
+            num_paths=50000,
             step_size=10e-3,
         )
     )
