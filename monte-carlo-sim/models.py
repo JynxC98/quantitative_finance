@@ -50,7 +50,7 @@ def simulate_heston_model_euler(
     # Seed generates the same brownian motion
     np.random.seed(1)
 
-    for _ in range(0, num_iterations):
+    for _ in range(num_iterations):
         dW1 = np.random.randn(num_paths, 1) * np.sqrt(step_size)
 
         dW2 = rho * dW1 + np.sqrt(1 - pow(rho, 2)) * np.random.randn(
