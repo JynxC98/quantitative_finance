@@ -47,7 +47,10 @@ def simulate_heston_model_euler(
     stock_price = S_0 * np.ones([num_paths, 1])
     volatility = v_0 * np.ones([num_paths, 1])
 
-    for _ in range(1, num_iterations + 1):
+    # Seed generates the same brownian motion
+    np.random.seed(1)
+
+    for _ in range(0, num_iterations):
         dW1 = np.random.randn(num_paths, 1) * np.sqrt(step_size)
 
         dW2 = rho * dW1 + np.sqrt(1 - pow(rho, 2)) * np.random.randn(
@@ -56,7 +59,7 @@ def simulate_heston_model_euler(
 
         # To find the next stock price, we need previous volatility.
         stock_price = stock_price * (
-            (risk_free_rate) * step_size + np.sqrt(np.abs(volatility)) * dW1
+            1 + (risk_free_rate) * step_size + np.sqrt(np.abs(volatility)) * dW1
         )
         volatility = volatility + (
             kappa * (theta - volatility) * step_size
@@ -73,7 +76,9 @@ def simulate_heston_model_euler(
 
     std_payoff = np.std(payoff)
     call_euler = np.mean(payoff)
-    confidence_interval = tuple([(call_euler - std_payoff), (call_euler + std_payoff)])
+    V1left = call_euler - 1.96 * std_payoff / np.sqrt(num_paths)
+    V1right = call_euler + 1.96 * std_payoff / np.sqrt(num_paths)
+    confidence_interval = tuple([V1left, V1right])
 
     return {
         "Mean Call Option Price": call_euler,
@@ -93,7 +98,7 @@ if __name__ == "__main__":
             risk_free_rate=0.05,
             time_to_maturity=1,
             strike_price=90,
-            num_paths=50000,
+            num_paths=500000,
             step_size=10e-3,
         )
     )
