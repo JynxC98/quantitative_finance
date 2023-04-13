@@ -101,6 +101,6 @@ if __name__ == "__main__":
             time_to_maturity=1,
             strike_price=90,
             num_paths=500000,
-            step_size=10e-3,
+            step_size=10e-4,
         )
     )
