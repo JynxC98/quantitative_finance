@@ -2,6 +2,7 @@
 Codes to simulate asset prices (GBM) and Heston model for stochastic volatility.
 Uses Euler scheme
 """
+import time
 import numpy as np
 
 
@@ -89,6 +90,7 @@ def simulate_heston_model_euler(**kwargs) -> dict:
 
 
 if __name__ == "__main__":
+    start_time = time.time()
     print(
         simulate_heston_model_euler(
             S_0=100,
@@ -100,7 +102,9 @@ if __name__ == "__main__":
             risk_free_rate=0.05,
             time_to_maturity=1,
             strike_price=90,
-            num_paths=500000,
+            num_paths=50000,
             step_size=10e-4,
         )
     )
+    end_time = time.time()
+    print(f"Time taken = {end_time - start_time}")
