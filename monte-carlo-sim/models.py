@@ -78,9 +78,9 @@ def simulate_heston_model_euler(**kwargs) -> dict:
 
     std_payoff = np.std(payoff)
     call_euler = np.mean(payoff)
-    V1_left = call_euler - 1.96 * std_payoff / np.sqrt(num_paths)
-    V1_right = call_euler + 1.96 * std_payoff / np.sqrt(num_paths)
-    confidence_interval = tuple([V1_left, V1_right])
+    v_left = call_euler - 1.96 * std_payoff / np.sqrt(num_paths)
+    v_right = call_euler + 1.96 * std_payoff / np.sqrt(num_paths)
+    confidence_interval = tuple([v_left, v_right])
 
     return {
         "Mean Call Option Price": call_euler,
