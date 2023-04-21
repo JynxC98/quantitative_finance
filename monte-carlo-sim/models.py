@@ -41,8 +41,8 @@ def simulate_heston_model_euler(**kwargs) -> dict:
     num_paths = kwargs.get("num_paths", 500000)
     step_size = kwargs.get("step_size", 10e-3)
 
-    if len(kwargs) < 11:
-        raise ValueError("Have you entered all the arguments? \n")
+    if len(kwargs) != 11:
+        raise ValueError("Have you entered correct number of arguments? \n")
 
     num_iterations = int(time_to_maturity / step_size)
     total_stock_price = S_0 * np.ones([num_paths, 1])
