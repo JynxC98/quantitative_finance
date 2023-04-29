@@ -10,11 +10,6 @@ import pandas as pd
 from models import simulate_heston_model_euler
 
 
-step_sizes = [10e-3, 10e-4, 10e-5]
-strike_prices = [90, 100, 110]
-maturity_times = [0.5, 1, 2]
-
-
 def perform_simulations(step_sizes, strike_prices, maturity_times):
     """
     Main function to perform all the simulations and return the result into a
