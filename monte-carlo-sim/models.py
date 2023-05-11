@@ -136,6 +136,40 @@ def simulate_heston_model_milstein(**kwargs) -> dict:
     # Seed generates the same brownian motion
     np.random.seed(1)
 
+    for _ in range(num_iterations):
+        dW1 = np.random.randn(num_paths, 1) * np.sqrt(step_size)
+
+        dW2 = rho * dW1 + np.sqrt(1 - pow(rho, 2)) * np.random.randn(
+            num_paths, 1
+        ) * np.sqrt(step_size)
+
+        # To find the next stock price, we need previous volatility.
+        stock_price = stock_price * (
+            1 + (risk_free_rate) * step_size + np.sqrt(np.abs(volatility)) * dW1
+        ) + (0.5) * volatility * 2 * step_size * (dW1 * 2 - 1)
+        volatility = volatility + (
+            kappa * (theta - volatility) * step_size
+            + sigma * np.sqrt(np.abs(volatility)) * dW2
+        )
+
+        total_stock_price += stock_price
+        mean_stock_price = total_stock_price / num_iterations
+
+    payoff = np.exp(-risk_free_rate * time_to_maturity) * (
+        np.maximum(mean_stock_price - strike_price, 0)
+    )
+
+    std_payoff = np.std(payoff)
+    call_euler = np.mean(payoff)
+    v_left = call_euler - 1.96 * std_payoff / np.sqrt(num_paths)
+    v_right = call_euler + 1.96 * std_payoff / np.sqrt(num_paths)
+    confidence_interval = tuple([v_left, v_right])
+
+    return {
+        "Mean Call Option Price": call_euler,
+        "Confidence Interval": confidence_interval,
+    }
+
 
 if __name__ == "__main__":
     start_time = time.time()
