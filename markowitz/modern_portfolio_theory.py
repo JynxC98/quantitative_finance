@@ -16,6 +16,9 @@ import scipy.optimize as optimize
 warnings.filterwarnings("ignore")
 
 
+RISK_FREE = 0.045  # Based on the government bond data
+
+
 # The functions outside the `Portfolio` class are used to feed into the `scipy.optimise model`
 def minimise_function(weights, returns) -> np.array:
     """
@@ -47,7 +50,7 @@ def statistics(weights, returns, n_days=252) -> np.array:
         [
             portfolio_return,
             portfolio_volatility,
-            portfolio_return / portfolio_volatility,
+            (portfolio_return - RISK_FREE) / portfolio_volatility,
         ]
     )
 
@@ -62,7 +65,7 @@ class Portfolio:
     """
 
     NUM_TRADING_DAYS = 252
-    NUM_PORTFOLIO = 100000
+    NUM_PORTFOLIO = 500000
 
     def __init__(self, stocks: list, start: str, end: str) -> None:
         """
@@ -142,7 +145,8 @@ class Portfolio:
         plt.scatter(
             portfolio_data["risk"],
             portfolio_data["mean"],
-            c=np.array(portfolio_data["mean"]) / np.array(portfolio_data["risk"]),
+            c=(np.array(portfolio_data["mean"]) - RISK_FREE)
+            / np.array(portfolio_data["risk"]),
             marker="o",
         )
         plt.grid(True)
@@ -177,6 +181,16 @@ class Portfolio:
         )
         return optimum["x"].round(4)
 
+    def display_stats(self, weights):
+        """
+        Displays the Sharpe Ratio, Expected return and the volatility of the
+        given portfolio.
+        """
+        return (
+            "Expected return, volatility and Sharpe ratio: ",
+            statistics(weights.round(3), self.returns),
+        )
+
     def display_and_print_portfolio(self) -> str:
         """
         Generates the point on the efficient portfolio frontier where
@@ -188,13 +202,16 @@ class Portfolio:
         result = {}
         for stock, optimum_weight in zip(self.stocks, optimal):
             result[stock] = optimum_weight
+
+        print(self.display_stats(optimal))
         print("The optimum portfolio is \n")
         print(pd.DataFrame(result, index=[0]).T)
         plt.figure(figsize=(10, 6))
         plt.scatter(
             portfolio_data["risk"],
             portfolio_data["mean"],
-            c=np.array(portfolio_data["mean"]) / np.array(portfolio_data["risk"]),
+            c=(np.array(portfolio_data["mean"]) - RISK_FREE)
+            / np.array(portfolio_data["risk"]),
             marker="o",
         )
         plt.grid(True)
@@ -205,7 +222,7 @@ class Portfolio:
             statistics(optimal, self.returns)[1],
             statistics(optimal, self.returns)[0],
             "g*",
-            markersize=10,
+            markersize=15,
         )
         plt.show()
 
@@ -213,7 +230,7 @@ class Portfolio:
 
 
 if __name__ == "__main__":
-    STOCKS = ["AAPL", "WMT", "TSLA", "GE", "AMZN", "DB"]
+    STOCKS = ["AAPL", "MSFT", "TSLA", "GOOGL", "AMZN", "IBM"]
 
     END_DATE = datetime.now()
     START_DATE = END_DATE - timedelta(days=365 * 10)
