@@ -3,10 +3,8 @@ Implementation of Bollinger bands and ATR
 """
 import yfinance as yf
 import pandas as pd
-import cufflinks as cf
 import plotly.express as px
 
-cf.go_offline()
 TICKERS = ["AMZN", "GOOG", "MSFT"]
 ohlcv_data = {}
 
