@@ -40,10 +40,11 @@ def statistics(weights, returns, n_days=252) -> np.array:
     """
 
     portfolio_return = np.sum(np.dot(returns.mean(), weights.T)) * n_days
+    excess_return = returns - RISK_FREE
     portfolio_volatility = np.sqrt(
         np.dot(
             weights,
-            np.dot(returns.cov() * n_days, weights.T),
+            np.dot(excess_return.cov() * n_days, weights.T),
         )
     )
     return np.array(
@@ -132,10 +133,12 @@ class Portfolio:
                 portfolio_return = (
                     np.sum(returns.mean() * weight) * self.NUM_TRADING_DAYS
                 )
+                excess_return = returns - RISK_FREE
                 portfolio_data["mean"].append(portfolio_return)
                 portfolio_volatility = np.sqrt(
                     np.dot(
-                        weight.T, np.dot(returns.cov() * self.NUM_TRADING_DAYS, weight)
+                        weight.T,
+                        np.dot(excess_return.cov() * self.NUM_TRADING_DAYS, weight),
                     )
                 )
                 portfolio_data["risk"].append(portfolio_volatility)
@@ -173,7 +176,9 @@ class Portfolio:
 
         optimum = optimize.minimize(
             fun=func,
-            x0=np.array(self.weights[0]),
+            x0=np.array(
+                self.weights[0]
+            ),  # We are randomly selecting a weight for optimisation
             args=returns,
             method="SLSQP",
             bounds=bounds,
