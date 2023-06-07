@@ -66,7 +66,7 @@ class Portfolio:
     """
 
     NUM_TRADING_DAYS = 252
-    NUM_PORTFOLIO = 10000
+    NUM_PORTFOLIO = 50000
 
     def __init__(self, stocks: list, start: str, end: str) -> None:
         """
