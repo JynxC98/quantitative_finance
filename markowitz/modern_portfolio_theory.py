@@ -16,7 +16,7 @@ import scipy.optimize as optimize
 warnings.filterwarnings("ignore")
 
 
-RISK_FREE = 0.045  # Based on the government bond data
+RISK_FREE = 0.045 / 252  # Based on the government bond data
 
 
 # The functions outside the `Portfolio` class are used to feed into the `scipy.optimise model`
@@ -50,7 +50,7 @@ def statistics(weights, returns, n_days=252) -> np.array:
         [
             portfolio_return,
             portfolio_volatility,
-            (portfolio_return - RISK_FREE) / portfolio_volatility,
+            (portfolio_return - RISK_FREE * 252) / portfolio_volatility,
         ]
     )
 
@@ -65,7 +65,7 @@ class Portfolio:
     """
 
     NUM_TRADING_DAYS = 252
-    NUM_PORTFOLIO = 500000
+    NUM_PORTFOLIO = 10000
 
     def __init__(self, stocks: list, start: str, end: str) -> None:
         """
