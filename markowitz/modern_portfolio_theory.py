@@ -145,7 +145,7 @@ class Portfolio:
         plt.scatter(
             portfolio_data["risk"],
             portfolio_data["mean"],
-            c=(np.array(portfolio_data["mean"]) - RISK_FREE)
+            c=(np.array(portfolio_data["mean"]) - RISK_FREE * 252)
             / np.array(portfolio_data["risk"]),
             marker="o",
         )
@@ -210,7 +210,7 @@ class Portfolio:
         plt.scatter(
             portfolio_data["risk"],
             portfolio_data["mean"],
-            c=(np.array(portfolio_data["mean"]) - RISK_FREE)
+            c=(np.array(portfolio_data["mean"]) - RISK_FREE * 252)
             / np.array(portfolio_data["risk"]),
             marker="o",
         )
