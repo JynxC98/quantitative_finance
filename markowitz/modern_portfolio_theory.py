@@ -112,9 +112,9 @@ class Portfolio:
         Returns the logarithmic price change of the price.
         """
         data = self.get_data_from_yahoo()
-        log_return = np.log(data / data.shift(1))
-        self.returns = log_return[1:]  # We save the value of log returns.
-        return log_return[1:]  # We skip the first row to eliminate the NaN values.
+        returns = data.pct_change().dropna()
+        self.returns = returns
+        return returns
 
     def generate_portfolios(self) -> dict:
         """
