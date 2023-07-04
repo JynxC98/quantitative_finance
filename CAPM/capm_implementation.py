@@ -3,7 +3,7 @@ CAPM Implementation
 """
 import warnings
 
-import matplotlib.pyplot as plt
+import plotly.express as px
 import numpy as np
 import pandas as pd
 import yfinance as yf
@@ -100,25 +100,43 @@ class CAPM:
 
     def plot_regression(self, alpha, beta):
         """
-        Plots the CAPM line
+        used to plot the CAPM line
         """
-        _, axis = plt.subplots(1, figsize=(20, 10))
-        axis.scatter(
-            self.data["m_returns"], self.data["s_returns"], label="Data Points"
+        df = self.data.copy()
+        df["CAPM_Line"] = beta * df["m_returns"] + alpha
+
+        # Plotting the data
+        fig = px.scatter(
+            df,
+            x="m_returns",
+            y="s_returns",
+            title="Capital Asset Pricing Model, finding alphas and betas",
         )
-        axis.plot(
-            self.data["m_returns"],
-            beta * self.data["m_returns"] + alpha,
-            color="red",
-            label="CAPM Line",
+
+        # Adding the CAPM line
+        fig.add_trace(px.line(df, x="m_returns", y="CAPM_Line").data[0])
+
+        # Updating the layout
+        fig.update_layout(
+            autosize=False,
+            width=1000,
+            height=500,
+            xaxis=dict(title="Market Return $r_m$"),
+            yaxis=dict(title="Stock Return $r_a$"),
+            legend_title="Data Points",
+            showlegend=True,
         )
-        plt.title("Capital Asset Pricing Model, finding alphas and betas")
-        plt.xlabel("Market Return $r_m$", fontsize=18)
-        plt.ylabel("Stock Return $r_a$")
-        plt.text(0.08, 0.05, r"$r_a = \beta * r_m + \alpha$", fontsize=18)
-        plt.legend()
-        plt.grid(True)
-        plt.show()
+
+        # Adding the equation text
+        fig.add_annotation(
+            x=0.08,
+            y=0.05,
+            text=r"$r_a = \beta * r_m + \alpha$",
+            showarrow=False,
+            font=dict(size=16),
+        )
+
+        fig.show()
 
 
 if __name__ == "__main__":
