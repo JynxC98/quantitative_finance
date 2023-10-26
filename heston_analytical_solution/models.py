@@ -20,27 +20,28 @@ def geometric_integral(S0, v0, theta, sigma, kappa, rho, r, n, T, K):
     """
     Params as same as `geometric_asian_call` function.
     """
+    args = (S0, v0, theta, sigma, kappa, rho, r, n, T, K)
+    option_price, _ = quad(
+        lambda x: 0.5 + (1 / np.pi) * np.real(integrand(x, *args)), 0, 1e5
+    )
 
-    pass
+    return option_price
 
 
 def integrand(x, S0, v0, theta, sigma, kappa, rho, r, n, T, K):
     """
     Params as same as `geometic_asian_call` function.
     """
-    args = (S0, v0, theta, sigma, kappa, rho, r, n, T, K)
-    # A=psi(1+1i*x,0,S0,v0,theta,sigma,kappa,rho,r,n,T);
-    # B=psi(x*1i,0,S0,v0,theta,sigma,kappa,rho,r,n,T);
-    # C=exp(-1i*x*log(K))./(1i*x);
-    # value=real((A-K.*B).*C); %return the real part only
-    # end
-
-    w = 0
-    A = (1 + 1j,)
-    pass
+    args = (S0, v0, theta, sigma, kappa, rho, r, n, T)
+    args = (S0, v0, theta, sigma, kappa, rho, r, n, T)
+    A = psi(1 + 1j * x, 0, *args)
+    B = psi(1j, 0, *args)
+    C = np.exp(-1j * x * np.log(K)) / (1j * x)
+    value = (A / B) * C
+    return value
 
 
-def psi(s, w, S0, v0, theta, sigma, kappa, rho, r, n, T, K):
+def psi(s, w, S0, v0, theta, sigma, kappa, rho, r, n, T):
     """
     s, w: complex numbers. \\
     Properties of s and w: \\
@@ -57,46 +58,81 @@ def psi(s, w, S0, v0, theta, sigma, kappa, rho, r, n, T, K):
     )
     a4 = np.log(S0) - (rho / sigma) * v0 + (r - ((rho * kappa * theta) / sigma)) * T
     a5 = (kappa * v0 + kappa**2 * T) / (sigma**2)
-
-    h_matrix = np.zeros([n + 2, 1])
+    h_matrix = np.zeros([n + 4, 1])
     h_matrix[2, :] = 1  # H_0 = 1, saving for the third entry.
     h_matrix[3, :] = (
         T * (kappa - w * rho * sigma) / 2
     )  # H1, will save in the 4th entry.
 
     # Calculating from H2 to H_n
-    nmat = np.linspace(1, n, n).reshape(-1, 1)
-    A1 = 1 / (4 * nmat[1:] * (nmat[1:] - 1))
-    A2 = -(s**2) * sigma * (1 - rho**2) * (T**2)
-    A3 = (s * sigma * T * (sigma - 2 * rho * kappa)) - 2 * s * w * (sigma**2) * T * (
-        1 - (rho**2)
+    nmat = np.linspace(1, n, n)
+
+    A1 = -(s**2) * sigma**2 * (1 - rho**2) * T**2
+    A2 = s * sigma * T * (sigma - 2 * rho * kappa) - 2 * s * w * sigma**2 * T * (
+        1 - rho**2
     )
-    A4 = T * (
-        (kappa**2) - 2 * s * rho * sigma - w * (2 * rho * kappa - sigma)
-    ) * sigma * T - ((w**2) * (1 - (rho**2)) * (sigma**2) * T)
-    for j in range(4, n + 2):
-        h_matrix[j, :] = A1[j - 2, 1] * A2 * h_matrix[j - 2, :] + A3 * (
-            T * h_matrix[j - 1, :] + A4 * h_matrix[j - 1, :]
+    A3 = T * (
+        kappa**2 * T
+        - 2 * s * rho * sigma
+        - w * (2 * rho * kappa - sigma) * sigma * T
+        - w**2 * (1 - rho**2) * sigma**2 * T
+    )
+
+    for i in range(4, n + 4):
+        h_matrix[i] = (
+            (1 / 4 * i * (i - 1)) * A1 * h_matrix[i - 4]
+            + A2 * h_matrix[i - 3]
+            + A3 * h_matrix(i - 2)
         )
-    H = np.sum(h_matrix[2:, :], 1)
-    h_tilde = nmat / T * h_matrix[3:, :]
-    H_tilde = np.sum(h_tilde, 1)
-    return np.exp(-a1 * H_tilde / H - a2 * np.log(H) + a3 * s + a4 * w + a5)
+
+        # Since we predefined the first 4 variables, we run the iterations till n + 4
+        # A1 = (1 / (4 * i * (i - 1))) * (
+        #     (-(s**2)) * (sigma**2) * (1 - (rho**2)) * (T**2) * h_matrix[i - 4]
+        # )
+        # A2 = (s * sigma * T * (sigma - 2 * rho * kappa)) - (
+        #     2 * s * w * (sigma**2) * T * (1 - (rho**2))
+        # ) * h_matrix[i - 3]
+        # A3 = T * (
+        #     (kappa**2) * T
+        #     - 2 * s * rho * sigma
+        #     - w * (2 * rho * kappa - sigma) * sigma * T
+        #     - (w**2) * (1 - (rho**2)) * (sigma**2) * T * h_matrix[i - 2]
+        # )
+
+        # h_matrix[i] = A1 + A2 + A3
+
+    # print(h_matrix)
+    H = np.sum(h_matrix[4:])
+    H_tilde = np.dot(nmat, h_matrix[4:])
+
+    return np.exp(-a1 * (H_tilde / H) - a2 * np.log(H) + a3 * s + a4 * w + a5)
 
 
 if __name__ == "__main__":
+    # value = define(1+1i, 0, 100, 0.09, 0.348, 0.39,1.15, -0.64, 0.05, 10, 1);
     value = psi(
         s=1 + 1j,
         w=0,
         S0=100,
         v0=0.09,
-        theta=0.09,
-        kappa=2.0,
-        rho=-0.3,
+        theta=0.348,
+        kappa=1.15,
+        rho=-0.64,
         r=0.05,
         n=10,
         T=1,
-        K=100,
-        sigma=0.2,
+        sigma=0.39,
     )
-    print(value)
+    test_2 = geometric_integral(
+        S0=100,
+        v0=0.09,
+        sigma=0.39,
+        theta=0.348,
+        kappa=1.15,
+        rho=-0.64,
+        r=0.05,
+        n=10,
+        T=1,
+        K=90,
+    )
+    print(test_2)
