@@ -70,5 +70,34 @@ def psi(s, w, S0, v0, theta, sigma, kappa, rho, r, n, T):
         )
         # print(h_matrix[i])
     H = np.sum(h_matrix)
-    H_tilde = np.dot(nmat, h_matrix[3:])  # We calculate from h_n.
+    H_tilde = np.dot(nmat, h_matrix[3:])
     return np.exp(-a1 * (H_tilde / H) - a2 * np.log(H) + a3 * s + a4 * w + a5)
+
+
+if __name__ == "__main__":
+    value = psi(
+        s=1 + 1j,
+        w=0,
+        S0=100,
+        v0=0.09,
+        theta=0.348,
+        kappa=1.15,
+        rho=-0.64,
+        r=0.05,
+        n=10,
+        T=1,
+        sigma=0.39,
+    )
+    test_2 = geometric_asian_call(
+        S0=100,
+        v0=0.09,
+        sigma=0.39,
+        theta=0.348,
+        kappa=1.15,
+        rho=-0.64,
+        r=0.05,
+        n=10,
+        T=1,
+        K=90,
+    )
+    print(test_2)
