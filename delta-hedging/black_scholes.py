@@ -48,8 +48,3 @@ def put_option_price(initial_price, strike_price, T, rf, sigma):
     return -initial_price * stats.norm.cdf(-d1) + strike_price * np.exp(
         -rf * T
     ) * stats.norm.cdf(-d2)
-
-
-if __name__ == "__main__":
-    print(call_option_price(100, 100, 1, 0.05, 0.2))
-    print(put_option_price(100, 100, 1, 0.05, 0.2))
