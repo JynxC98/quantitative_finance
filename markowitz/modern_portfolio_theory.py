@@ -112,7 +112,7 @@ class Portfolio:
         Returns the logarithmic price change of the price.
         """
         data = self.get_data_from_yahoo()
-        returns = data.pct_change().dropna()
+        returns = np.log(data / data.shift(1))
         self.returns = returns
         return returns
 
@@ -235,7 +235,13 @@ class Portfolio:
 
 
 if __name__ == "__main__":
-    STOCKS = ["AAPL", "MSFT", "TSLA", "GOOGL", "AMZN", "IBM"]
+    STOCKS = [
+        "ADANIENT.NS",
+        "BAJFINANCE.NS",
+        "BRITANNIA.NS",
+        "ASIANPAINT.NS",
+        "JSWSTEEL.NS",
+    ]
 
     END_DATE = datetime.now()
     START_DATE = END_DATE - timedelta(days=365 * 10)
