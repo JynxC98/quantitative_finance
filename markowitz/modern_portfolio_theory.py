@@ -11,6 +11,7 @@ import numpy as np
 import pandas as pd
 import yfinance as yf
 from alive_progress import alive_bar
+import plotly.express as px
 import scipy.optimize as optimize
 
 warnings.filterwarnings("ignore")
@@ -66,7 +67,7 @@ class Portfolio:
     """
 
     NUM_TRADING_DAYS = 252
-    NUM_PORTFOLIO = 50000
+    NUM_PORTFOLIO = 100000
 
     def __init__(self, stocks: list, start: str, end: str) -> None:
         """
@@ -105,7 +106,7 @@ class Portfolio:
         data.plot(figsize=(10, 5))
         plt.xlabel("Year")
         plt.ylabel("Price")
-        plt.show()
+        # plt.show()
 
     def calculate_return(self) -> None:
         """
@@ -156,7 +157,7 @@ class Portfolio:
         plt.xlabel("Expected Volatility")
         plt.ylabel("Expected Return")
         plt.colorbar(label="Sharpe Ratio")
-        plt.show()
+        # plt.show()
 
         self.weights = np.array(weights)
         self.portfolio_data = portfolio_data
@@ -196,40 +197,49 @@ class Portfolio:
             statistics(weights.round(3), self.returns),
         )
 
-    def display_and_print_portfolio(self) -> str:
+    def display_and_print_portfolio(self) -> None:
         """
-        Generates the point on the efficient portfolio frontier where
-        the portfolio shows the optimal return and risk.
+        Displays the final result.
         """
         optimal = self.optimize_portfolio()
-        _ = self.show_data()
         portfolio_data = self.portfolio_data
         result = {}
         for stock, optimum_weight in zip(self.stocks, optimal):
             result[stock] = optimum_weight
 
+        fig = px.scatter(
+            x=portfolio_data["risk"],
+            y=portfolio_data["mean"],
+            color=(np.array(portfolio_data["mean"]) - RISK_FREE * 252)
+            / np.array(portfolio_data["risk"]),
+        )
+        fig.update_layout(
+            title="Efficient Frontier",
+            xaxis_title="Expected Volatility",
+            yaxis_title="Expected Return",
+            coloraxis_colorbar_title="Sharpe Ratio",
+        )
+        fig.add_scatter(
+            x=[statistics(optimal, self.returns)[1]],
+            y=[statistics(optimal, self.returns)[0]],
+            mode="markers",
+            marker=dict(size=15, color="red"),
+            name="Optimal Portfolio",
+        )
+        fig.update_layout(
+            legend=dict(
+                orientation="h",
+                y=1.1,
+                x=0.5,
+                xanchor="center",
+                yanchor="top",
+            )
+        )
+
+        fig.show()
         print(self.display_stats(optimal))
         print("The optimum portfolio is \n")
         print(pd.DataFrame(result, index=[0]).T)
-        plt.figure(figsize=(10, 6))
-        plt.scatter(
-            portfolio_data["risk"],
-            portfolio_data["mean"],
-            c=(np.array(portfolio_data["mean"]) - RISK_FREE * 252)
-            / np.array(portfolio_data["risk"]),
-            marker="o",
-        )
-        plt.grid(True)
-        plt.xlabel("Expected Volatility")
-        plt.ylabel("Expected Return")
-        plt.colorbar(label="Sharpe Ratio")
-        plt.plot(
-            statistics(optimal, self.returns)[1],
-            statistics(optimal, self.returns)[0],
-            "g*",
-            markersize=15,
-        )
-        plt.show()
 
         # Need to add VaR model for the optimal portfolio.
 
@@ -243,7 +253,7 @@ if __name__ == "__main__":
         "JSWSTEEL.NS",
     ]
 
-    END_DATE = datetime.now()
+    END_DATE = datetime(2022, 1, 1)
     START_DATE = END_DATE - timedelta(days=365 * 10)
 
     portfolio = Portfolio(
