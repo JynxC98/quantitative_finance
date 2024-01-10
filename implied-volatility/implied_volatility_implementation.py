@@ -3,6 +3,26 @@ A script to calculate implied volatility.
 """
 import numpy as np
 from scipy.stats import norm
+import matplotlib.pyplot as plt
+
+
+def call_option_price(initial_price, strike_price, T, rf, sigma):
+    """
+    Parameters:
+    -----------
+    S: Initial stock price
+    E: Strike Price
+    T: Time to maturity
+    rf: Risk Free interest rate
+    sigma: Volatility
+    """
+    d1 = (np.log(initial_price / strike_price) + (rf + pow(sigma, 2) / 2) * T) / (
+        sigma * np.sqrt(T)
+    )
+
+    d2 = d1 - sigma * np.sqrt((T))
+
+    return initial_price * norm.cdf(d1) - strike_price * np.exp(-rf * T) * norm.cdf(d2)
 
 
 def implied_volatility(S, K, r, T, actual_price, callput):
@@ -55,7 +75,22 @@ def implied_volatility(S, K, r, T, actual_price, callput):
 if __name__ == "__main__":
     S = 100
     RISK_FREE = 0.05
-    K = np.linspace(80, 120, 20)
-    # implied_volatility_values = np.zeros([len(K)])
-    # for itr, strike_price in enumerate(K):
-    #     implied_volatility_values[itr] = implied_volatility(S, strike_price, RISK_FREE, )
+    K = np.linspace(
+        80, 120, 20
+    )  # We create an array of strike prices to calculate actual call option prices.
+    SIGMA = 0.25
+    implied_volatility_values = np.zeros([len(K)])
+    for itr, strike_price in enumerate(K):
+        option_price = call_option_price(S, strike_price, 1, RISK_FREE, SIGMA)
+        implied_volatility_values[itr] = implied_volatility(
+            S, strike_price, RISK_FREE, 1, option_price, 1
+        )
+
+    plt.plot(
+        K, implied_volatility_values, marker="o"
+    )  # Added marker for better visualization
+    plt.xlabel("Strike Price")
+    plt.ylabel("Implied Volatility")
+    plt.title("Volatility Smile")
+    plt.grid(True)
+    plt.show()

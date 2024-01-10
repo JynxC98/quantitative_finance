@@ -51,5 +51,5 @@ def put_option_price(initial_price, strike_price, T, rf, sigma):
 
 
 if __name__ == "__main__":
-    print(call_option_price(100, 100, 1, 0.05, 0.2))
+    print(call_option_price(100, 100, 1, 0.05, 0.25))
     print(put_option_price(100, 100, 1, 0.05, 0.2))
