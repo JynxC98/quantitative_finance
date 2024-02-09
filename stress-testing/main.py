@@ -9,6 +9,8 @@ import plotly.express as px
 import matplotlib.pyplot as plt
 import yfinance as yf
 
+RISK_FREE = 0.05
+
 
 def generate_stress_scenarios(mean_returns, cov_matrix, num_scenarios=10000):
     """
@@ -16,6 +18,33 @@ def generate_stress_scenarios(mean_returns, cov_matrix, num_scenarios=10000):
     """
     np.random.seed(42)
     return np.random.multivariate_normal(mean_returns, cov_matrix, num_scenarios)
+
+
+def statistics(weights, returns, n_days=252) -> np.array:
+    """
+    Calculates the required statistics for optimisation function.
+    Parameters
+    ----------
+    weights: Portfolio weights
+    returns: Log daily returns
+    n_days: Number of trading days
+    """
+
+    portfolio_return = np.sum(np.dot(returns.mean(), weights.T)) * n_days
+    excess_return = returns - RISK_FREE
+    portfolio_volatility = np.sqrt(
+        np.dot(
+            weights,
+            np.dot(excess_return.cov() * n_days, weights.T),
+        )
+    )
+    return np.array(
+        [
+            portfolio_return,
+            portfolio_volatility,
+            (portfolio_return - RISK_FREE * 252) / portfolio_volatility,
+        ]
+    )
 
 
 class Portfolio:
@@ -71,40 +100,35 @@ class Portfolio:
         return_data = self.get_data_from_yahoo()
         return np.log(return_data / return_data.shift(1)).dropna()
 
-    def optimise_portfolio(self, alpha=0.05) -> np.ndarray:
+    def optimise_portfolio(self, target_return=RISK_FREE) -> np.ndarray:
         """
-        Minimizes portfolio volatility subject to specified returns and stress test.
+        Minimizes portfolio volatility subject to specified returns.
 
         Parameters:
-            - target_returns (float): Target expected returns for the portfolio.
-            - stress_test_alpha (float): Significance level for stress test (e.g., 0.05 for 5%).
+            - target_return (float): Target expected return for the portfolio.
 
         Returns:
             optimal weights
         """
         return_data = self.calculate_returns()
-        cov_matrix = np.cov(return_data)
-        weights = cp.Variable(len(return_data[0]))
+        cov_matrix = np.cov(return_data, rowvar=False)
+        weights = cp.Variable(len(self.stocks))
+        portfolio_return = cp.sum(cp.multiply(self.expected_returns, weights))
         portfolio_volatility = cp.quad_form(weights, cov_matrix)
 
         # Setting the objective function
-        objective_1 = cp.Minimize(portfolio_volatility)
-        objective_2 = cp.Minimize(
-            generate_stress_scenarios(
-                np.mean(return_data.to_numpy(), axis=0),
-                np.cov(return_data, rowvar=False),
-            )
-        )
-        constraint = [cp.sum(weights) == 1, weights >= 0]
-        problem = cp.Problem(
-            constraints=constraint, objective=(objective_1, objective_2)
-        )
+        objective = cp.Minimize(portfolio_volatility)
+        constraint = [
+            cp.sum(weights) == 1,
+            weights >= 0,
+            portfolio_return >= target_return,
+        ]
+        problem = cp.Problem(constraints=constraint, objective=objective)
         problem.solve()
         optimal_weights = weights.value
 
-        portfolio_returns = np.dot(self.expected_returns, optimal_weights)
-        expected_shortfall = np.percentile(portfolio_returns, alpha * 100)
-        return optimal_weights, expected_shortfall
+        portfolio_statistics = statistics(weights=optimal_weights, returns=return_data)
+        return portfolio_statistics, optimal_weights
 
 
 if __name__ == "__main__":
@@ -115,8 +139,5 @@ if __name__ == "__main__":
     portfolio = Portfolio(
         stocks=STOCKS, start_date=START, end_date=END, expected_returns=EXPECTED_RETURNS
     )
-    data = portfolio.calculate_returns()
-    stress_scenarios = generate_stress_scenarios(
-        np.mean(data.to_numpy(), axis=0), np.cov(data, rowvar=False)
-    )
-    print(stress_scenarios)
+
+    print(portfolio.optimise_portfolio())
