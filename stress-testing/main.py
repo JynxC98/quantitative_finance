@@ -2,6 +2,7 @@
 A script that generates optimal weights for the portfolio.
 """
 from datetime import datetime, timedelta
+import warnings
 import cvxpy as cp
 import numpy as np
 import pandas as pd
@@ -9,6 +10,8 @@ import plotly.express as px
 import matplotlib.pyplot as plt
 import yfinance as yf
 
+
+warnings.filterwarnings("ignore")
 RISK_FREE = 0.05
 
 
@@ -42,7 +45,7 @@ def statistics(weights, returns, n_days=252) -> np.array:
         [
             portfolio_return,
             portfolio_volatility,
-            (portfolio_return - RISK_FREE * 252) / portfolio_volatility,
+            (portfolio_return - RISK_FREE) / portfolio_volatility,
         ]
     )
 
@@ -113,18 +116,24 @@ class Portfolio:
         return_data = self.calculate_returns()
         cov_matrix = np.cov(return_data, rowvar=False)
         weights = cp.Variable(len(self.stocks))
-        portfolio_return = cp.sum(cp.multiply(self.expected_returns, weights))
-        portfolio_volatility = cp.quad_form(weights, cov_matrix)
+        portfolio_volatility = cp.sqrt(cp.quad_form(weights, cov_matrix))
+
+        # Calculating the expected returns
+        expected_returns = cp.sum(
+            cp.multiply(cp.mean(return_data, axis=0), cp.transpose(weights))
+        )
+
+        # sharpe_ratio = (expected_returns - (target_return / 252)) / portfolio_volatility
 
         # Setting the objective function
         objective = cp.Minimize(portfolio_volatility)
         constraint = [
             cp.sum(weights) == 1,
             weights >= 0,
-            portfolio_return >= target_return,
+            expected_returns >= target_return / 252,
         ]
         problem = cp.Problem(constraints=constraint, objective=objective)
-        problem.solve()
+        problem.solve(qcp=True)
         optimal_weights = weights.value
 
         portfolio_statistics = statistics(weights=optimal_weights, returns=return_data)
