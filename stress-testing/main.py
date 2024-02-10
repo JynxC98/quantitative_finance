@@ -14,7 +14,7 @@ warnings.filterwarnings("ignore")
 RISK_FREE = 0.05
 
 
-def generate_stress_scenarios(mean_returns, cov_matrix, num_scenarios):
+def generate_stress_scenarios(mean_returns, cov_matrix, num_scenarios) -> np.ndarray:
     """
     This function generates random cases of overall market fluctuations.
     """
@@ -68,9 +68,10 @@ class Portfolio:
         - end_date (str): End date for collecting historical data in 'YYYY-MM-DD' format.
 
     Methods:
-        - collect_data(): Collects historical price data for the specified stocks from Yahoo Finance.
-        - optimize_portfolio(): Minimizes portfolio volatility subject to specified returns and stress test.
-        - generate_plots(): Generates appropriate plots illustrating the optimized portfolio.
+        - get_data_from_yahoo(): Collects historical price from Yahoo Finance.
+        - calculate_returns(): Calculates logarithmic returns of the historical data
+        - optimise_portfolio(): Minimises portfolio volatility subject to specified returns.
+        - stress_test_portfolio(): Generates several scenarios of returns.
     """
 
     def __init__(self, stocks, start_date, end_date):
@@ -81,7 +82,6 @@ class Portfolio:
             - stocks (list): List of stock symbols for portfolio construction.
             - start_date (str): Start date for collecting historical data in 'YYYY-MM-DD' format.
             - end_date (str): End date for collecting historical data in 'YYYY-MM-DD' format.
-            - expected_returns (np.ndarray): Random set of returns generated for simulation.
         """
         self.stocks = stocks
         self.start_date = start_date
@@ -109,13 +109,19 @@ class Portfolio:
     def calculate_returns(self) -> np.ndarray:
         """
         Calculates logarithmic returns of the historical data.
+
+        Returns:
+            - Logarithmic returns of the historical data.
         """
         return_data = self.get_data_from_yahoo()
         return np.log(return_data / return_data.shift(1)).dropna()
 
-    def optimise_portfolio(self) -> np.array:
+    def optimise_portfolio(self) -> np.ndarray:
         """
-        Used to optimize the weights with respect to the sharpe ratio.
+        Used to optimise the weights with respect to the Sharpe ratio.
+
+        Returns:
+            - Array of optimal asset weights.
         """
 
         returns = self.calculate_returns()
@@ -180,7 +186,7 @@ class Portfolio:
         )
 
 
-def plot_stress_test_results(test_results_mpt, test_results_equally_weighted):
+def plot_stress_test_results(test_results_mpt, test_results_equally_weighted) -> None:
     """
     Plot histograms of stress test results for two distributions.
 
