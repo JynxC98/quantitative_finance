@@ -1,26 +1,34 @@
 """
 A script that generates optimal weights for the portfolio.
 """
+from collections import defaultdict
 from datetime import datetime, timedelta
 import warnings
-import cvxpy as cp
 import numpy as np
 import pandas as pd
-import plotly.express as px
-import matplotlib.pyplot as plt
+import plotly.graph_objects as go
+import scipy.optimize as optimize
 import yfinance as yf
-
 
 warnings.filterwarnings("ignore")
 RISK_FREE = 0.05
 
 
-def generate_stress_scenarios(mean_returns, cov_matrix, num_scenarios=10000):
+def generate_stress_scenarios(mean_returns, cov_matrix, num_scenarios):
     """
     This function generates random cases of overall market fluctuations.
     """
     np.random.seed(42)
     return np.random.multivariate_normal(mean_returns, cov_matrix, num_scenarios)
+
+
+def minimise_function(weights, returns) -> np.array:
+    """
+    Minimisation class for the given function
+    """
+    return -np.array(
+        statistics(weights, returns)[2]
+    )  # The maximum of f(x) is the minimum of -f(x)
 
 
 def statistics(weights, returns, n_days=252) -> np.array:
@@ -65,7 +73,7 @@ class Portfolio:
         - generate_plots(): Generates appropriate plots illustrating the optimized portfolio.
     """
 
-    def __init__(self, stocks, expected_returns, start_date, end_date):
+    def __init__(self, stocks, start_date, end_date):
         """
         Initialize the PortfolioOptimizer object.
 
@@ -78,7 +86,9 @@ class Portfolio:
         self.stocks = stocks
         self.start_date = start_date
         self.end_date = end_date
-        self.expected_returns = expected_returns
+
+        # These values will be stored later
+        self.returns = None
 
     def get_data_from_yahoo(self) -> pd.DataFrame:
         """
@@ -103,50 +113,132 @@ class Portfolio:
         return_data = self.get_data_from_yahoo()
         return np.log(return_data / return_data.shift(1)).dropna()
 
-    def optimise_portfolio(self, target_return=RISK_FREE) -> np.ndarray:
+    def optimise_portfolio(self) -> np.array:
         """
-        Minimizes portfolio volatility subject to specified returns.
+        Used to optimize the weights with respect to the sharpe ratio.
+        """
+
+        returns = self.calculate_returns()
+        self.returns = returns
+        func = minimise_function
+        constraints = {"type": "eq", "fun": lambda x: np.sum(x) - 1}
+        # The weights can at the most be 1.
+        bounds = tuple((0, 1) for _ in range(len(self.stocks)))
+        random_weights = np.random.rand(len(self.stocks))
+        random_weights /= np.sum(random_weights)
+        optimum = optimize.minimize(
+            fun=func,
+            x0=np.array(
+                random_weights
+            ),  # We are randomly selecting a weight for optimisation
+            args=returns,
+            method="SLSQP",
+            bounds=bounds,
+            constraints=constraints,
+        )
+        return optimum["x"].round(4)
+
+    def stress_test_portfolio(self, num_scenarios=10000) -> np.ndarray:
+        """
+        Stress tests the optimized portfolio by generating random market scenarios.
 
         Parameters:
-            - target_return (float): Target expected return for the portfolio.
+            - num_scenarios (int): Number of random scenarios to generate.
 
         Returns:
-            optimal weights
+            - Array of portfolio statistics for each scenario.
         """
-        return_data = self.calculate_returns()
-        cov_matrix = np.cov(return_data, rowvar=False)
-        weights = cp.Variable(len(self.stocks))
-        portfolio_volatility = cp.sqrt(cp.quad_form(weights, cov_matrix))
+        optimised_weights = self.optimise_portfolio()
+        print(optimised_weights)
 
-        # Calculating the expected returns
-        expected_returns = cp.sum(
-            cp.multiply(cp.mean(return_data, axis=0), cp.transpose(weights))
+        # Calculate mean and covariance matrix from historical data
+        returns = self.returns
+        mean_returns = returns.mean(axis=0)
+        cov_matrix = np.cov(returns, rowvar=False)
+
+        # Generate stress scenarios
+        stress_scenarios = generate_stress_scenarios(
+            mean_returns, cov_matrix, num_scenarios
+        )
+        # daily_risk_free_rate = (1 + RISK_FREE) ** (1 / 252) - 1
+        portfolio_volatility = np.sqrt(
+            np.dot(optimised_weights, np.dot(cov_matrix, optimised_weights.T))
+        )
+        print(portfolio_volatility)
+
+        # Calculate portfolio statistics for each scenario
+        portfolio_statistics = defaultdict(list)
+        equally_weighted_portfolio_stats = defaultdict(list)
+        for i in range(num_scenarios):
+            scenario_returns = stress_scenarios[i]
+            portfolio_return = np.sum(np.dot(scenario_returns, optimised_weights.T))
+            portfolio_statistics["Return"].append(portfolio_return)
+            equally_weighted_portfolio_stats["Return"].append(np.mean(scenario_returns))
+
+        return pd.DataFrame(portfolio_statistics), pd.DataFrame(
+            equally_weighted_portfolio_stats
         )
 
-        # sharpe_ratio = (expected_returns - (target_return / 252)) / portfolio_volatility
 
-        # Setting the objective function
-        objective = cp.Minimize(portfolio_volatility)
-        constraint = [
-            cp.sum(weights) == 1,
-            weights >= 0,
-            expected_returns >= target_return / 252,
-        ]
-        problem = cp.Problem(constraints=constraint, objective=objective)
-        problem.solve(qcp=True)
-        optimal_weights = weights.value
+def plot_stress_test_results(test_results_mpt, test_results_equally_weighted):
+    """
+    Plot histograms of stress test results for two distributions.
 
-        portfolio_statistics = statistics(weights=optimal_weights, returns=return_data)
-        return portfolio_statistics, optimal_weights
+    Parameters:
+        - test_results_mpt (pd.DataFrame): DataFrame of portfolio statistics for MPT scenarios.
+        - test_results_equally_weighted (pd.DataFrame): DataFrame of portfolio statistics for equally weighted scenarios.
+    """
+    fig = go.Figure()
+
+    # Add histogram trace for MPT distribution
+    fig.add_trace(
+        go.Histogram(
+            x=test_results_mpt["Return"],
+            opacity=0.7,
+            name="MPT",
+            marker_color="blue",
+        )
+    )
+
+    # Add histogram trace for equally weighted distribution
+    fig.add_trace(
+        go.Histogram(
+            x=test_results_equally_weighted["Return"],
+            opacity=0.7,
+            name="Equally Weighted",
+            marker_color="orange",
+        )
+    )
+
+    # Update layout
+    fig.update_layout(
+        title="Returns under different scenarios",
+        xaxis_title="Portfolio Return",
+        barmode="overlay",
+    )
+
+    fig.show()
 
 
 if __name__ == "__main__":
-    STOCKS = ["AAPL", "MSFT", "NVDA"]
+    STOCKS = [
+        "ASIANPAINT.NS",
+        "BAJFINANCE.NS",
+        "TITAN.NS",
+        "BAJAJFINSV.NS",
+        "ADANIENT.NS",
+        "BRITANNIA.NS",
+    ]
     END = datetime.today()
     START = END - timedelta(10 * 365)  # data of 10 years
-    EXPECTED_RETURNS = np.random.rand(len(STOCKS))
-    portfolio = Portfolio(
-        stocks=STOCKS, start_date=START, end_date=END, expected_returns=EXPECTED_RETURNS
-    )
+    portfolio = Portfolio(stocks=STOCKS, start_date=START, end_date=END)
+    mpt_result, equally_weigted_result = portfolio.stress_test_portfolio()
+    plot_stress_test_results(mpt_result, equally_weigted_result)
 
-    print(portfolio.optimise_portfolio())
+    # Printing the mean and Sharpe ratio of the portfolio
+    print(
+        f"The average return of an equally weighted portfolio is {np.mean(equally_weigted_result['Return'])}"
+    )
+    print(
+        f"The average return of an mpt-based portfolio is {np.mean(mpt_result['Return'])}"
+    )
