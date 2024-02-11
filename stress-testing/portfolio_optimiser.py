@@ -14,7 +14,7 @@ warnings.filterwarnings("ignore")
 RISK_FREE = 0.05
 
 
-def generate_stress_scenarios(mean_returns, cov_matrix, num_scenarios) -> np.ndarray:
+def generate_stress_scenarios(mean_returns, cov_matrix, num_scenarios):
     """
     This function generates random cases of overall market fluctuations.
     """
@@ -68,10 +68,9 @@ class Portfolio:
         - end_date (str): End date for collecting historical data in 'YYYY-MM-DD' format.
 
     Methods:
-        - get_data_from_yahoo(): Collects historical price from Yahoo Finance.
-        - calculate_returns(): Calculates logarithmic returns of the historical data
-        - optimise_portfolio(): Minimises portfolio volatility subject to specified returns.
-        - stress_test_portfolio(): Generates several scenarios of returns.
+        - collect_data(): Collects historical price data for the specified stocks from Yahoo Finance.
+        - optimize_portfolio(): Minimizes portfolio volatility subject to specified returns and stress test.
+        - generate_plots(): Generates appropriate plots illustrating the optimized portfolio.
     """
 
     def __init__(self, stocks, start_date, end_date):
@@ -82,6 +81,7 @@ class Portfolio:
             - stocks (list): List of stock symbols for portfolio construction.
             - start_date (str): Start date for collecting historical data in 'YYYY-MM-DD' format.
             - end_date (str): End date for collecting historical data in 'YYYY-MM-DD' format.
+            - expected_returns (np.ndarray): Random set of returns generated for simulation.
         """
         self.stocks = stocks
         self.start_date = start_date
@@ -93,8 +93,9 @@ class Portfolio:
     def get_data_from_yahoo(self) -> pd.DataFrame:
         """
         Downloads data from yfinance.
-        Returns:
-            - Dataframe of the historical data.
+        Parameters:
+        start: Start Date (yyyy-mm-dd) format
+        end: End Date (yyyy-mm-dd) format
         """
         stock_data = {}
         for stock in self.stocks:
@@ -108,19 +109,13 @@ class Portfolio:
     def calculate_returns(self) -> np.ndarray:
         """
         Calculates logarithmic returns of the historical data.
-
-        Returns:
-            - Logarithmic returns of the historical data.
         """
         return_data = self.get_data_from_yahoo()
         return np.log(return_data / return_data.shift(1)).dropna()
 
-    def optimise_portfolio(self) -> np.ndarray:
+    def optimise_portfolio(self) -> np.array:
         """
-        Used to optimise the weights with respect to the Sharpe ratio.
-
-        Returns:
-            - Array of optimal asset weights.
+        Used to optimize the weights with respect to the sharpe ratio.
         """
 
         returns = self.calculate_returns()
@@ -165,6 +160,7 @@ class Portfolio:
         stress_scenarios = generate_stress_scenarios(
             mean_returns, cov_matrix, num_scenarios
         )
+        # daily_risk_free_rate = (1 + RISK_FREE) ** (1 / 252) - 1
         portfolio_volatility = np.sqrt(
             np.dot(optimised_weights, np.dot(cov_matrix, optimised_weights.T))
         )
@@ -184,7 +180,7 @@ class Portfolio:
         )
 
 
-def plot_stress_test_results(test_results_mpt, test_results_equally_weighted) -> None:
+def plot_stress_test_results(test_results_mpt, test_results_equally_weighted):
     """
     Plot histograms of stress test results for two distributions.
 
@@ -194,7 +190,7 @@ def plot_stress_test_results(test_results_mpt, test_results_equally_weighted) ->
     """
     fig = go.Figure()
 
-    # Histogram trace for MPT distribution
+    # Add histogram trace for MPT distribution
     fig.add_trace(
         go.Histogram(
             x=test_results_mpt["Return"],
@@ -204,7 +200,7 @@ def plot_stress_test_results(test_results_mpt, test_results_equally_weighted) ->
         )
     )
 
-    # Histogram trace for equally weighted distribution
+    # Add histogram trace for equally weighted distribution
     fig.add_trace(
         go.Histogram(
             x=test_results_equally_weighted["Return"],
@@ -222,7 +218,6 @@ def plot_stress_test_results(test_results_mpt, test_results_equally_weighted) ->
     )
 
     fig.show()
-    fig.write_image("returns_distribution.png", scale=5)
 
 
 if __name__ == "__main__":
@@ -240,7 +235,7 @@ if __name__ == "__main__":
     mpt_result, equally_weigted_result = portfolio.stress_test_portfolio()
     plot_stress_test_results(mpt_result, equally_weigted_result)
 
-    # Printing the average returns of the portfolios
+    # Printing the mean and Sharpe ratio of the portfolio
     print(
         f"The average return of an equally weighted portfolio is {np.mean(equally_weigted_result['Return'])}"
     )
