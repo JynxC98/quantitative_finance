@@ -50,10 +50,6 @@ def stock_monete_carlo(
         result.append(prices)
 
     simulation_data = pd.DataFrame(result).T
-
-    # plt.plot(simulation_data)
-    # plt.show()
-
     simulation_data["mean"] = simulation_data.mean(axis=1)
 
     plt.plot(simulation_data["mean"])
