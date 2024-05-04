@@ -4,7 +4,6 @@ A script to calculate local volatility function.
 
 from datetime import datetime
 import numpy as np
-
 from data import get_option_data_from_yahoo
 
 # Constants
@@ -58,8 +57,8 @@ def calculate_local_volatility(option_data, expiration_date, **params):
     d2C_dK2 = np.gradient(dC_dK, dK)
 
     # Compute numerator and denominator for local volatility
-    numerator = 2 * (dC_dt + RISK_FREE_RATE * np.dot(strike_prices, dC_dK))
-    denominator = np.dot(strike_prices**2, d2C_dK2)
+    numerator = 2 * (dC_dt + RISK_FREE_RATE * strike_prices * dC_dK)
+    denominator = (strike_prices**2) * d2C_dK2
 
     # Compute local volatility
     local_volatility = np.sqrt(numerator / denominator)
@@ -73,5 +72,5 @@ if __name__ == "__main__":
     EXPIRATION_DATE = "2025-03-21"
     req_option_data = get_option_data_from_yahoo(TICKER, EXPIRATION_DATE)
 
-    local_volatility = calculate_local_volatility(req_option_data, EXPIRATION_DATE)
-    print(local_volatility)
+    result = calculate_local_volatility(req_option_data, EXPIRATION_DATE)
+    print(result)
