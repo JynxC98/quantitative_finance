@@ -1,5 +1,5 @@
 """
-Implementation of Logistic Regression using numpy.
+Implementation of Logistic Regression.
 """
 
 import numpy as np

@@ -88,3 +88,28 @@ class LinearRegression:
         """
         y_hat = np.dot(X, self.coef_) + self.intercept_
         return y_hat
+
+    def score(self, X, y):
+        """
+        Calculate the coefficient of determination (R^2) for the linear regression model.
+
+        Parameters:
+        -----------
+        X : numpy.ndarray
+            Input features of shape (n_samples, n_features).
+        y : numpy.ndarray
+            Target values of shape (n_samples,).
+
+        Returns:
+        --------
+        float
+            The R^2 score, a measure of the proportion of the variance in the dependent variable that is predictable from the independent variables.
+        """
+        y_hat = np.dot(X, self.coef_) + self.intercept_
+        SSR = np.sum((y_hat - y) ** 2)  # Sum of squared residuals
+
+        baseline_pred = np.mean(y) * np.ones(len(y))
+
+        SST = np.sum((y - baseline_pred) ** 2)  # Sum of squared total
+        r_squared = 1 - (SSR / SST)
+        return r_squared
