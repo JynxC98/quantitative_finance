@@ -22,7 +22,7 @@ def propagate(coef, intercept, X, y):
     y_hat = np.dot(X, coef.T) + intercept
     cost = np.sum((y_hat - y) ** 2) / num_samples
     dM = -np.dot((y - y_hat), X) / num_samples  # Gradient of coefficients.
-    dC = -np.sum((y - y_hat)) / num_samples
+    dC = -np.sum((y - y_hat)) / num_samples  # Gradient of intercept.
 
     gradients = {"dM": dM, "dC": dC}
 
@@ -68,6 +68,11 @@ class LinearRegression:
         """
         self.coef_ = np.zeros(X.shape[1])
         self.intercept_ = 0
+
+        if X.shape[1] != len(y):
+            raise ValueError(
+                "The shape of the feature vector and target vector don't match."
+            )
         for _ in range(num_iterations):
             cost, gradients = propagate(self.coef_, self.intercept_, X, y)
             dM = gradients["dM"]
