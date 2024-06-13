@@ -62,7 +62,7 @@ class VolatilitySurface:
 
         for maturity in maturities:
             mat_time = (pd.to_datetime(maturity) - pd.Timestamp.today()).days / 252
-            if mat_time <= 0.1:
+            if mat_time <= 0.1 or mat_time >= 2:
                 continue
 
             data = company_data.option_chain(maturity)
@@ -169,7 +169,7 @@ class VolatilitySurface:
 
 if __name__ == "__main__":
     RISK_FREE_RATE = 0.0467  # Fed rate
-    TICKER = "IBM"
+    TICKER = "AAPL"
 
     surface = VolatilitySurface(ticker=TICKER, risk_free_rate=RISK_FREE_RATE)
     surface.plot_imp_vol_surface()
