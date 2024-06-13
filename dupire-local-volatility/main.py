@@ -53,16 +53,28 @@ class VolatilitySurface:
         - DataFrame: Pivot table with TTM as rows, strike prices as columns, and
           option prices as values.
         """
+        if option_type not in ("call", "put"):
+            raise ValueError(
+                "Invalid option type selection. Select one from `call` or `put`."
+            )
         company_data = yf.Ticker(self._ticker)
-        maturities = company_data.options
-        strikes = set(company_data.option_chain(maturities[0]).calls["strike"])
+
+        maturities = (
+            company_data.options
+        )  # This code fetches all the available option contract based on their expiration dates
+
+        strikes = set(
+            company_data.option_chain(maturities[0]).calls["strike"]
+        )  # We store the first set of strike prices for evaluation.
         spot_price = self.get_spot_price()
 
         options_data = []
 
         for maturity in maturities:
             mat_time = (pd.to_datetime(maturity) - pd.Timestamp.today()).days / 252
-            if mat_time <= 0.1 or mat_time >= 2:
+            if (
+                mat_time <= 0.1 or mat_time >= 2
+            ):  # Filtering the data based on time to maturity.
                 continue
 
             data = company_data.option_chain(maturity)
@@ -120,7 +132,9 @@ class VolatilitySurface:
         iv_values = iv_surface.ev(ttm_grid.ravel(), strike_grid.ravel()).reshape(
             ttm_grid.shape
         )
-        iv_values[iv_values < 0] = 0
+        iv_values[iv_values < 0] = (
+            0  # Using this to filter out the negative implied volatility generated due to interpolation.
+        )
 
         return iv_values
 
@@ -149,14 +163,14 @@ class VolatilitySurface:
         ax.set_zlabel("Implied Volatility", fontsize=12, labelpad=10)
         ax.set_title("Implied Volatility Surface", fontsize=16, pad=20)
 
-        # Customize tick parameters
+        # Tick parameters
         ax.tick_params(axis="both", which="major", labelsize=10)
         ax.tick_params(axis="z", which="major", labelsize=10)
 
-        # Customize the view angle for better visual
+        # The view angle for better visual
         ax.view_init(elev=30, azim=120)
 
-        # Add grid for better readability
+        # Adding grid for better readability
         ax.grid(True, linestyle="--", linewidth=0.5)
 
         # Color bar
