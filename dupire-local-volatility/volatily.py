@@ -1,76 +1,95 @@
 """
-A script to calculate local volatility function.
+Script for calculating the option price and implied volatility.
 """
 
-from datetime import datetime
 import numpy as np
-from data import get_option_data_from_yahoo
-
-# Constants
-NUM_DAYS = 252  # Number of trading days in one year
-RISK_FREE_RATE = 0.05  # Risk-free rate
+from scipy.stats import norm
+from scipy.optimize import brentq
 
 
-def calculate_local_volatility(option_data, expiration_date, **params):
+class Option:
     """
-    Calculates local volatility based on Dupire's local volatility function.
-    Uses finite difference approximation to calculate the local volatility.
-
-    Parameters
-    ----------
-    option_data : dict or DataFrame
-        Dictionary or DataFrame containing option prices and strike prices.
-        It should have keys/columns for "ask" (option prices) and "strike" (strike prices).
-    expiration_date : str
-        Expiration date of the option in the format "YYYY-MM-DD".
-    params : dict, optional
-        Additional parameters.
-
-    Returns
-    -------
-    local_volatility : np.ndarray
-        Local volatility grid.
-
+    Class representing an option for pricing and implied volatility calculations.
     """
-    # Extract option prices and strike prices from option_data
-    strike_prices = np.array(option_data["strike"])
-    option_prices = np.array(option_data["ask"])
 
-    # Calculate time to maturity
-    today = datetime.today()
-    expiration_datetime = datetime.strptime(expiration_date, "%Y-%m-%d")
-    days_to_expiration = (expiration_datetime - today).days
-    time_to_maturity = days_to_expiration / NUM_DAYS
+    def __init__(self, spot, strike, risk_free, maturity, option_type=1):
+        """
+        Initializes the Option instance.
 
-    # Compute time and strike step sizes
-    num_time_grid = params.get("N", 1000)
-    spatial_grid = params.get("M", 1000)
-    dt = time_to_maturity / num_time_grid
-    dK = (max(strike_prices) - min(strike_prices)) / spatial_grid
+        Parameters:
+        - spot: float, current price of the underlying asset
+        - strike: float, strike price of the option
+        - risk_free: float, risk-free interest rate
+        - maturity: float, time to maturity (in years)
+        - option_type: int, 1 for Call option, 0 for Put option
+        """
+        self.spot = spot
+        self.strike = strike
+        self.risk_free = risk_free
+        self.maturity = maturity
+        self.option_type = option_type
 
-    # Computing first order derivatives
+        if option_type not in (0, 1):
+            raise ValueError("Invalid option_type, please select 0 (Put) or 1 (Call)")
 
-    dC_dt = np.gradient(option_prices, dt)
-    dC_dK = np.gradient(option_prices, dK)
+    def calculate_price(self, sigma):
+        """
+        Calculates the price of the option based on the Black-Scholes pricing model.
 
-    # Computing second order derivatives
-    d2C_dK2 = np.gradient(dC_dK, dK)
+        Parameters:
+        - sigma: float, volatility of the underlying asset
 
-    # Compute numerator and denominator for local volatility
-    numerator = 2 * (dC_dt + RISK_FREE_RATE * strike_prices * dC_dK)
-    denominator = (strike_prices**2) * d2C_dK2
+        Returns:
+        - float, price of the option
+        """
+        d1 = (
+            np.log(self.spot / self.strike)
+            + (self.risk_free + 0.5 * sigma**2) * self.maturity
+        ) / (sigma * np.sqrt(self.maturity))
+        d2 = d1 - sigma * np.sqrt(self.maturity)
 
-    # Compute local volatility
-    local_volatility = np.sqrt(numerator / denominator)
+        if self.option_type == 1:
+            return self.spot * norm.cdf(d1) - self.strike * np.exp(
+                -self.risk_free * self.maturity
+            ) * norm.cdf(d2)
+        return self.strike * np.exp(-self.risk_free * self.maturity) * norm.cdf(
+            -d2
+        ) - self.spot * norm.cdf(-d1)
 
-    return local_volatility
+    def implied_volatility(self, actual_price):
+        """
+        Calculates the implied volatility of the option given the market price.
 
+        Parameters:
+        - actual_price: float, market price of the option
 
-if __name__ == "__main__":
-    # Example usage
-    TICKER = "AAPL"
-    EXPIRATION_DATE = "2025-03-21"
-    req_option_data = get_option_data_from_yahoo(TICKER, EXPIRATION_DATE)
+        Returns:
+        - float, implied volatility of the option
+        """
+        if actual_price == 0:
+            return 0.0
 
-    result = calculate_local_volatility(req_option_data, EXPIRATION_DATE)
-    print(result)
+        def objective_function(sigma):
+            """
+            Objective function to calculate implied volatility.
+
+            Parameters:
+            - sigma: float, volatility of the option
+
+            Returns:
+            - float, difference between calculated and actual option price
+            """
+            return self.calculate_price(sigma) - actual_price
+
+        low, high = 1e-4, 5.0
+        try:
+            return brentq(objective_function, low, high, xtol=1e-6)
+        except ValueError as error:
+            print(
+                f"ValueError for strike={self.strike}, maturity={self.maturity}: {error}"
+            )
+        except RuntimeError as error:
+            print(
+                f"RuntimeError for strike={self.strike}, maturity={self.maturity}: {error}"
+            )
+        return np.nan
