@@ -149,7 +149,7 @@ class VolatilitySurface:
 
         # Surface plot
         surf = ax.plot_surface(
-            self._ttm_grid[::-1],
+            self._ttm_grid,
             np.log(self._strike_grid / self._spot),
             iv_values,
             cmap="viridis",
