@@ -8,7 +8,7 @@ import numpy as np
 import pandas as pd
 from scipy.interpolate import RectBivariateSpline
 import yfinance as yf
-from volatily import Option
+from option_properties import Option
 
 warnings.filterwarnings("ignore")
 
