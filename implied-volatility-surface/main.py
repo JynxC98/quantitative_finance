@@ -15,7 +15,40 @@ warnings.filterwarnings("ignore")
 
 class VolatilitySurface:
     """
-    Class for generating and plotting the implied volatility surface of a stock.
+    A class to generate and plot the implied volatility surface for a given stock.
+
+    This class provides methods to:
+    - Retrieve the spot price of the stock.
+    - Generate a pivot table of option prices with strike prices as columns and time to maturity (TTM) as rows.
+    - Calculate the implied volatility for a range of strike prices and maturities.
+    - Plot the implied volatility surface using a 3D plot.
+
+    Attributes:
+    ----------
+    _ticker : str
+        The ticker symbol of the stock.
+    _risk_free_rate : float
+        The risk-free interest rate used in calculations.
+    _spot : float
+        The current spot price of the stock.
+    _ttm_grid : ndarray
+        A grid of time to maturity values.
+    _strike_grid : ndarray
+        A grid of strike prices.
+
+    Methods:
+    -------
+    get_spot_price():
+        Retrieves the current spot price of the stock.
+
+    get_strike_price_pivot_table(option_type="call", min_rows=30):
+        Creates a pivot table of option prices with TTM as rows and strike prices as columns.
+
+    generate_implied_volatility_surface():
+        Calculates the implied volatility surface based on option prices.
+
+    plot_imp_vol_surface():
+        Plots the implied volatility surface using a 3D plot.
     """
 
     def __init__(self, ticker, risk_free_rate):
@@ -28,6 +61,8 @@ class VolatilitySurface:
         """
         self._ticker = ticker
         self._risk_free_rate = risk_free_rate
+
+        # These values are to be calculated later.
         self._spot = None
         self._ttm_grid = None
         self._strike_grid = None
