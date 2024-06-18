@@ -22,20 +22,20 @@ class GradientVisual:
         cost_stoch_gd (list): List to store the loss of stochastic gradient descent.
     """
 
-    def __init__(self, X, y):
+    def __init__(self, features, target):
         """
         Initialize the GradientVisual class.
 
         Args:
-            X (np.ndarray): Input features.
+            features (np.ndarray): Input features.
             y (np.ndarray): Target labels.
         """
-        self.X = X
-        self.y = y
+        self.features = features
+        self.target = target
         self.cost_batch_gd = []  # Storing the loss of batch gradient descent.
         self.cost_mini_batch_gd = []  # Storing the loss of mini batch gradient descent.
         self.cost_stoch_gd = []  # Storing the loss of stochastic gradient descent.
-        self.weights = np.zeros(X.shape[1])
+        self.weights = np.zeros(features.shape[1])
         self.bias = 0
 
     def batch_gradient_descent(self, num_iterations=1000, learning_rate=0.01):
@@ -51,13 +51,13 @@ class GradientVisual:
 
         for _ in range(num_iterations):
             gradients, cost = propagate_classification(
-                weights_batch, bias_batch, self.X, self.y
+                weights_batch, bias_batch, self.features, self.target
             )
-            dW = gradients["dW"]
-            dB = gradients["dB"]
+            weights_grad = gradients["dW"]
+            bias_grad = gradients["dB"]
 
-            weights_batch -= learning_rate * dW
-            bias_batch -= learning_rate * dB
+            weights_batch -= learning_rate * weights_grad
+            bias_batch -= learning_rate * bias_grad
 
             self.cost_batch_gd.append(cost)
 
@@ -74,12 +74,12 @@ class GradientVisual:
         """
         weights_mini_batch = self.weights.copy()
         bias_mini_batch = self.bias
-        m = self.X.shape[0]
+        m = self.features.shape[0]
 
         for _ in range(num_iterations):
             indices = np.random.permutation(m)
-            X_shuffled = self.X[indices]
-            y_shuffled = self.y[indices]
+            features_shuffled = self.features[indices]
+            y_shuffled = self.target[indices]
 
             weighted_average_data = {"num_samples": [], "cost": []}
 
@@ -87,24 +87,24 @@ class GradientVisual:
                 batch_end = min(
                     batch_start + batch_size, m
                 )  # Ensuring there is no index overflow.
-                X_batch = X_shuffled[batch_start:batch_end]
+                features_batch = features_shuffled[batch_start:batch_end]
                 y_batch = y_shuffled[batch_start:batch_end]
 
                 gradients, cost = propagate_classification(
-                    weights_mini_batch, bias_mini_batch, X_batch, y_batch
+                    weights_mini_batch, bias_mini_batch, features_batch, y_batch
                 )
-                dW = gradients["dW"]
-                dB = gradients["dB"]
-                weights_mini_batch -= learning_rate * dW
-                bias_mini_batch -= learning_rate * dB
+                weights_grad = gradients["dW"]
+                bias_grad = gradients["dB"]
+                weights_mini_batch -= learning_rate * weights_grad
+                bias_mini_batch -= learning_rate * bias_grad
 
                 batch_size_actual = batch_end - batch_start
                 weighted_average_data["num_samples"].append(batch_size_actual)
                 weighted_average_data["cost"].append(cost)
 
-            total_samples = sum(weighted_average_data["num_samples"])
+            total_samples = np.sum(weighted_average_data["num_samples"])
             weighted_cost = (
-                sum(
+                np.sum(
                     [
                         (num_samples * cost)
                         for num_samples, cost in zip(
@@ -127,28 +127,28 @@ class GradientVisual:
         """
         weights_stoch = self.weights.copy()
         bias_stoch = self.bias
-        m = self.X.shape[0]
+        m = self.features.shape[0]
 
         for _ in range(num_iterations):
             indices = np.random.permutation(m)
-            X_shuffled = self.X[indices]
-            y_shuffled = self.y[indices]
+            features_shuffled = self.features[indices]
+            y_shuffled = self.target[indices]
 
             for i in range(0, m):
-                X_i = X_shuffled[i]
-                y_i = y_shuffled[i]
+                feature_i = features_shuffled[i]
+                target_i = y_shuffled[i]
 
                 gradients, cost = propagate_classification(
-                    weights_stoch, bias_stoch, X_i, y_i
+                    weights_stoch, bias_stoch, feature_i, target_i
                 )
-                dW = gradients["dW"]
-                dB = gradients["dB"]
+                weights_grad = gradients["dW"]
+                bias_grad = gradients["dB"]
 
-                weights_stoch -= learning_rate * dW
-                bias_stoch -= learning_rate * dB
+                weights_stoch -= learning_rate * weights_grad
+                bias_stoch -= learning_rate * bias_grad
 
             _, cost = propagate_classification(
-                weights_stoch, bias_stoch, self.X, self.y
+                weights_stoch, bias_stoch, self.features, self.target
             )
             self.cost_stoch_gd.append(cost)
 
@@ -162,7 +162,7 @@ class GradientVisual:
 
 
 if __name__ == "__main__":
-    X, y = make_classification(
+    feature_vector, target_vector = make_classification(
         n_samples=100,
         n_features=10,
         n_informative=5,
@@ -171,17 +171,14 @@ if __name__ == "__main__":
         flip_y=0.2,
         random_state=42,
     )
-    scaler = StandardScaler()
-    X = scaler.fit_transform(X)
 
-    gv = GradientVisual(X, y)
+    scaler = StandardScaler()
+    feature_vector = scaler.fit_transform(feature_vector)
+
+    gv = GradientVisual(feature_vector, target_vector)
 
     # Performing gradient descent
-    gv.batch_gradient_descent(num_iterations=1000, learning_rate=0.01)
-    gv.mini_batch_gradient_descent(
-        num_iterations=1000, learning_rate=0.01, batch_size=32
-    )
-    gv.stochastic_gradient_descent(num_iterations=1000, learning_rate=0.01)
+    gv.activate()
 
     # Plot the cost over iterations
     plt.plot(gv.cost_batch_gd, label="Batch Gradient Descent")
