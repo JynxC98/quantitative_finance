@@ -38,11 +38,6 @@ class GradientVisual:
         self.weights = np.zeros(features.shape[1])
         self.bias = 0
 
-        # Storing paths to visualise the gradient descent algorithm
-        self.batch = []
-        self.mini_batch = []
-        self.stochastic = []
-
     def batch_gradient_descent(self, num_iterations=1000, learning_rate=0.01):
         """
         Batch gradient descent implementation.
@@ -65,7 +60,6 @@ class GradientVisual:
             bias_batch -= learning_rate * bias_grad
 
             self.cost_batch_gd.append(cost)
-            self.batch.append(weights_batch.copy())
 
     def mini_batch_gradient_descent(
         self, num_iterations=1000, learning_rate=0.01, batch_size=32
@@ -90,7 +84,6 @@ class GradientVisual:
                 weights_mini_batch, bias_mini_batch, self.features, self.target
             )
             self.cost_mini_batch_gd.append(cost)
-            self.mini_batch.append(weights_mini_batch.copy())
             for batch_start in range(0, m, batch_size):
                 batch_end = min(
                     batch_start + batch_size, m
@@ -129,7 +122,6 @@ class GradientVisual:
             )
 
             self.cost_stoch_gd.append(cost)
-            self.stochastic.append(weights_stoch.copy())
             for i in range(0, m):
                 feature_i = features_shuffled[i]
                 target_i = y_shuffled[i]
@@ -143,7 +135,7 @@ class GradientVisual:
                 weights_stoch -= learning_rate * weights_grad
                 bias_stoch -= learning_rate * bias_grad
 
-    def activate(self, learning_rate=0.01, num_iterations=1000):
+    def activate(self, learning_rate=0.01, num_iterations=5000):
         """
         Run all the gradient descent methods.
         """
