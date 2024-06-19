@@ -19,24 +19,26 @@ def sigmoid(x):
     return 1 / (1 + np.exp(-x))
 
 
-def propagate_regression(coef, intercept, X, y):
+def propagate_regression(coef, intercept, feature_vector, target_vector):
     """
     Calculates the gradients and cost for the `LinearRegression` model.
     Args:
         - coef (numpy array): Model coefficients of shape (n,).
         - intercept (float): Model intercept.
-        - X (numpy array): Training features of shape (m, n).
+        - feature_vector (numpy array): Training features of shape (m, n).
         - y (numpy array): Training labels of shape (m,).
 
     Returns:
     - gradients (dictionary): Gradients for coefficients and intercept.
     - cost (numpy array): Cost associated with the model.
     """
-    num_samples = X.shape[0]
-    y_hat = np.dot(X, coef.T) + intercept
-    cost = np.sum((y_hat - y) ** 2) / num_samples
-    dM = -np.dot((y - y_hat), X) / num_samples  # Gradient of coefficients.
-    dC = -np.sum((y - y_hat)) / num_samples  # Gradient of intercept.
+    num_samples = feature_vector.shape[0]
+    y_hat = np.dot(feature_vector, coef.T) + intercept
+    cost = np.sum((y_hat - target_vector) ** 2) / num_samples
+    dM = (
+        -np.dot((target_vector - y_hat), feature_vector) / num_samples
+    )  # Gradient of coefficients.
+    dC = -np.sum((target_vector - y_hat)) / num_samples  # Gradient of intercept.
 
     gradients = {"dM": dM, "dC": dC}
 
