@@ -140,11 +140,11 @@ def psi(
     a2 = 2 * kappa * theta / (sigma**2)
     a3 = (
         np.log(S0)
-        + ((r * sigma - kappa * theta * rho) * T) / (2 * sigma)
+        + ((r * sigma - kappa * theta * rho) * (T**2)) / (2 * sigma * T)
         - (rho * v0) / sigma
     )
     a4 = np.log(S0) - (rho / sigma) * v0 + (r - ((rho * kappa * theta) / sigma)) * T
-    a5 = (kappa * v0 + kappa**2 * theta * T) / (sigma**2)
+    a5 = (kappa * v0 + (kappa**2) * theta * T) / (sigma**2)
 
     h_matrix = np.zeros(n + 3, dtype=complex)
     h_matrix[2] = 1
@@ -168,7 +168,7 @@ def psi(
         )
 
     H = np.sum(h_matrix[2:])
-    H_tilde = np.sum((nmat / T) * h_matrix[3:])
+    H_tilde = np.dot((nmat / T), h_matrix[3:])
 
     return np.exp(-a1 * (H_tilde / H) - a2 * np.log(H) + a3 * s + a4 * w + a5)
 
@@ -184,7 +184,7 @@ if __name__ == "__main__":
         rho=-0.64,  # Correlation
         r=0.05,  # Risk-free rate
         n=10,  # Number of terms in series expansion
-        T=1,  # Time to maturity
+        T=0.2,  # Time to maturity
         K=90,  # Strike price
     )
     print(f"Geometric Asian Call Option Price: {price:.4f}")

@@ -43,15 +43,14 @@ def simulate_heston_model_euler(**kwargs) -> dict:
     step_size = kwargs.get("step_size", 10e-3)
 
     num_iterations = int(T / step_size)
-    total_stock_price = S0 * np.ones([num_paths, 1])
 
-    stock_price = S0 * np.ones([num_paths, 1])
+    stock_price = S0 * np.ones([num_paths, num_iterations])
     volatility = v0 * np.ones([num_paths, 1])
 
     # Seed generates the same brownian motion
     np.random.seed(1)
 
-    for _ in range(num_iterations):
+    for i in range(1, num_iterations):
         dZ = np.random.randn(num_paths, 1) * np.sqrt(step_size)
 
         dW = rho * dZ + np.sqrt(1 - pow(rho, 2)) * np.random.randn(
@@ -59,7 +58,7 @@ def simulate_heston_model_euler(**kwargs) -> dict:
         ) * np.sqrt(step_size)
 
         # To find the next stock price, we need previous volatility.
-        stock_price = stock_price * (
+        stock_price[:, i] = stock_price[:, i - 1] * (
             1 + (r) * step_size + np.sqrt(np.abs(volatility)) * dW
         )
         volatility = volatility + (
@@ -67,10 +66,9 @@ def simulate_heston_model_euler(**kwargs) -> dict:
             + sigma * np.sqrt(np.abs(volatility)) * dW
         )
 
-        total_stock_price += stock_price
-
-    mean_stock_price = total_stock_price / num_iterations
-
+    mean_stock_price = np.prod(stock_price, axis=1) ** (
+        1 / num_iterations
+    )  # Geometric mean of the stock prices.
     payoff = np.exp(-r * T) * (np.maximum(mean_stock_price - K, 0))
 
     std_payoff = np.std(payoff)
@@ -172,8 +170,8 @@ if __name__ == "__main__":
             r=0.05,
             T=1,
             K=90,
-            num_paths=50000,
-            step_size=10e-4,
+            num_paths=10000,
+            step_size=1e-3,
         )
     )
     end_time = time.time()
