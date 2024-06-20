@@ -1,190 +1,180 @@
 """
-Pricing of Geometric Asian Options under Heston's Stochastic Volatility Model
-
-This module implements the pricing model described in the paper:
-'Pricing of geometric Asian options under Heston's stochastic volatility model'
-by Bara Kim and In-Suk Wee.
-
-Reference:
-Kim, B., & Wee, I. S. (2011). Pricing of geometric Asian options under Heston's
-stochastic volatility model. Quantitative Finance, 11(12), 1795-1811.
-https://www.tandfonline.com/doi/abs/10.1080/14697688.2011.596844
+Codes to simulate asset prices (GBM) and Heston model for stochastic volatility.
+Uses Euler scheme
 """
 
-import warnings
+import time
 import numpy as np
-from scipy.integrate import quad
-
-warnings.filterwarnings("ignore")
 
 
-def geometric_asian_call(
-    S0,
-    v0,
-    theta,
-    sigma,
-    kappa,
-    rho,
-    r,
-    n,
-    T,
-    K,
-):
+def simulate_heston_model_euler(**kwargs) -> dict:
     """
-    Calculate the price of a geometric Asian call option under Heston's model.
+    Simulation of Heston Model under euler scheme.
 
-    Args:
-        S0 (float): Initial stock price
-        v0 (float): Initial volatility
-        theta (float): Long-term mean of volatility
-        sigma (float): Volatility of volatility
-        kappa (float): Mean reversion rate of volatility
-        rho (float): Correlation between stock price and volatility
-        r (float): Risk-free interest rate
-        n (int): Number of terms in series expansion
-        T (float): Time to maturity
-        K (float): Strike price
+    Input Parameters
+    ----------------
+    S0: Stock price at t = 0
+    v0: Volatility at t = 0
+    theta: long run average of the volatility
+    sigma: volatility of volatility
+    kappa: rate of mean reversion
+    rho: correlation between two brownian motions
+    r: Interest rate of riskless assets
+    T: Option's contract period. Measured in years.
+    K: Option's strike price
+    num_paths: Number of paths in Brownian motion
+    step_size: Time Increments
 
-    Returns:
-        float: Price of the geometric Asian call option
+    Returns
+    -------
+    Euler call option price
+    Euler confidence interval
     """
-    args = (S0, v0, theta, sigma, kappa, rho, r, n, T)
-    call_option = np.exp(-r * T) * (
-        (psi(1, 0, *args) - K) / 2 + (1 / np.pi) * geometric_integral(*args, K)
-    )
-    return np.real(call_option)
+    S0 = kwargs.get("S0", 100)
+    v0 = kwargs.get("v0", 0.09)
+    theta = kwargs.get("theta", 0.348)
+    sigma = kwargs.get("sigma", 0.39)
+    kappa = kwargs.get("kappa", 1.15)
+    rho = kwargs.get("rho", -0.64)
+    r = kwargs.get("r", 0.05)
+    T = kwargs.get("T", 1)
+    K = kwargs.get("K", 90)
+    num_paths = kwargs.get("num_paths", 500000)
+    step_size = kwargs.get("step_size", 10e-3)
 
+    num_iterations = int(T / step_size)
+    total_stock_price = S0 * np.ones([num_paths, 1])
 
-def geometric_integral(
-    S0,
-    v0,
-    theta,
-    sigma,
-    kappa,
-    rho,
-    r,
-    n,
-    T,
-    K,
-) -> float:
-    """
-    Calculate the integral component of the geometric Asian option price.
+    stock_price = S0 * np.ones([num_paths, 1])
+    volatility = v0 * np.ones([num_paths, 1])
 
-    Args:
-        Same as geometric_asian_call function
+    # Seed generates the same brownian motion
+    np.random.seed(1)
 
-    Returns:
-        float: Value of the integral
-    """
-    args = (S0, v0, theta, sigma, kappa, rho, r, n, T, K)
-    option_price, _ = quad(lambda x: integrand(x, *args), 0, np.inf)
-    return option_price
+    for _ in range(num_iterations):
+        dW1 = np.random.randn(num_paths, 1) * np.sqrt(step_size)
 
+        dW2 = rho * dW1 + np.sqrt(1 - pow(rho, 2)) * np.random.randn(
+            num_paths, 1
+        ) * np.sqrt(step_size)
 
-def integrand(
-    x,
-    S0,
-    v0,
-    theta,
-    sigma,
-    kappa,
-    rho,
-    r,
-    n,
-    T,
-    K,
-) -> float:
-    """
-    Calculate the integrand for the geometric Asian option price integral.
-
-    Args:
-        x (float): Integration variable
-        Other args: Same as geometric_asian_call function
-
-    Returns:
-        float: Value of the integrand
-    """
-    args = (S0, v0, theta, sigma, kappa, rho, r, n, T)
-    A = psi(1 + 1j * x, 0, *args)
-    B = psi(1j * x, 0, *args)
-    C = np.exp(-1j * x * np.log(K)) / (1j * x)
-    value = (A - K * B) * C
-    return np.real(value)
-
-
-def psi(
-    s,
-    w,
-    S0,
-    v0,
-    theta,
-    sigma,
-    kappa,
-    rho,
-    r,
-    n,
-    T,
-) -> complex:
-    """
-    Calculate the characteristic function psi as defined in the paper.
-
-    Args:
-        s (complex): Complex argument for the characteristic function
-        w (float): Second argument for the characteristic function
-        Other args: Same as geometric_asian_call function
-
-    Returns:
-        complex: Value of the characteristic function psi
-    """
-    a1 = 2 * v0 / (sigma**2)
-    a2 = 2 * kappa * theta / (sigma**2)
-    a3 = (
-        np.log(S0)
-        + ((r * sigma - kappa * theta * rho) * T) / (2 * sigma)
-        - (rho * v0) / sigma
-    )
-    a4 = np.log(S0) - (rho / sigma) * v0 + (r - ((rho * kappa * theta) / sigma)) * T
-    a5 = (kappa * v0 + kappa**2 * theta * T) / (sigma**2)
-
-    h_matrix = np.zeros(n + 3, dtype=complex)
-    h_matrix[2] = 1
-    h_matrix[3] = T * (kappa - w * rho * sigma) / 2
-
-    nmat = np.arange(1, n + 1)
-    A1 = -(s**2) * (sigma**2) * (1 - rho**2) * T**2
-    A2 = s * sigma * T * (sigma - 2 * rho * kappa) - 2 * s * w * sigma**2 * T * (
-        1 - rho**2
-    )
-    A3 = T * (
-        kappa**2 * T
-        - 2 * s * rho * sigma
-        - w * (2 * rho * kappa - sigma) * sigma * T
-        - w**2 * (1 - rho**2) * sigma**2 * T
-    )
-
-    for i in range(4, n + 3):
-        h_matrix[i] = (1 / (4 * (i - 2) * (i - 3))) * (
-            A1 * h_matrix[i - 4] + A2 * h_matrix[i - 3] + A3 * h_matrix[i - 2]
+        # To find the next stock price, we need previous volatility.
+        stock_price = stock_price * (
+            1 + (r) * step_size + np.sqrt(np.abs(volatility)) * dW1
+        )
+        volatility = volatility + (
+            kappa * (theta - volatility) * step_size
+            + sigma * np.sqrt(np.abs(volatility)) * dW2
         )
 
-    H = np.sum(h_matrix[2:])
-    H_tilde = np.sum((nmat / T) * h_matrix[3:])
+        total_stock_price += stock_price
 
-    return np.exp(-a1 * (H_tilde / H) - a2 * np.log(H) + a3 * s + a4 * w + a5)
+    mean_stock_price = total_stock_price / num_iterations
+
+    payoff = np.exp(-r * T) * (np.maximum(mean_stock_price - K, 0))
+
+    std_payoff = np.std(payoff)
+    call_euler = np.mean(payoff)
+    v_left = call_euler - 1.96 * std_payoff / np.sqrt(num_paths)
+    v_right = call_euler + 1.96 * std_payoff / np.sqrt(num_paths)
+    confidence_interval = tuple([v_left, v_right])
+
+    return {
+        "Mean Call Option Price": call_euler,
+        "Confidence Interval": confidence_interval,
+    }
+
+
+def simulate_heston_model_milstein(**kwargs) -> dict:
+    """
+    Simulation of Heston Model under Milstein scheme.
+
+    Input Parameters
+    ----------------
+    S0: Stock price at t = 0
+    v0: Volatility at t = 0
+    theta: long run average of the volatility
+    sigma: volatility of volatility
+    kappa: rate of mean reversion
+    rho: correlation between two brownian motions
+    r: Interest rate of riskless assets
+    T: Option's contract period. Measured in years.
+    K: Option's strike price
+    num_paths: Number of paths in Brownian motion
+    step_size: Time Increments
+
+    Returns
+    -------
+    Milstein call option price
+    Milstein confidence interval
+    """
+    S0 = kwargs.get("S0", 100)
+    v0 = kwargs.get("v0", 0.09)
+    r = kwargs.get("r", 0.05)
+    theta = kwargs.get("theta", 0.348)
+    rho = kwargs.get("rho", -0.64)
+    kappa = kwargs.get("kappa", 1.15)
+    sigma = kwargs.get("sigma", 0.39)
+    r = kwargs.get("r", 0.05)
+    T = kwargs.get("T", 1)
+    K = kwargs.get("K", 90)
+    num_paths = kwargs.get("num_paths", 500000)
+    step_size = kwargs.get("step_size", 10e-3)
+
+    num_iterations = int(T / step_size)
+
+    stock_price = S0 * np.ones([num_paths, 1])
+    volatility = v0 * np.ones([num_paths, 1])
+
+    # Seed generates the same brownian motion
+    np.random.seed(1)
+
+    for _ in range(num_iterations):
+        dW1 = np.random.randn(num_paths, 1) * np.sqrt(step_size)
+
+        dW2 = rho * dW1 + np.sqrt(1 - pow(rho, 2)) * np.random.randn(
+            num_paths, 1
+        ) * np.sqrt(step_size)
+
+        # To find the next stock price, we need previous volatility.
+        stock_price = stock_price * (
+            1 + (r) * step_size + np.sqrt(np.abs(volatility)) * dW1
+        ) + (0.5) * volatility * 2 * step_size * (dW1 * 2 - 1)
+        volatility = volatility + (
+            kappa * (theta - volatility) * step_size
+            + sigma * np.sqrt(np.abs(volatility)) * dW2
+        )
+
+    payoff = np.exp(-r * T) * (np.maximum(stock_price - K, 0))
+
+    std_payoff = np.std(payoff)
+    call_euler = np.mean(payoff)
+    v_left = call_euler - 1.96 * std_payoff / np.sqrt(num_paths)
+    v_right = call_euler + 1.96 * std_payoff / np.sqrt(num_paths)
+    confidence_interval = tuple([v_left, v_right])
+
+    return {
+        "Mean Call Option Price": call_euler,
+        "Confidence Interval": confidence_interval,
+    }
 
 
 if __name__ == "__main__":
-    # Example usage
-    price = geometric_asian_call(
-        S0=100,  # Initial stock price
-        v0=0.09,  # Initial volatility
-        sigma=1,  # Volatility of volatility
-        theta=0.09,  # Long-term mean of volatility
-        kappa=2,  # Mean reversion rate
-        rho=-0.3,  # Correlation
-        r=0.05,  # Risk-free rate
-        n=10,  # Number of terms in series expansion
-        T=1,  # Time to maturity
-        K=90,  # Strike price
+    start_time = time.time()
+    print(
+        simulate_heston_model_euler(
+            S0=100,
+            v0=0.09,
+            theta=0.348,
+            sigma=0.39,
+            kappa=1.15,
+            rho=-0.64,
+            r=0.05,
+            T=1,
+            K=90,
+            num_paths=50000,
+            step_size=10e-4,
+        )
     )
-    print(f"Geometric Asian Call Option Price: {price:.4f}")
+    end_time = time.time()
+    print(f"Time taken = {end_time - start_time}")
