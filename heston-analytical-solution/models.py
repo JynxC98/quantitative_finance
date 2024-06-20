@@ -1,3 +1,9 @@
+"""
+Replication of the paper `Pricing of geometric Asian options under Heston's
+stochastic volatility model` by Bara Kim and In-Suk Wee.
+Here's the link to the paper: https://www.tandfonline.com/doi/abs/10.1080/14697688.2011.596844
+"""
+
 import numpy as np
 from scipy.integrate import quad
 
@@ -14,12 +20,8 @@ def geometric_asian_call(S0, v0, theta, sigma, kappa, rho, r, n, T, K):
 
 
 def geometric_integral(S0, v0, theta, sigma, kappa, rho, r, n, T, K):
-    """
-    Params as same as `geometric_asian_call` function.
-    """
     args = (S0, v0, theta, sigma, kappa, rho, r, n, T, K)
-    option_price, _ = quad(lambda x: integrand(x, *args), 0, 10e5)
-
+    option_price, _ = quad(lambda x: integrand(x, *args), 0, np.inf)
     return option_price
 
 
@@ -40,23 +42,20 @@ def psi(s, w, S0, v0, theta, sigma, kappa, rho, r, n, T):
     a2 = 2 * kappa * theta / (sigma**2)
     a3 = (
         np.log(S0)
-        + ((r * sigma - kappa * theta * rho) * (T**2) / (2 * sigma * T))
-        - (rho * T / (sigma * T)) * v0
+        + ((r * sigma - kappa * theta * rho) * T) / (2 * sigma)
+        - (rho * v0) / sigma
     )
     a4 = np.log(S0) - (rho / sigma) * v0 + (r - ((rho * kappa * theta) / sigma)) * T
     a5 = (kappa * v0 + kappa**2 * theta * T) / (sigma**2)
-    h_matrix = np.zeros(
-        [n + 3], dtype=complex
-    )  # n + 3 because we need to store values from h_(n-2) to h_n
 
+    h_matrix = np.zeros([n + 3], dtype=complex)
     h_matrix[2] = 1
     h_matrix[3] = T * (kappa - w * rho * sigma) / 2
-    nmat = np.arange(1, n + 1)
 
+    nmat = np.arange(1, n + 1)
     A1 = -(s**2) * (sigma**2) * (1 - rho**2) * T**2
-    A2 = (
-        s * sigma * T * (sigma - 2 * rho * kappa)
-        - 2 * s * w * sigma**2 * T * (1 - rho**2) * T
+    A2 = s * sigma * T * (sigma - 2 * rho * kappa) - 2 * s * w * sigma**2 * T * (
+        1 - rho**2
     )
     A3 = T * (
         kappa**2 * T
@@ -64,13 +63,15 @@ def psi(s, w, S0, v0, theta, sigma, kappa, rho, r, n, T):
         - w * (2 * rho * kappa - sigma) * sigma * T
         - w**2 * (1 - rho**2) * sigma**2 * T
     )
+
     for i in range(4, n + 3):
         h_matrix[i] = (1 / (4 * (i - 2) * (i - 3))) * (
             A1 * h_matrix[i - 4] + A2 * h_matrix[i - 3] + A3 * h_matrix[i - 2]
         )
-        # print(h_matrix[i])
-    H = np.sum(h_matrix)
-    H_tilde = np.dot(nmat, h_matrix[3:])
+
+    H = np.sum(h_matrix[2:])
+    H_tilde = np.sum((nmat / T) * h_matrix[3:])
+
     return np.exp(-a1 * (H_tilde / H) - a2 * np.log(H) + a3 * s + a4 * w + a5)
 
 
