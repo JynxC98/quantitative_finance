@@ -52,19 +52,19 @@ def simulate_heston_model_euler(**kwargs) -> dict:
     np.random.seed(1)
 
     for _ in range(num_iterations):
-        dW1 = np.random.randn(num_paths, 1) * np.sqrt(step_size)
+        dZ = np.random.randn(num_paths, 1) * np.sqrt(step_size)
 
-        dW2 = rho * dW1 + np.sqrt(1 - pow(rho, 2)) * np.random.randn(
+        dW = rho * dZ + np.sqrt(1 - pow(rho, 2)) * np.random.randn(
             num_paths, 1
         ) * np.sqrt(step_size)
 
         # To find the next stock price, we need previous volatility.
         stock_price = stock_price * (
-            1 + (r) * step_size + np.sqrt(np.abs(volatility)) * dW1
+            1 + (r) * step_size + np.sqrt(np.abs(volatility)) * dW
         )
         volatility = volatility + (
             kappa * (theta - volatility) * step_size
-            + sigma * np.sqrt(np.abs(volatility)) * dW2
+            + sigma * np.sqrt(np.abs(volatility)) * dW
         )
 
         total_stock_price += stock_price
