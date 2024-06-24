@@ -14,118 +14,149 @@ Link to the paper: https://www.jstor.org/stable/2962057
 
 import warnings
 import numpy as np
+from scipy.integrate import quad
 
 warnings.filterwarnings("ignore")
 
 
-class HestonCall:
+def heston_char_func(
+    x: float,
+    S0: float,
+    v0: float,
+    kappa: float,
+    theta: float,
+    sigma: float,
+    rho: float,
+    lambda_: float,
+    r: float,
+    tau: float,
+) -> complex:
     """
-    Implementation of the Heston model for pricing European call options.
+    Calculate the characteristic function for the Heston model.
 
-    This class provides methods to calculate option prices using the Heston
-    stochastic volatility model. It uses the characteristic function approach
-    for efficient computation.
+    Args:
+        x (float): The value at which to evaluate the characteristic function.
+        S0 (float): Initial stock price.
+        v0 (float): Initial variance.
+        kappa (float): Mean reversion speed of variance.
+        theta (float): Long-term mean of variance.
+        sigma (float): Volatility of variance.
+        rho (float): Correlation between stock price and variance.
+        lambda_ (float): Market price of volatility risk.
+        r (float): Risk-free interest rate.
+        tau (float): Time to maturity in years.
 
-    Parameters
-    ----------
-    S0 : float
-        Initial price of the underlying asset.
-    K : float
-        Strike price of the option.
-    T : float
-        Time to maturity of the option, in years.
-    t : float
-        Initial time, in years.
-    r : float
-        Risk-free interest rate (annualized).
-    v0 : float
-        Initial variance of the underlying asset.
-    kappa : float
-        Rate at which the variance reverts to its long-term mean (theta).
-    theta : float
-        Long-term mean of the variance.
-    sigma : float
-        Volatility of the variance (volatility of volatility).
-    rho : float
-        Correlation between the two Wiener processes driving the asset price and its variance.
-    lambda_ : float
-        Variance risk premium.
-
-    Attributes
-    ----------
-    Same as parameters.
-
-    Notes
-    -----
-    All parameters should be provided in annual terms where applicable.
+    Returns:
+        complex: The value of the characteristic function.
     """
+    a = kappa * theta
+    b = kappa + lambda_
+    d = np.sqrt((sigma * rho * x * 1j - b) ** 2 + (sigma**2) * (x * 1j + x**2))
+    g = (b - rho * 1j * x * sigma - d) / (b - rho * 1j * x * sigma + d)
 
-    def __init__(self, S0, K, T, t, r, v0, kappa, theta, sigma, rho, lambda_):
-        """
-        Initialize the HestonCall object with model parameters.
+    part_1 = (
+        np.exp(r * x * 1j * tau)
+        * (S0 ** (1j * x))
+        * (((1 - g * np.exp(-d * tau)) / (1 - g)) ** (-2 * a / (sigma**2)))
+    )
 
-        All parameters are as described in the class docstring.
-        """
-        self.S0 = S0
-        self.K = K
-        self.T = T
-        self.t = t
-        self.r = r
-        self.v0 = v0
-        self.kappa = kappa
-        self.theta = theta
-        self.sigma = sigma
-        self.rho = rho
-        self.lambda_ = lambda_
+    part_2 = np.exp(
+        (a * tau / (sigma**2)) * (b - rho * sigma * 1j * x - d)
+        + (v0 / (sigma**2))
+        * (b - rho * sigma * 1j * x - d)
+        * ((1 - np.exp(-d * tau)) / (1 - g * np.exp(-d * tau)))
+    )
 
-    def characteristic_function(self, phi):
-        """
-        Compute the characteristic function of the log-price process.
+    return part_1 * part_2
 
-        This method implements the closed-form solution for the characteristic
-        function of the log-price under the Heston model.
 
-        Parameters
-        ----------
-        phi : complex
-            The argument of the characteristic function.
+def heston_integrand(
+    x: float,
+    S0: float,
+    K: float,
+    v0: float,
+    kappa: float,
+    theta: float,
+    sigma: float,
+    rho: float,
+    lambda_: float,
+    r: float,
+    tau: float,
+) -> float:
+    """
+    Calculate the integrand for the Heston model price integral.
 
-        Returns
-        -------
-        complex
-            The value of the characteristic function at phi.
+    Args:
+        x (float): The value at which to evaluate the integrand.
+        S0 (float): Initial stock price.
+        K (float): Strike price.
+        v0 (float): Initial variance.
+        kappa (float): Mean reversion speed of variance.
+        theta (float): Long-term mean of variance.
+        sigma (float): Volatility of variance.
+        rho (float): Correlation between stock price and variance.
+        lambda_ (float): Market price of volatility risk.
+        r (float): Risk-free interest rate.
+        tau (float): Time to maturity in years.
 
-        Notes
-        -----
-        The characteristic function is a key component in the Fourier-based
-        pricing method used in the Heston model.
-        """
-        tau = self.T - self.t  # Time to maturity
-        a = self.kappa * self.theta
-        b = self.kappa + self.lambda_
+    Returns:
+        float: The real part of the integrand value.
+    """
+    args = (S0, v0, kappa, theta, sigma, rho, lambda_, r, tau)
+    numerator = np.exp(-1j * x * np.log(K)) * (
+        heston_char_func(x - 1j, *args) - K * heston_char_func(x, *args)
+    )
+    denominator = 1j * x
+    return (numerator / denominator).real
 
-        # Complex-valued terms in the characteristic function
-        d = np.sqrt(
-            ((self.rho * self.sigma * phi * 1j - b) ** 2)
-            - (self.sigma**2) * (phi * 1j + phi**2)
-        )
-        g = (b - self.rho * self.sigma * phi * 1j - d) / (
-            b - self.rho * self.sigma * phi * 1j + d
-        )
 
-        # Components of the characteristic function
-        C = (self.r * phi * 1j * tau) + (a / (self.sigma**2)) * (
-            (b - self.rho * self.sigma * phi * 1j - d) * tau
-            - 2 * np.log((1 - g * np.exp(-d * tau)) / (1 - g))
-        )
+def heston_call_price(
+    S0: float,
+    K: float,
+    v0: float,
+    kappa: float,
+    theta: float,
+    sigma: float,
+    rho: float,
+    lambda_: float,
+    r: float,
+    tau: float,
+) -> float:
+    """
+    Calculate the call option price using the Heston model.
 
-        D = (
-            (b - self.rho * self.sigma * phi * 1j - d)
-            / (self.sigma**2)
-            * ((1 - np.exp(-d * tau)) / (1 - g * np.exp(-d * tau)))
-        )
+    Args:
+        S0 (float): Initial stock price.
+        K (float): Strike price.
+        v0 (float): Initial variance.
+        kappa (float): Mean reversion speed of variance.
+        theta (float): Long-term mean of variance.
+        sigma (float): Volatility of variance.
+        rho (float): Correlation between stock price and variance.
+        lambda_ (float): Market price of volatility risk.
+        r (float): Risk-free interest rate.
+        tau (float): Time to maturity in years.
 
-        # The characteristic function
-        return np.exp(C + D * self.v0 + 1j * phi * np.log(self.S0))
+    Returns:
+        float: The calculated call option price.
+    """
+    args = (S0, K, v0, kappa, theta, sigma, rho, lambda_, r, tau)
+    heston_integral, _ = quad(lambda x: heston_integrand(x, *args), 0, np.inf)
+    call_price = 0.5 * (S0 - K * np.exp(-r * tau)) + (1 / np.pi) * heston_integral
+    return call_price
 
-    # Add other methods with similar detailed docstrings...
+
+if __name__ == "__main__":
+    S0 = 100
+    v0 = 0.35
+    K = 110
+    kappa = 1.15
+    theta = 0.348
+    sigma = 0.3
+    rho = -0.64
+    lambda_ = 0.03
+    r = 0.034
+    tau = 1
+
+    args = (S0, K, v0, kappa, theta, sigma, rho, lambda_, r, tau)
+    print(heston_call_price(*args))
