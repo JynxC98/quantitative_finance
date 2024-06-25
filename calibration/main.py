@@ -2,7 +2,6 @@
 The main script for calibration.
 """
 
-import numpy as np
 from scipy.optimize import minimize
 
 from models import heston_call_price
@@ -13,18 +12,55 @@ def calibrate_model(
     spot_price, strikes, maturities, call_option_prices, risk_free=0.04
 ):
     """
-    Main calibration function.
+    Calibrate the Heston model parameters to market data.
+
+    This function performs the calibration of the Heston stochastic volatility model
+    using market prices of European call options. The calibration minimizes the
+    difference between the model prices and the market prices of the options.
+
+    Parameters:
+    -----------
+    spot_price : float
+        The current price of the underlying asset.
+    strikes : list of float
+        A list of strike prices for the options.
+    maturities : list of float
+        A list of times to maturity for the options, in years.
+    call_option_prices : list of list of float
+        A nested list where each inner list contains the market prices of call options
+        corresponding to the given strike prices for a specific maturity.
+    risk_free : float, optional (default=0.04)
+        The risk-free interest rate, expressed as a decimal.
+
+    Returns:
+    --------
+    result : OptimizeResult
+        The result of the optimization process, containing the optimal parameters
+        and information about the optimization process.
+
+    Notes:
+    ------
+    The Heston model parameters to be calibrated are:
+        v0 : Initial variance
+        kappa : Rate of mean reversion
+        theta : Long-term variance
+        sigma : Volatility of volatility
+        rho : Correlation between the two Brownian motions
+        lambda_ : Volatility premium
+
+    The optimisation is subject to the Feller condition constraint to ensure
+    the variance remains positive.
     """
     params = {
-        "v0": {"x0": 0.1, "lbub": [1e-3, 0.1]},
+        "v0": {"x0": 0.1, "lbub": [1e-3, 1]},
         "kappa": {"x0": 3, "lbub": [1e-3, 5]},
-        "theta": {"x0": 0.05, "lbub": [1e-3, 0.1]},
+        "theta": {"x0": 0.05, "lbub": [1e-3, 1]},
         "sigma": {"x0": 0.3, "lbub": [1e-2, 1]},
         "rho": {"x0": -0.8, "lbub": [-1, 1]},
-        "lambda_": {"x0": 0.03, "lbub": [-1, 1]},  # Changed "lambd" to "lambda_"
+        "lambda_": {"x0": 0.03, "lbub": [-1, 1]},
     }
-    initial_values = [param["x0"] for _, param in params.items()]
-    bounds = [param["lbub"] for _, param in params.items()]
+    initial_values = [param["x0"] for param in params.values()]
+    bounds = [param["lbub"] for param in params.values()]
 
     # Feller condition constraint
     def feller_constraint(x):
@@ -36,20 +72,27 @@ def calibrate_model(
     def objective_function(x):
         v0, kappa, theta, sigma, rho, lambda_ = x
         total_error = 0.0
-        for K, tau, market_price in zip(strikes, maturities, call_option_prices):
-            model_price = heston_call_price(
-                spot_price, K, v0, kappa, theta, sigma, rho, lambda_, risk_free, tau
-            )
-            # Using relative error
-            total_error += np.sum(
-                ((market_price - model_price) / (market_price)) ** 2
-            )  # Added small constant to avoid division by zero
+        for i, tau in enumerate(maturities):
+            for j, strike in enumerate(strikes):
+                calculated_price = heston_call_price(
+                    S0=spot_price,
+                    K=strike,
+                    v0=v0,
+                    tau=tau,
+                    kappa=kappa,
+                    theta=theta,
+                    sigma=sigma,
+                    rho=rho,
+                    lambda_=lambda_,
+                    r=risk_free,
+                )
+                total_error += (calculated_price - call_option_prices[i][j]) ** 2
         return total_error
 
     result = minimize(
         objective_function,
         initial_values,
-        method="L-BFGS-B",
+        method="SLSQP",
         bounds=bounds,
         constraints=constraints,
         options={"maxiter": 1000, "ftol": 1e-6},
