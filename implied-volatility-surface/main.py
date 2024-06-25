@@ -2,6 +2,7 @@
 Script for generating volatility surface graphs.
 """
 
+from collections import defaultdict
 import warnings
 import matplotlib.pyplot as plt
 import numpy as np
@@ -75,61 +76,72 @@ class VolatilitySurface:
         self._spot = stock.history(period="1d")["Close"].iloc[-1]
         return self._spot
 
-    def get_strike_price_pivot_table(self, option_type="call", min_rows=30):
+    def get_strike_price_pivot_table(
+        self,
+        option_type="call",
+        maturity_min=0.1,
+        maturity_max=2,
+        moneyness_min=0.95,
+        moneyness_max=1.5,
+    ):
         """
-        Returns a pivot table with time to maturity as rows, strike prices as columns,
-        and option prices as values.
+        Generate a pivot table of option strike prices for a given ticker.
 
-        Parameters:
-        - option_type (str): "call" for call options, "put" for put options.
-        - min_rows (int): Minimum number of rows required to consider the option chain.
+        This function fetches option data for a specified stock ticker and creates a pivot table
+        of strike prices across different maturities. It filters the data based on time to maturity
+        and moneyness (strike price relative to spot price).
+
+        Args:
+            ticker (str): The stock ticker symbol (e.g., 'AAPL' for Apple Inc.).
+            maturity_min (float, optional): Minimum time to maturity in years. Defaults to 0.1.
+            maturity_max (float, optional): Maximum time to maturity in years. Defaults to 2.
+            moneyness_min (float, optional): Minimum moneyness (strike/spot) to consider. Defaults to 0.95.
+            moneyness_max (float, optional): Maximum moneyness (strike/spot) to consider. Defaults to 1.2.
 
         Returns:
-        - DataFrame: Pivot table with TTM as rows, strike prices as columns, and
-          option prices as values.
+            pd.DataFrame: A pivot table with time to maturity as index, strike prices as columns,
+                        and option last prices as values. Strikes not available for a particular
+                        maturity are filled with 0.
         """
         if option_type not in ("call", "put"):
             raise ValueError(
                 "Invalid option type selection. Select one from `call` or `put`."
             )
-        company_data = yf.Ticker(self._ticker)
+        option_data = yf.Ticker(self._ticker)
+        today = pd.Timestamp.today()
+        valid_maturities = [
+            mat
+            for mat in option_data.options
+            if maturity_min < (pd.to_datetime(mat) - today).days / 252 < maturity_max
+        ]
 
-        maturities = (
-            company_data.options
-        )  # This code fetches all the available option contract based on their expiration dates
-
-        strikes = set(
-            company_data.option_chain(maturities[0]).calls["strike"]
-        )  # We store the first set of strike prices for evaluation.
         spot_price = self.get_spot_price()
+        strikes_freq = defaultdict(int)
+        all_data = []
+        for maturity in valid_maturities:
+            chain = option_data.option_chain(maturity).calls
+            ttm = (pd.to_datetime(maturity) - today).days / 252
 
-        options_data = []
+            valid_strikes = chain[
+                (chain["strike"] >= moneyness_min * spot_price)
+                & (chain["strike"] <= moneyness_max * spot_price)
+            ]
 
-        for maturity in maturities:
-            mat_time = (pd.to_datetime(maturity) - pd.Timestamp.today()).days / 252
-            if (
-                mat_time <= 0.1 or mat_time >= 2
-            ):  # Filtering the data based on time to maturity.
-                continue
+            for strike in valid_strikes["strike"]:
+                strikes_freq[strike] += 1
 
-            data = company_data.option_chain(maturity)
-            data = data.calls if option_type == "call" else data.puts
+            valid_strikes["TTM"] = ttm
+            all_data.append(valid_strikes[["strike", "lastPrice", "TTM"]])
 
-            if data.shape[0] < min_rows:
-                continue
+        common_strikes = {
+            strike
+            for strike, freq in strikes_freq.items()
+            if freq == len(valid_maturities)
+        }
 
-            strikes = strikes.intersection(data["strike"])
-            filtered_strikes = {
-                strike
-                for strike in strikes
-                if 0.95 * spot_price <= strike <= 1.1 * spot_price
-            }
-            filtered_data = data[data["strike"].isin(filtered_strikes)]
+        combined_data = pd.concat(all_data, ignore_index=True)
+        combined_data = combined_data[combined_data["strike"].isin(common_strikes)]
 
-            filtered_data["TTM"] = mat_time
-            options_data.append(filtered_data)
-
-        combined_data = pd.concat(options_data, ignore_index=True)
         pivot_table = combined_data.pivot_table(
             index="TTM", columns="strike", values="lastPrice", fill_value=0
         )
@@ -218,7 +230,7 @@ class VolatilitySurface:
 
 if __name__ == "__main__":
     RISK_FREE_RATE = 0.0467  # Fed rate
-    TICKER = "AAPL"
+    TICKER = "MSFT"
 
     surface = VolatilitySurface(ticker=TICKER, risk_free_rate=RISK_FREE_RATE)
     surface.plot_imp_vol_surface()
