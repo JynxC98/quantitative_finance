@@ -3,8 +3,11 @@ A script to fetch the option data using yahoo finance API
 """
 
 from collections import defaultdict
+import warnings
 import pandas as pd
 import yfinance as yf
+
+warnings.filterwarnings("ignore")
 
 
 def get_strike_price_pivot_table(
