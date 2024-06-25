@@ -144,19 +144,3 @@ def heston_call_price(
     heston_integral, _ = quad(lambda x: heston_integrand(x, *args), 0, np.inf)
     call_price = 0.5 * (S0 - K * np.exp(-r * tau)) + (1 / np.pi) * heston_integral
     return call_price
-
-
-if __name__ == "__main__":
-    S0 = 100
-    v0 = 0.35
-    K = 110
-    kappa = 1.15
-    theta = 0.348
-    sigma = 0.3
-    rho = -0.64
-    lambda_ = 0.03
-    r = 0.034
-    tau = 1
-
-    args = (S0, K, v0, kappa, theta, sigma, rho, lambda_, r, tau)
-    print(heston_call_price(*args))
