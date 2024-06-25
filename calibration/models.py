@@ -51,7 +51,7 @@ def heston_char_func(
     """
     a = kappa * theta
     b = kappa + lambda_
-    d = np.sqrt((sigma * rho * x * 1j - b) ** 2 + (sigma**2) * (x * 1j + x**2))
+    d = np.sqrt((sigma * rho * x * 1j - b) ** 2 + (sigma**2) * ((1j * x + x**2)))
     g = (b - rho * 1j * x * sigma - d) / (b - rho * 1j * x * sigma + d)
 
     part_1 = (
@@ -67,7 +67,8 @@ def heston_char_func(
         * ((1 - np.exp(-d * tau)) / (1 - g * np.exp(-d * tau)))
     )
 
-    return part_1 * part_2
+    char_func = part_1 * part_2
+    return char_func
 
 
 def heston_integrand(
@@ -103,11 +104,11 @@ def heston_integrand(
         float: The real part of the integrand value.
     """
     args = (S0, v0, kappa, theta, sigma, rho, lambda_, r, tau)
-    numerator = np.exp(-1j * x * np.log(K)) * (
-        heston_char_func(x - 1j, *args) - K * heston_char_func(x, *args)
-    )
-    denominator = 1j * x
-    return (numerator / denominator).real
+    numerator = np.exp(r * tau) * heston_char_func(
+        x - 1j, *args
+    ) - K * heston_char_func(x, *args)
+    denominator = 1j * x * K ** (1j * x)
+    return np.real(numerator / denominator)
 
 
 def heston_call_price(
@@ -141,6 +142,6 @@ def heston_call_price(
         float: The calculated call option price.
     """
     args = (S0, K, v0, kappa, theta, sigma, rho, lambda_, r, tau)
-    heston_integral, _ = quad(lambda x: heston_integrand(x, *args), 0, np.inf)
+    heston_integral, _ = quad(lambda x: np.real(heston_integrand(x, *args)), 0, np.inf)
     call_price = 0.5 * (S0 - K * np.exp(-r * tau)) + (1 / np.pi) * heston_integral
     return call_price
