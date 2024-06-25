@@ -71,4 +71,4 @@ def get_strike_price_pivot_table(
         index="TTM", columns="strike", values="lastPrice", fill_value=0
     )
 
-    return pivot_table
+    return spot_price, pivot_table
