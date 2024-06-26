@@ -25,7 +25,7 @@ from collections import defaultdict
 import time
 import pandas as pd
 from analytical_solution import geometric_asian_call
-from models import simulate_heston_model_milstein
+from models import geometric_asian_call_price_euler
 
 warnings.filterwarnings("ignore")
 
@@ -100,7 +100,7 @@ def simulate(maturities, strikes, **kwargs):
             result["time_taken_analytic"].append(total_time_analytic)
 
             start_time = time.time()
-            option_data = simulate_heston_model_milstein(
+            option_data = geometric_asian_call_price_euler(
                 S0=S0,
                 v0=v0,
                 theta=theta,
@@ -111,6 +111,8 @@ def simulate(maturities, strikes, **kwargs):
                 n=n,
                 T=maturity,
                 K=strike,
+                num_paths=5000,
+                step_size=1e-4,
             )
             end_time = time.time()
 
@@ -129,8 +131,8 @@ def simulate(maturities, strikes, **kwargs):
 
 
 if __name__ == "__main__":
-    maturities_list = [0.2, 0.4]  # , 0.5, 1]
-    strikes_list = [90, 95]  # , 100, 105, 110]
+    maturities_list = [0.2, 0.4, 0.5, 1]
+    strikes_list = [90, 95, 100, 105, 110]
 
     simulation = simulate(maturities=maturities_list, strikes=strikes_list)
     print(simulation)
