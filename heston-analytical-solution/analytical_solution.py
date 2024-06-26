@@ -144,6 +144,6 @@ if __name__ == "__main__":
         r=0.05,  # Risk-free rate
         n=10,  # Number of terms in series expansion
         T=0.2,  # Time to maturity
-        K=100,  # Strike price
+        K=90,  # Strike price
     )
     print(f"Geometric Asian Call Option Price: {price:.4f}")

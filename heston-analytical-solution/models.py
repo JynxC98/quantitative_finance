@@ -7,7 +7,7 @@ import time
 import numpy as np
 
 
-def simulate_heston_model_euler(**kwargs) -> dict:
+def geometric_asian_call_price_euler(**kwargs):
     """
     Simulation of Heston Model under euler scheme.
 
@@ -37,49 +37,47 @@ def simulate_heston_model_euler(**kwargs) -> dict:
     kappa = kwargs.get("kappa", 1.15)
     rho = kwargs.get("rho", -0.64)
     r = kwargs.get("r", 0.05)
-    T = kwargs.get("T", 1)
+    T = kwargs.get("T", 0.2)
     K = kwargs.get("K", 90)
-    num_paths = kwargs.get("num_paths", 500000)
-    step_size = kwargs.get("step_size", 10e-3)
+    num_paths = kwargs.get("num_paths", 5000)
+    step_size = kwargs.get("step_size", 1e-3)
+    N = int(T / step_size)
 
-    num_iterations = int(T / step_size)
+    stock_prices = np.zeros((num_paths, N + 1))
+    stock_prices[:, 0] = S0
+    sigma_v = v0 * np.ones(num_paths)
 
-    stock_price = S0 * np.ones([num_paths, num_iterations])
-    volatility = v0 * np.ones([num_paths, 1])
-
-    # Seed generates the same brownian motion
     np.random.seed(1)
 
-    for i in range(1, num_iterations):
-        dZ = np.random.randn(num_paths, 1) * np.sqrt(step_size)
-
-        dW = rho * dZ + np.sqrt(1 - pow(rho, 2)) * np.random.randn(
-            num_paths, 1
-        ) * np.sqrt(step_size)
-
-        # To find the next stock price, we need previous volatility.
-        stock_price[:, i] = stock_price[:, i - 1] * (
-            1 + (r) * step_size + np.sqrt(np.abs(volatility)) * dW
-        )
-        volatility = volatility + (
-            kappa * (theta - volatility) * step_size
-            + sigma * np.sqrt(np.abs(volatility)) * dW
+    for n in range(1, N + 1):
+        dW1 = np.random.randn(num_paths) * np.sqrt(step_size)
+        dW2 = rho * dW1 + np.sqrt(1 - rho**2) * np.random.randn(num_paths) * np.sqrt(
+            step_size
         )
 
-    mean_stock_price = np.prod(stock_price, axis=1) ** (
-        1 / num_iterations
-    )  # Geometric mean of the stock prices.
-    payoff = np.exp(-r * T) * (np.maximum(mean_stock_price - K, 0))
+        stock_prices[:, n] = stock_prices[:, n - 1] * (
+            1 + r * step_size + np.sqrt(np.abs(sigma_v)) * dW1
+        )
+        sigma_v = (
+            sigma_v
+            + kappa * (theta - sigma_v) * step_size
+            + sigma * np.sqrt(np.abs(sigma_v)) * dW2
+        )
 
-    std_payoff = np.std(payoff)
-    call_euler = np.mean(payoff)
-    v_left = call_euler - 1.96 * std_payoff / np.sqrt(num_paths)
-    v_right = call_euler + 1.96 * std_payoff / np.sqrt(num_paths)
-    confidence_interval = tuple([v_left, v_right])
+    geometric_avg = np.exp(np.mean(np.log(stock_prices[:, 1:]), axis=1))
+    payoff = np.maximum(geometric_avg - K, 0)
+    discounted_payoff = np.exp(-r * T) * payoff
+
+    call_euler = np.mean(discounted_payoff)
+    std_payoff = np.std(discounted_payoff)
+
+    conf_left = call_euler - 1.96 * std_payoff / np.sqrt(num_paths)
+    conf_right = call_euler + 1.96 * std_payoff / np.sqrt(num_paths)
+    euler_confidence = (conf_left, conf_right)
 
     return {
         "Mean Call Option Price": call_euler,
-        "Confidence Interval": confidence_interval,
+        "Confidence Interval": euler_confidence,
     }
 
 
@@ -160,7 +158,7 @@ def simulate_heston_model_milstein(**kwargs) -> dict:
 if __name__ == "__main__":
     start_time = time.time()
     print(
-        simulate_heston_model_euler(
+        geometric_asian_call_price_euler(
             S0=100,
             v0=0.09,
             theta=0.348,
@@ -168,7 +166,7 @@ if __name__ == "__main__":
             kappa=1.15,
             rho=-0.64,
             r=0.05,
-            T=1,
+            T=0.2,
             K=90,
             num_paths=10000,
             step_size=1e-3,
