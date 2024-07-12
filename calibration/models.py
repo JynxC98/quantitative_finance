@@ -14,11 +14,13 @@ Link to the paper: https://www.jstor.org/stable/2962057
 
 import warnings
 import numpy as np
-from scipy.integrate import quad
+from numba import jit
+from scipy.integrate import quad_vec
 
 warnings.filterwarnings("ignore")
 
 
+@jit(nopython=True)
 def heston_char_func(
     x: float,
     S0: float,
@@ -71,6 +73,7 @@ def heston_char_func(
     return char_func
 
 
+@jit(nopython=True)
 def heston_integrand(
     x: float,
     S0: float,
@@ -142,6 +145,13 @@ def heston_call_price(
         float: The calculated call option price.
     """
     args = (S0, K, v0, kappa, theta, sigma, rho, lambda_, r, tau)
-    heston_integral, _ = quad(lambda x: np.real(heston_integrand(x, *args)), 0, np.inf)
+    heston_integral, _ = quad_vec(
+        lambda x: np.real(heston_integrand(x, *args)), 0, np.inf
+    )
     call_price = 0.5 * (S0 - K * np.exp(-r * tau)) + (1 / np.pi) * heston_integral
     return call_price
+
+
+if __name__ == "__main__":
+    # Test value
+    print(heston_call_price(100, 110, 0.3, 1.15, 0.348, 0.2, -0.64, 0.03, 0.04, 1))

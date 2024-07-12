@@ -7,6 +7,8 @@ import warnings
 import pandas as pd
 import yfinance as yf
 
+from models import heston_call_price
+
 warnings.filterwarnings("ignore")
 
 
