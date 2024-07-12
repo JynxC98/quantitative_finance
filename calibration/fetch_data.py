@@ -4,8 +4,6 @@ A script to fetch the option data using yahoo finance API
 
 from collections import defaultdict
 import warnings
-import numpy as np
-from nelson_siegel_svensson.calibrate import calibrate_nss_ols
 import pandas as pd
 import yfinance as yf
 
@@ -73,18 +71,6 @@ def get_strike_price_pivot_table(
         index="TTM", columns="strike", values="lastPrice", fill_value=0
     )
 
-    # Fed rates as of July 2024.
-    yield_maturities = np.array(
-        [1 / 12, 2 / 12, 3 / 12, 4 / 12, 6 / 12, 1, 2, 3, 5, 7, 10, 20, 30]
-    )
-    yields = np.array(
-        [5.47, 5.48, 5.52, 5.46, 5.40, 5.16, 4.87, 4.62, 4.48, 4.47, 4.47, 4.68, 4.59]
-    )
-
-    # Calibrating interest rates
-    curve_fit, _ = calibrate_nss_ols(yield_maturities, yields)
-
-    pivot_table["rate"] = pivot_table.index.map(curve_fit) * 0.01
     return spot_price, pivot_table
 
 
