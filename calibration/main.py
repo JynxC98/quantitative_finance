@@ -55,8 +55,6 @@ class CalibrateModel:
             - maturities(numpy.ndarray): Maturities in years.
         """
         self.ticker = ticker
-
-        self.option_data = get_strike_price_pivot_table(self.ticker)
         self.yields = yields
         self.maturities = maturities
         # Parameters to be calculated later
@@ -79,7 +77,7 @@ class CalibrateModel:
             Higher values create a finer grid but increase computation time.
 
         """
-        spot_price, pivot_table = self.option_data
+        spot_price, pivot_table = get_strike_price_pivot_table(self.ticker)
 
         print("Successfully acquired the option data")
         self.spot_price_ = spot_price
@@ -138,8 +136,8 @@ class CalibrateModel:
             is already available as instance attributes.
         """
         print("Calibrating model")
-        spot_price = self.spot_price_
         required_parameters = self.interpolate_data()
+        spot_price = self.spot_price_
         strikes = required_parameters["strike_grid"]
         maturities = required_parameters["time_grid"]
         option_prices = required_parameters["interpolated_prices"]
@@ -156,8 +154,6 @@ class CalibrateModel:
         initial_values = np.array([param["x0"] for param in params.values()])
         bounds = [param["bounds"] for param in params.values()]
 
-        parameter_history = []
-
         def callback(x):
             """
             Callback function to record parameter history during optimization.
@@ -165,7 +161,7 @@ class CalibrateModel:
             Args:
                 x (np.array): Current parameter set being evaluated.
             """
-            parameter_history.append(x.copy())
+            self.parameter_history.append(x.copy())
 
         def fellers_constraint(x):
             """
@@ -211,13 +207,15 @@ class CalibrateModel:
 
             return np.sum((model_prices - option_prices) ** 2) + 1e-6 * np.sum(x**2)
 
+        fellers_constraint_dict = {"type": "ineq", "fun": fellers_constraint}
+
         result = minimize(
             objective_function,
             initial_values,
             method="L-BFGS-B",
             bounds=bounds,
             options={"ftol": 1e-4, "maxiter": 1000},
-            constraints=fellers_constraint,
+            constraints=fellers_constraint_dict,
             callback=callback,
         )
 
@@ -226,7 +224,7 @@ class CalibrateModel:
         else:
             print("Optimisation failed. Reason:", result.message)
 
-        return result, parameter_history
+        return result
 
 
 if __name__ == "__main__":
