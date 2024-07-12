@@ -153,5 +153,5 @@ def heston_call_price(
 
 
 if __name__ == "__main__":
-    # Test value
+    # Test value (Should print around 20.931)
     print(heston_call_price(100, 110, 0.3, 1.15, 0.348, 0.2, -0.64, 0.03, 0.04, 1))
