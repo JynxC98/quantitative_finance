@@ -7,7 +7,6 @@ import numpy as np
 from nelson_siegel_svensson.calibrate import calibrate_nss_ols
 
 from scipy.optimize import minimize
-from scipy.interpolate import RectBivariateSpline
 
 from models import heston_call_price
 from fetch_data import get_strike_price_pivot_table
@@ -62,20 +61,9 @@ class CalibrateModel:
         self.parameter_history = []
         self.params_ = []
 
-        # These parameters ensure that the methods are fitted properly.
-
-        self._is_interpolated = False
-
-    def interpolate_data(self, num_interpolations=20):
+    def get_data(self):
         """
-        Interpolates the existing option data to create a denser grid for improved model accuracy.
-
-        Parameters:
-        -----------
-        num_interpolations : int, optional (default=20)
-            The number of interpolated points to add between each pair of existing data points.
-            Higher values create a finer grid but increase computation time.
-
+        Generates the required data for calibration.
         """
         spot_price, pivot_table = get_strike_price_pivot_table(self.ticker)
 
@@ -90,26 +78,14 @@ class CalibrateModel:
 
         # Calibrating the interest rates.
         pivot_table["rate"] = pivot_table.index.map(curve_fit) * 0.01
-
-        # Parameters to interpolate the option pricing data.
-        time_grid = np.linspace(maturities.min(), maturities.max(), num_interpolations)
-        strike_grid = np.linspace(strikes.min(), strikes.max(), num_interpolations)
-        interpolator = RectBivariateSpline(maturities, strikes, option_prices)
-        interpolated_prices = interpolator(time_grid, strike_grid)
-
-        interpolated_int_rates = np.array([curve_fit(t) for t in time_grid]) * 0.01
+        rates = pivot_table["rate"].values
 
         required_data = {
-            "time_grid": time_grid,
-            "strike_grid": strike_grid,
-            "interpolated_prices": interpolated_prices,
-            "interpolated_int_rates": interpolated_int_rates,
+            "strikes": strikes,
+            "maturities": maturities,
+            "option_prices": option_prices,
+            "rates": rates,
         }
-
-        self._is_interpolated = True
-
-        # To map the progress
-        print("Successfully interpolated the option data")
         return required_data
 
     def calibrate_model(self):
@@ -136,12 +112,12 @@ class CalibrateModel:
             is already available as instance attributes.
         """
         print("Calibrating model")
-        required_parameters = self.interpolate_data()
+        required_parameters = self.get_data()
         spot_price = self.spot_price_
-        strikes = required_parameters["strike_grid"]
-        maturities = required_parameters["time_grid"]
-        option_prices = required_parameters["interpolated_prices"]
-        risk_free = required_parameters["interpolated_int_rates"]
+        strikes = required_parameters["strikes"]
+        maturities = required_parameters["maturities"]
+        option_prices = required_parameters["option_prices"]
+        risk_free = required_parameters["rates"]
 
         params = {
             "v0": {"x0": 0.1, "bounds": (1e-2, 1)},
@@ -205,7 +181,12 @@ class CalibrateModel:
                 ]
             )
 
-            return np.sum((model_prices - option_prices) ** 2) + 1e-6 * np.sum(x**2)
+            mse = np.sum((model_prices - option_prices) ** 2)
+
+            # Adding a penalty for violating Feller's condition
+            feller_violation = max(0, sigma**2 - 2 * kappa * theta)
+            penalty = 1e6 * feller_violation  # Large penalty for violation
+            return mse + penalty + 1e-4 * np.sum(x**2)
 
         fellers_constraint_dict = {"type": "ineq", "fun": fellers_constraint}
 
