@@ -64,7 +64,7 @@ def geometric_asian_call_price_euler(**kwargs):
             + sigma * np.sqrt(np.abs(sigma_v)) * dW2
         )
 
-    geometric_avg = np.exp(np.mean(np.log(stock_prices[:, 1:]), axis=1))
+    geometric_avg = np.exp(np.mean(np.log(stock_prices[:,]), axis=1))
     payoff = np.maximum(geometric_avg - K, 0)
     discounted_payoff = np.exp(-r * T) * payoff
 
