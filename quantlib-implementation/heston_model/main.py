@@ -251,14 +251,14 @@ class QuantlibCalibration:
             maturities (np.array): Array of maturities.
             surface (np.array): 2D array representing the implied volatility surface.
         """
-        X, Y = np.meshgrid(strikes, maturities)
+        X, Y = np.meshgrid(np.log(strikes / self.data["spot_price"]), maturities)
         
         fig = plt.figure(figsize=(12, 8))
         ax = fig.add_subplot(111, projection='3d')
         
         surf = ax.plot_surface(X, Y, surface, cmap='viridis', edgecolor='none')
         
-        ax.set_xlabel('Strike')
+        ax.set_xlabel('Moneyness (Log Scale)')
         ax.set_ylabel('Maturity')
         ax.set_zlabel('Implied Volatility')
         ax.set_title('Heston Model Implied Volatility Surface')
