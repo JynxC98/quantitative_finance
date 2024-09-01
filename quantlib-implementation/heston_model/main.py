@@ -281,7 +281,7 @@ class QuantlibCalibration:
 if __name__ == "__main__":
     YIELDS = np.array([5.47, 5.48, 5.52, 5.46, 5.40, 5.16, 4.87, 4.62, 4.48, 4.47, 4.47, 4.68, 4.59])
     YIELD_MATURITIES = np.array([1/12, 2/12, 3/12, 4/12, 6/12, 1, 2, 3, 5, 7, 10, 20, 30])
-    TICKER = "MSFT"
+    TICKER = "AAPL"
     model = QuantlibCalibration(ticker=TICKER,
                                 yields=YIELDS,
                                 yield_maturities=YIELD_MATURITIES)
