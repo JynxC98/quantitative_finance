@@ -264,7 +264,7 @@ class QuantlibCalibration:
         ax.set_title('Heston Model Implied Volatility Surface')
         
         fig.colorbar(surf, shrink=0.5, aspect=5)
-        plt.savefig(f"Heston volatility surface for {self.ticker}")
+        plt.savefig(f"Heston volatility surface for {self.ticker}", dpi=500)
         plt.show()
 
     def calibrate_and_plot(self):
