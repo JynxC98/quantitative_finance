@@ -25,9 +25,7 @@ def get_strike_price_pivot_table(ticker, maturity_min=0.1, maturity_max=2, money
         option_type (str, optional): The type of option ('call' or 'put'). Defaults to 'call'.
 
     Returns:
-        pd.DataFrame: A pivot table with time to maturity as index, strike prices as columns,
-                    and option last prices as values. Strikes not available for a particular
-                    maturity are filled with 0.
+        Dictionary
     """
     if option_type not in ["call", "put"]:
         raise ValueError("Invalid option type. Choose 'call' or 'put'.")
