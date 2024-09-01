@@ -107,11 +107,7 @@ class CalibrateModel:
                 - parameter_history (list): A list of parameter sets explored during optimization.
 
         Raises:
-            Any exceptions raised by the optimization process are not explicitly handled.
-
-        Note:
-            This method assumes that necessary data (spot price, interpolated market data)
-            is already available as instance attributes.
+            Any exceptions raised by the optimisation process are not explicitly handled.
         """
         print("Calibrating model")
         required_parameters = self.get_data()
@@ -166,7 +162,6 @@ class CalibrateModel:
             Returns:
                 float: The value of the objective function to be minimized.
             """
-            v0, kappa, theta, sigma, rho, lambda_ = x
             v0, kappa, theta, sigma, rho, lambda_ = x
             model_prices = np.array([[heston_call_price(spot_price, strike, v0,
                                                         kappa, theta, sigma, rho, lambda_, risk_free[i], tau)
