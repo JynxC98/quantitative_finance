@@ -76,6 +76,10 @@ class QuantlibCalibration:
         maturities = pivot_table.index.values
         strikes = pivot_table.columns.values
         option_prices = pivot_table.values
+
+        # Second argument below gives us the statistics of the curve fit, not required 
+        # for the current implementation. 
+    
         curve_fit, _ = calibrate_nss_ols(self.yield_maturities, self.yields)
 
         # Converting the percentage values to absolute values
@@ -89,11 +93,12 @@ class QuantlibCalibration:
                     spot_price, strike, rates[i], tau, option_prices[i, j]
                 )
 
+        # The expiration date is in the form of YYYY-MM-DD
         expiration_dates = [
             ql.Date(
-                int(date.split("-")[2]),
-                int(date.split("-")[1]),
-                int(date.split("-")[0]),
+                int(date.split("-")[2]), # Extracting year
+                int(date.split("-")[1]), # Extracting month
+                int(date.split("-")[0]), # Extracting day
             )
             for date in valid_maturities
         ]
@@ -192,7 +197,7 @@ class QuantlibCalibration:
         black_var_surface.setInterpolation("bicubic")
 
         for i, date in enumerate(expiration_dates):
-            for j, s in enumerate(strikes):
+            for j, strike in enumerate(strikes):
                 t = date - calculation_date
                 p = ql.Period(t, ql.Days)
                 sigma = imp_vols[i][j]
@@ -200,7 +205,7 @@ class QuantlibCalibration:
                     p,
                     calendar,
                     spot_price,
-                    s,
+                    strike,
                     ql.QuoteHandle(ql.SimpleQuote(sigma)),
                     zero_curve_handle,
                     dividend_ts,
