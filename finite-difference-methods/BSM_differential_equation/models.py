@@ -176,6 +176,9 @@ def implicit_scheme(Smax,  K, T, r, sigma, M, N, option_type='call'):
 
 def thomas_algorithm(a, b, c, d):
     """
+    The code has been referenced from this post: 
+    https://stackoverflow.com/questions/8733015/tridiagonal-matrix-algorithm-tdma-aka-thomas-algorithm-using-python-with-nump
+    
     Solve a tridiagonal system using the Thomas algorithm.
 
     Parameters:
