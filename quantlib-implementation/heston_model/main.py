@@ -341,6 +341,8 @@ class QuantlibCalibration:
 
 
 if __name__ == "__main__":
+    # Fetched from 
+    # https://home.treasury.gov/resource-center/data-chart-center/interest-rates/TextView?type=daily_treasury_yield_curve&field_tdr_date_value_month=202409
     YIELDS = np.array(
         [5.47, 5.48, 5.52, 5.46, 5.40, 5.16, 4.87, 4.62, 4.48, 4.47, 4.47, 4.68, 4.59]
     )
