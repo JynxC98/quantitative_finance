@@ -4,11 +4,10 @@ Implementation of Logistic Regression.
 
 import numpy as np
 
-
 def sigmoid(z):
     """
     Calculates the sigmoid of a particular vector.
-
+    
     Sigmoid is calculated by:
     f(x) = 1 / (1 + e^(-x))
 
@@ -17,7 +16,6 @@ def sigmoid(z):
         sigmoid(x)
     """
     return 1 / (1 + np.exp(-z))
-
 
 def propagate(weights, bias, X, y):
     """
@@ -35,9 +33,11 @@ def propagate(weights, bias, X, y):
     num_samples = X.shape[0]
     z = np.dot(X, weights) + bias
     probability_vector = sigmoid(z)
+    
+    epsilon = 1e-10  # Prevent log(0)
     cost = (1 / num_samples) * np.sum(
-        (-np.log(probability_vector) * y)
-        + (-np.log(1 - probability_vector) * (1 - y))
+        (-np.log(probability_vector + epsilon) * y)
+        + (-np.log(1 - probability_vector + epsilon) * (1 - y))
     )
 
     dW = np.dot(X.T, (probability_vector - y)) / num_samples
@@ -45,7 +45,6 @@ def propagate(weights, bias, X, y):
 
     gradients = {"dW": dW, "dB": dB}
     return gradients, cost
-
 
 class LogisticRegression:
     """
@@ -66,10 +65,6 @@ class LogisticRegression:
     def __init__(self):
         """
         Initialise logistic regression model with training data.
-
-        Args:
-        - X_train (numpy array): Training features of shape (m, n).
-        - y_train (numpy array): Training labels of shape (m,).
         """
         self.X_train_ = None
         self.y_train_ = None
@@ -85,9 +80,9 @@ class LogisticRegression:
         - learning_rate (float): Learning rate for gradient descent.
         - num_iterations (int): Number of iterations for gradient descent.
         """
-        self.X_train = X_train
+        self.X_train_ = X_train
         self.y_train_ = y_train
-        self.weights = np.zeros(X_train.shape[1])
+        self.weights_ = np.zeros(X_train.shape[1])
 
         for _ in range(num_iterations):
             gradients, cost = propagate(
