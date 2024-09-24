@@ -139,3 +139,33 @@ Untitled.ipynb
 *.csv
 *.ipynb
 *.ipynb_checkpoints
+
+# CPP files
+# Compiled object files
+*.o
+*.obj
+
+# Compiled dynamic libraries
+*.so
+*.dylib
+*.dll
+
+# Compiled static libraries
+*.a
+*.lib
+
+# Executables
+*.exe
+*.out
+*.app
+
+# Build directories
+build/
+Debug/
+Release/
+
+# IDE-specific files (optional, but often helpful)
+.vscode/
+*.sln
+*.vcxproj
+*.vcxproj.filters
