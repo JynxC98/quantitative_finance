@@ -216,6 +216,39 @@ class WilliamsR(Indicator):
         )
 
 
+class OnBalanceVolume(Indicator):
+    """
+    On-Balance Volume (OBV) indicator.
+
+    Formula:
+    - OBV is calculated by adding/subtracting the volume based on the direction of the price.
+      If today's close > yesterday's close, OBV = previous OBV + volume.
+      If today's close < yesterday's close, OBV = previous OBV - volume.
+      If today's close == yesterday's close, OBV = previous OBV.
+    """
+
+    def __init__(self, data: pd.DataFrame):
+        super().__init__(data)
+        self.calculate()
+
+    def calculate(self):
+        """Calculate the On-Balance Volume (OBV) using vectorized operations."""
+        # Calculate the difference in closing prices
+        delta_close = self.data["Close"].diff()
+
+        # Create a direction vector: 1 if price increased, -1 if decreased, 0 if unchanged
+        direction = np.sign(delta_close)
+
+        # Calculate OBV by multiplying the direction with volume
+        obv = direction * self.data["Volume"]
+
+        # The first OBV value is set to 0
+        obv.iloc[0] = 0
+
+        # Cumulative sum to get the OBV series
+        self.result = pd.DataFrame({"OBV": obv.cumsum()})
+
+
 if __name__ == "__main__":
     TICKERS = ["AAPL"]
     END_TEST = datetime.now()
