@@ -19,7 +19,7 @@ Date: 2nd October 2024
 
 """
 
-from datetime import datetime, timedelta, date
+from datetime import timedelta, date
 import warnings
 from typing import Union, List, Dict
 import numpy as np
