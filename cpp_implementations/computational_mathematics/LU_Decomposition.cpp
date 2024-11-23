@@ -57,8 +57,8 @@ pair<vector<vector<T>>,
 
 LU_Decomposition<T>::getRequiredMatrices()
 /**
- * @brief The function returns the lower triangular (L) and upper triangular (U) matrices
- * obtained from LU decomposition.
+ * @brief The function calculates the lower triangular (L) and upper triangular (U) matrices
+ * obtained from LU decomposition using `Doolittle Algorithm`.
  *
  * @cite https://www.geeksforgeeks.org/doolittle-algorithm-lu-decomposition/
  *
@@ -79,9 +79,9 @@ LU_Decomposition<T>::getRequiredMatrices()
  *     [a31  a32  a33]
  *
  * The resulting matrices are:
- * L = [111      0      0   ]
- *     [l21    122      0   ]
- *     [l31    l32    133   ]
+ * L = [1      0      0   ]
+ *     [l21    1      0   ]
+ *     [l31    l32    1   ]
  *
  * U = [u11    u12    u13 ]
  *     [0      u22    u23 ]
@@ -98,6 +98,10 @@ LU_Decomposition<T>::getRequiredMatrices()
     {
         throw invalid_argument("LU decomposition not possible due to dimension mismatch");
     }
+    if (matrix.empty() || matrix[0].empty())
+    {
+        throw invalid_argument("Matrix cannot be empty.");
+    }
 
     // Initialising the upper triangular matrix
     vector<vector<T>> L(num_rows, vector<T>(num_rows, 0));
@@ -107,9 +111,15 @@ LU_Decomposition<T>::getRequiredMatrices()
 
     for (int i = 0; i < num_rows; i++)
     {
-        // Working on lower triangular matrix
+        // Working on upper triangular matrix
         for (int j = 0; j < num_rows; j++)
         {
+
+            if (i == 0)
+            {
+                U[i][j] = matrix[i][j];
+                continue;
+            }
 
             T sum = 0;
             for (int k = 0; k < i; k++)
@@ -118,6 +128,8 @@ LU_Decomposition<T>::getRequiredMatrices()
             }
             U[i][j] = matrix[i][j] - sum;
         }
+
+        // Working on lower triangular matrix
         for (int j = i; j < num_rows; j++)
         {
             if (i == j)
