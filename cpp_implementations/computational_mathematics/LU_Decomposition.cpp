@@ -1,6 +1,6 @@
 /**
  * @file LU_Decomposition.cpp
- * @brief A script that performs LU Decomposition of two matrices.
+ * @brief A script that performs LU Decomposition of a matrix.
  * @author Harsh Parikh
  */
 
@@ -15,16 +15,11 @@ class LU_Decomposition
  * @brief LU decomposition is a matrix factorisation technique that
  * converts a square matrix in the following form:
  *
- * A = L * U,
+ * matrix = L * U,
  * @where,
- * A: The original square matrix
+ * matrix: The original square matrix
  * L: Lower triangular matrix
  * U: Upper triangular matrix
- *
- * Initialises the class with the original square matrix.
- *
- * @param A Reference to the first matrix.
- * @param B Reference to the second matrix.
  */
 {
 private:
@@ -57,22 +52,23 @@ pair<vector<vector<T>>,
 
 LU_Decomposition<T>::getRequiredMatrices()
 /**
- * @brief The function calculates the lower triangular (L) and upper triangular (U) matrices
- * obtained from LU decomposition using `Doolittle Algorithm`.
+ * @brief This function calculates the lower triangular matrix (L) and upper triangular
+ * matrix (U) obtained from LU decomposition using the Doolittle Algorithm.
  *
- * @cite https://www.geeksforgeeks.org/doolittle-algorithm-lu-decomposition/
- *
- * LU decomposition is a matrix factorization technique that expresses a square matrix A
- * as the product of a lower triangular matrix L and an upper triangular matrix U
+ * LU decomposition is a matrix factorisation technique that expresses a square matrix A
+ * as the product of a lower triangular matrix L and an upper triangular matrix U:
  *
  * A = L * U
  *
- * where,
- * A: The original square matrix
- * L: Lower triangular matrix
- * U: Upper triangular matrix
+ * where:
+ * - A: The original square matrix.
+ * - L: A lower triangular matrix with diagonal elements set to 1.
+ * - U: An upper triangular matrix.
  *
- * Symbolic Example:
+ * This method is particularly useful for solving systems of linear equations,
+ * inverting matrices, and computing determinants efficiently.
+ *
+ * **Symbolic Example**:
  * Let the original matrix A be:
  * A = [a11  a12  a13]
  *     [a21  a22  a23]
@@ -87,7 +83,35 @@ LU_Decomposition<T>::getRequiredMatrices()
  *     [0      u22    u23 ]
  *     [0      0      u33 ]
  *
- * @return A pair of matrices {L, U}, where L is lower triangular and U is upper triangular.
+ * **Algorithm Overview**:
+ * 1. For each element in the matrix:
+ *   - Compute elements of U:
+ *       U[i][j] = A[i][j] - sum(L[i][k] * U[k][j] for k = 0 to i-1)
+ *       (for all i <= j)
+ *   - Compute elements of L:
+ *       L[i][j] = (A[i][j] - sum(L[i][k] * U[k][j] for k = 0 to j-1)) / U[j][j]
+ *       (for all i > j)
+ *   - Set L[i][j] = 1 for all diagonal elements (i == j).
+ *
+ * **Preconditions**:
+ * 1. The input matrix A must be square (i.e., the number of rows equals the number of columns).
+ * 2. LU decomposition is possible for non-singular matrices, but pivoting may be required for stability
+ *    (this implementation does not handle pivoting explicitly).
+ *
+ * **Computational Complexity**:
+ * - Time complexity: O(n^3), where n is the size of the matrix.
+ * - Space complexity: O(n^2), due to storage of matrices L and U.
+
+ * **Key Notes**:
+ * - The diagonal elements of L are always set to 1.
+ * - LU decomposition without pivoting can fail for certain matrices; in such cases,
+ *   consider using an LU decomposition method with partial pivoting (e.g., the PA = LU approach).
+ *
+ * @cite GeeksforGeeks (https://www.geeksforgeeks.org/doolittle-algorithm-lu-decomposition/)
+ * @cite Wikipedia (https://en.wikipedia.org/wiki/LU_decomposition)
+ *
+ * @return A pair of matrices {L, U}, where L is a lower triangular matrix with 1s on the diagonal,
+ *         and U is an upper triangular matrix.
  */
 
 {
