@@ -1,5 +1,5 @@
 /**
- * @file: Singular_Value_Decomposition.cpp
+ * @file: singular_value_decomposition.cpp
  * @brief: A script to perform Singular Value Decomposition of a matrix.
  * @author: Harsh Parikh
  */
@@ -58,6 +58,7 @@ class SingularValueDecomposition
 
 {
 
+    // Input matrix
 private:
     const vector<vector<T>> &matrix;
 
@@ -94,6 +95,85 @@ void SingularValueDecomposition<T>::displayMatrix(const vector<vector<T>> &input
     }
 }
 template <typename T>
-vector<vector<T>> getTranspose(const vector<vector<T>> &inputMatrix)
+
+vector<vector<T>> SingularValueDecomposition<T>::getTranspose(const vector<vector<T>> &inputMatrix)
+/**
+ * @brief The function evaluates the transpose of the input matrix.
+ */
 {
+    {
+        int num_rows = inputMatrix.size();
+        int num_columns = inputMatrix[0].size();
+
+        vector<vector<T>> result(num_columns, vector<T>(num_rows, 0)); // Create a transposed matrix with swapped dimensions
+
+        for (int i = 0; i < num_rows; i++)
+        {
+            for (int j = 0; j < num_columns; j++)
+            {
+                result[j][i] = inputMatrix[i][j];
+            }
+        }
+        return result;
+    }
+}
+template <typename T>
+vector<vector<T>> SingularValueDecomposition<T>::
+    multiplyMatrices(const vector<vector<T>> &inputMatrix_A, const vector<vector<T>> &inputMatrix_B)
+/**
+ * @brief The function returns the matrix multiplication of two matrices.
+ */
+{
+    int num_rows_A = inputMatrix_A.size();
+    int num_cols_A = inputMatrix_A[0].size();
+    int num_rows_B = inputMatrix_B.size();
+    int num_cols_B = inputMatrix_B[0].size();
+
+    // Evaluating the condition for matrix multiplication.
+
+    if (num_cols_A != num_rows_B)
+    {
+        throw invalid_argument("Dimension mismatch");
+    }
+    vector<vector<T>> result(num_rows_A, vector<T>(num_cols_B, 0));
+
+    for (int i = 0; i < num_rows_A; i++)
+    {
+        for (int j = 0; j < num_cols_B; j++)
+        {
+            T sum = 0;
+            for (int k = 0; k < num_cols_A; k++)
+            {
+
+                sum += inputMatrix_A[i][k] * inputMatrix_B[k][j];
+            }
+            result[i][j] = sum;
+        }
+    }
+
+    return result;
+}
+
+int main()
+{
+    vector<vector<int>> matrix = {{1, 2, 3},
+                                  {4, 5, 6},
+                                  {7, 8, 9}};
+
+    // Testing the functions to ensure they are working properly.
+
+    vector<vector<int>> unitary_matrix = {{1, 0, 0},
+                                          {0, 1, 0},
+                                          {0, 0, 1}};
+
+    SingularValueDecomposition<int> instance(matrix);
+
+    cout << "Displaying the original matrix" << endl;
+    instance.displayMatrix(matrix);
+
+    vector<vector<int>> result = instance.multiplyMatrices(matrix, unitary_matrix);
+    cout << "Displaying the matrix multiplication" << endl;
+    instance.displayMatrix(result);
+
+    return 0;
 }

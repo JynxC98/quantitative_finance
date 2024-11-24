@@ -100,7 +100,7 @@ bool CholskeyDecomposition<T>::isSymmetric()
 template <typename T>
 vector<vector<T>> CholskeyDecomposition<T>::getTranspose(const vector<vector<T>> &inputMatrix)
 /**
- * @brief The function evaluates the transpose of.
+ * @brief The function evaluates the transpose of the input matrix.
  */
 {
     int num_rows = inputMatrix.size();
