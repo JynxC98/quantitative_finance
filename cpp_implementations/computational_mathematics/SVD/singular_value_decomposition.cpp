@@ -44,11 +44,7 @@ class SingularValueDecomposition
  * **Notes**:
  * - The matrix Σ contains singular values, which are the square roots of the eigenvalues of the matrix A^T * A.
  * - SVD is often used in problems where the matrix may be ill-conditioned or rank-deficient.
- *
- * **Algorithm Overview**:
- * 1. Compute the eigenvalues and eigenvectors of the matrix A^T * A.
- * 2. Construct the matrix V from the eigenvectors.
- * 3. Compute A * V to find U, and form the diagonal matrix Σ from the singular values.
+
  *
  * @return A tuple containing the matrices {U, Σ, V^T}, where:
  *   - U is the matrix of left singular vectors.
@@ -152,6 +148,28 @@ vector<vector<T>> SingularValueDecomposition<T>::
     }
 
     return result;
+}
+template <typename T>
+pair<vector<T>, vector<vector<T>>> SingularValueDecomposition<T>::
+    getEigenValuesandEigenVectors(const vector<vector<T>> &inputMatrix)
+/**
+ * @brief The function calculates the value of U, V and Σ for SVD.
+ */
+{
+    int num_rows = inputMatrix.size();
+    int num_cols = inputMatrix[0].size();
+
+    // This vector stores the value of A * A^T (m x m)
+    vector<vector<T>> left_vector(num_rows, vector<T>(nums_rows, 0));
+
+    // This vector stores the value of A^T * A (n x n)
+    vector<vector<T>> right_vector(num_cols, vector<T>(num_cols, 0));
+
+    // Evaluating A * A^T
+    left_vector = multiplyMatrices(inputMatrix, getTranspose(inputMatrix));
+
+    // Evaluating A^T * A
+    right_vector = multiplyMatrices(getTranspose(inputMatrix), inputMatrix);
 }
 
 int main()
