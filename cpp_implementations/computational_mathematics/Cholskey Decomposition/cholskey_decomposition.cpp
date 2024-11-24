@@ -23,6 +23,17 @@ class CholskeyDecomposition
  * L: Lower triangular matrix with positive diagonal entries
  * L^T: Transpose of the lower triangular matrix
  *
+ * Symbolic Example:
+ * Let the original matrix A be:
+ * A = [a11  a12  a13]
+ *     [a12  a22  a23]
+ *     [a13  a23  a33]
+ *
+ * The resulting matrix L is:
+ * L = [l11    0      0   ]
+ *     [l21    l22    0   ]
+ *     [l31    l32    l33 ]
+ *
  * This method computes the Cholesky decomposition of the input matrix.
  * If the decomposition fails (e.g., if the matrix is not positive semidefinite),
  * the function indicates an error.
@@ -124,33 +135,7 @@ CholskeyDecomposition<T>::getRequiredMatrices()
 /**
  * @brief The function calculates the lower triangular matrix (L) and its transpose (L^T)
  * obtained from Cholesky Decomposition.
- *
- * Cholesky Decomposition is a matrix factorization technique that expresses a
- * symmetric positive-definite matrix A as:
- *
  * A = L * L^T
- *
- * where:
- * - A: The original symmetric positive-definite matrix.
- * - L: A lower triangular matrix with strictly positive diagonal entries.
- * - L^T: The transpose of the lower triangular matrix L.
- *
- * Symbolic Example:
- * Let the original matrix A be:
- * A = [a11  a12  a13]
- *     [a12  a22  a23]
- *     [a13  a23  a33]
- *
- * The resulting matrix L is:
- * L = [l11    0      0   ]
- *     [l21    l22    0   ]
- *     [l31    l32    l33 ]
- *
- * The decomposition guarantees that:
- * 1. A = L * L^T
- * 2. The diagonal elements of L are positive.
- * 3. The decomposition is only valid for symmetric positive-definite matrices.
- *
  * Algorithm Overview:
  * For each element L[i][j] in the lower triangular matrix:
  * - If i == j (diagonal elements), compute:
@@ -158,7 +143,6 @@ CholskeyDecomposition<T>::getRequiredMatrices()
  * - If i > j (off-diagonal elements), compute:
  *       L[i][j] = (A[i][j] - sum(L[i][k] * L[j][k] for k = 0 to j-1)) / L[j][j]
  * - If i < j (upper triangle), set L[i][j] = 0
- *
  * Computational Complexity:
  * - Time complexity: O(n^3), where n is the size of the matrix.
  * - Space complexity: O(n^2), due to storage of matrix L.
@@ -169,6 +153,8 @@ CholskeyDecomposition<T>::getRequiredMatrices()
 
  * @return A pair of matrices {L, L^T}, where L is the lower triangular matrix
  *         and L^T is its transpose.
+ *
+ * @cite https://www.geeksforgeeks.org/cholesky-decomposition-matrix-decomposition/
  */
 
 {
