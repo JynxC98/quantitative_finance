@@ -27,12 +27,13 @@ class Cholskey_Decomposition
  * If the decomposition fails (e.g., if the matrix is not positive semidefinite),
  * the function indicates an error.
  *
- * @param A Reference to the original square matrix to decompose.
- * @return A lower triangular matrix L if decomposition succeeds.
+ * @param matrix: Reference to the original square matrix to decompose.
+ * @return A lower triangular matrix L and its transpose L^T if decomposition succeeds.
  */
 
 {
 
+    // Initialising the input matrix.
 private:
     const vector<vector<T>> &matrix;
 
