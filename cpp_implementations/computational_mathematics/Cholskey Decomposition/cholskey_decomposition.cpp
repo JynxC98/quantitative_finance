@@ -12,7 +12,7 @@ using namespace std;
 
 template <typename T>
 
-class Cholskey_Decomposition
+class CholskeyDecomposition
 /**
  * @brief Cholesky decomposition is a matrix factorisation technique
  * that converts a positive semidefinite square matrix into the form:
@@ -39,7 +39,7 @@ private:
 
 public:
     // Constructor to assign the value of matrix.
-    Cholskey_Decomposition(const vector<vector<T>> &matrix) : matrix(matrix) {}
+    CholskeyDecomposition(const vector<vector<T>> &matrix) : matrix(matrix) {}
 
     // Function to print a matrix.
     void displayMatrix(const vector<vector<T>> &inputMatrix);
@@ -55,7 +55,7 @@ public:
 };
 
 template <typename T>
-void Cholskey_Decomposition<T>::displayMatrix(const vector<vector<T>> &inputMatrix)
+void CholskeyDecomposition<T>::displayMatrix(const vector<vector<T>> &inputMatrix)
 /**
  * @brief The function prints the input matrix.
  */
@@ -71,7 +71,7 @@ void Cholskey_Decomposition<T>::displayMatrix(const vector<vector<T>> &inputMatr
     }
 }
 template <typename T>
-bool Cholskey_Decomposition<T>::isSymmetric()
+bool CholskeyDecomposition<T>::isSymmetric()
 /**
  * @brief The function checks the symmetricity of the matrix.
  */
@@ -98,7 +98,7 @@ bool Cholskey_Decomposition<T>::isSymmetric()
 }
 
 template <typename T>
-vector<vector<T>> Cholskey_Decomposition<T>::getTranspose(const vector<vector<T>> &inputMatrix)
+vector<vector<T>> CholskeyDecomposition<T>::getTranspose(const vector<vector<T>> &inputMatrix)
 /**
  * @brief The function evaluates the transpose of.
  */
@@ -120,7 +120,7 @@ vector<vector<T>> Cholskey_Decomposition<T>::getTranspose(const vector<vector<T>
 
 template <typename T>
 pair<vector<vector<T>>, vector<vector<T>>>
-Cholskey_Decomposition<T>::getRequiredMatrices()
+CholskeyDecomposition<T>::getRequiredMatrices()
 /**
  * @brief The function calculates the lower triangular matrix (L) and its transpose (L^T)
  * obtained from Cholesky Decomposition.
@@ -231,7 +231,7 @@ int main()
                                   {12, 37, -43},
                                   {-16, -43, 98}};
 
-    Cholskey_Decomposition<int> instance(matrix);
+    CholskeyDecomposition<int> instance(matrix);
     auto [L, L_transpose] = instance.getRequiredMatrices();
     cout << "Printing the lower triangular matrix" << endl;
     instance.displayMatrix(L);

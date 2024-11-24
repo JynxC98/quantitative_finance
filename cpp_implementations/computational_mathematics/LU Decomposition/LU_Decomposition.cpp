@@ -1,5 +1,5 @@
 /**
- * @file LU_Decomposition.cpp
+ * @file lu_decomposition.cpp
  * @brief A script that performs LU Decomposition of a matrix.
  * @author Harsh Parikh
  */
@@ -10,7 +10,7 @@
 using namespace std;
 
 template <typename T>
-class LU_Decomposition
+class LUDecomposition
 /**
  * @brief LU decomposition is a matrix factorisation technique that
  * converts a square matrix in the following form:
@@ -27,14 +27,14 @@ private:
 
 public:
     // Constructor to assign the value of matrix.
-    LU_Decomposition(const vector<vector<T>> &matrix) : matrix(matrix) {}
+    LUDecomposition(const vector<vector<T>> &matrix) : matrix(matrix) {}
 
     void displayMatrix();
     pair<vector<vector<T>>, vector<vector<T>>> getRequiredMatrices();
 };
 
 template <typename T>
-void LU_Decomposition<T>::displayMatrix()
+void LUDecomposition<T>::displayMatrix()
 {
     for (const auto &row : matrix)
     {
@@ -50,7 +50,7 @@ template <typename T>
 pair<vector<vector<T>>,
      vector<vector<T>>>
 
-LU_Decomposition<T>::getRequiredMatrices()
+LUDecomposition<T>::getRequiredMatrices()
 /**
  * @brief This function calculates the lower triangular matrix (L) and upper triangular
  * matrix (U) obtained from LU decomposition using the Doolittle Algorithm.
@@ -108,7 +108,7 @@ LU_Decomposition<T>::getRequiredMatrices()
  *   consider using an LU decomposition method with partial pivoting (e.g., the PA = LU approach).
  *
  * @cite GeeksforGeeks (https://www.geeksforgeeks.org/doolittle-algorithm-lu-decomposition/)
- * @cite Wikipedia (https://en.wikipedia.org/wiki/LU_decomposition)
+ * @cite Wikipedia (https://en.wikipedia.org/wiki/LUdecomposition)
  *
  * @return A pair of matrices {L, U}, where L is a lower triangular matrix with 1s on the diagonal,
  *         and U is an upper triangular matrix.
@@ -179,7 +179,7 @@ int main()
                                   {-4, 6, 3},
                                   {-4, -2, 8}};
 
-    LU_Decomposition<int> instance(matrix);
+    LUDecomposition<int> instance(matrix);
 
     instance.displayMatrix();
 
