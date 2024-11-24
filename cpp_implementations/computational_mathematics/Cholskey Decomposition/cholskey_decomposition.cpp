@@ -100,6 +100,28 @@ bool Cholskey_Decomposition<T>::isSymmetric()
 template <typename T>
 vector<vector<T>> Cholskey_Decomposition<T>::getTranspose(const vector<vector<T>> &inputMatrix)
 /**
+ * @brief The function evaluates the transpose of.
+ */
+{
+    int num_rows = inputMatrix.size();
+    int num_columns = inputMatrix[0].size();
+
+    vector<vector<T>> result(num_columns, vector<T>(num_rows, 0)); // Create a transposed matrix with swapped dimensions
+
+    for (int i = 0; i < num_rows; i++)
+    {
+        for (int j = 0; j < num_columns; j++)
+        {
+            result[j][i] = inputMatrix[i][j];
+        }
+    }
+    return result;
+}
+
+template <typename T>
+pair<vector<vector<T>>, vector<vector<T>>>
+Cholskey_Decomposition<T>::getRequiredMatrices()
+/**
  * @brief The function calculates the lower triangular matrix (L) and its transpose (L^T)
  * obtained from Cholesky Decomposition.
  *
@@ -149,25 +171,6 @@ vector<vector<T>> Cholskey_Decomposition<T>::getTranspose(const vector<vector<T>
  *         and L^T is its transpose.
  */
 
-{
-    int num_rows = inputMatrix.size();
-    int num_columns = inputMatrix[0].size();
-
-    vector<vector<T>> result(num_columns, vector<T>(num_rows, 0)); // Create a transposed matrix with swapped dimensions
-
-    for (int i = 0; i < num_rows; i++)
-    {
-        for (int j = 0; j < num_columns; j++)
-        {
-            result[j][i] = inputMatrix[i][j];
-        }
-    }
-    return result;
-}
-
-template <typename T>
-pair<vector<vector<T>>, vector<vector<T>>>
-Cholskey_Decomposition<T>::getRequiredMatrices()
 {
     if (!isSymmetric())
     {
