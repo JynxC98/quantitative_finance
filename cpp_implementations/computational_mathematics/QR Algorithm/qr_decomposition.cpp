@@ -86,7 +86,7 @@ void QRDecomposition::displayMatrix(const vector<vector<double>> &matrix)
 
 /**
  * @brief The function calculates the L2 norm of a vector.
- * @param vec Input vector
+ * @param _vector Input vector
  * @return L2 norm of the vector
  */
 
@@ -122,7 +122,7 @@ double QRDecomposition ::getDotProduct(const vector<double> &_vector1, const vec
 
 /**
  * @brief The function normalizes the input vector using L2 norm.
- * @param vector Input vector to normalize
+ * @param _vector Input vector to normalize
  * @return Normalized vector
  */
 
@@ -273,6 +273,9 @@ pair<vector<vector<double>>, vector<vector<double>>> QRDecomposition::computeQR(
     vector<vector<double>> R = matrix;
 
     // Performing the QR decomposition.
+
+    // Here we iterate until `num_elements - 1` as the last element is not required
+    // for calculation
     for (size_t k = 0; k < num_elements - 1; k++)
     {
         // Extract the column vector below the diagonal
