@@ -16,7 +16,7 @@ class QRDecomposition
 {
     /**
      * @brief QR algorithm is an iterative method used to compute the eigenvalues
-     * and eigenvectors of a square matrix by factorizing the matrix into:
+     * and eigenvectors of a square matrix by factorising the matrix into:
      *
      * A = Q * R,
      * where,
