@@ -274,8 +274,8 @@ pair<vector<vector<double>>, vector<vector<double>>> QRDecomposition::computeQR(
 
     // Performing the QR decomposition.
 
-    // Here we iterate until `num_elements - 1` as the last element is not required
-    // for calculation
+    // Here we iterate until `num_elements - 1` as the last column computation
+    // is not required for calculation
     for (size_t k = 0; k < num_elements - 1; k++)
     {
         // Extract the column vector below the diagonal
