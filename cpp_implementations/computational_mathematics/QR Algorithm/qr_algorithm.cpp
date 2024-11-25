@@ -67,6 +67,9 @@ public:
 
     // Function to get the householder matrix
     vector<vector<T>> generateHouseholderMatrix(const vector<T> &columnVector);
+
+    // Function to compute Q and R
+    pair<vector<vector<T>>, vector<vector<T>>> computeQR(const vector<vector<T>> &matrix);
 };
 
 template <typename T>
@@ -231,6 +234,67 @@ vector<vector<T>> QRDecomposition<T>::generateHouseholderMatrix(const vector<T> 
 
     return H;
 }
+template <typename T>
+pair<vector<vector<T>>, vector<vector<T>>>
+QRDecomposition<T>::computeQR(const vector<vector<T>> &matrix)
+/**
+ * @brief Computes the QR decomposition of the input matrix using Householder transformations.
+ *
+ * @return A pair of matrices {Q, R}, where Q is orthogonal and R is upper triangular.
+ */
+{
+    size_t rows = matrix.size();
+    size_t cols = matrix[0].size();
+
+    // Copy of the input matrix to modify
+    vector<vector<T>> A = matrix;
+
+    // Initialising Q as an identity matrix
+    vector<vector<T>> Q = vector<vector<T>>(rows, vector<T>(rows, 0));
+
+    // Initialize Q as an identity matrix
+    for (size_t i = 0; i < rows; ++i)
+    {
+        Q[i][i] = 1;
+    }
+
+    for (size_t k = 0; k < cols && k < rows - 1; ++k)
+    {
+        // Extract the k-th column below the diagonal
+        vector<T> columnVector(rows - k);
+        for (size_t i = k; i < rows; ++i)
+        {
+            columnVector[i - k] = A[i][k];
+        }
+
+        // Generate the Householder matrix for the k-th column
+        vector<vector<T>> H_k = vector<vector<T>>(rows, vector<T>(rows, 0));
+
+        vector<vector<T>> H_local = generateHouseholderMatrix(columnVector);
+
+        // Embed the H_local into a larger identity matrix (H_k)
+        for (size_t i = 0; i < rows; ++i)
+        {
+            for (size_t j = 0; j < rows; ++j)
+            {
+                if (i < k || j < k)
+
+                    // Preserving the  identity matrix
+                    H_k[i][j] = (i == j) ? 1 : 0;
+                else
+                    H_k[i][j] = H_local[i - k][j - k]; // Embed H_local
+            }
+        }
+
+        // Update A: A = H_k * A
+        A = multiplyMatrices(H_k, A);
+
+        // Update Q: Q = Q * H_k^T (accumulate transformations)
+        Q = multiplyMatrices(Q, getTranspose(H_k));
+    }
+
+    return {Q, A}; // Q is orthogonal, A is now upper triangular (R)
+}
 
 int main()
 {
@@ -240,18 +304,16 @@ int main()
 
     QRDecomposition<int> instance(matrix);
 
-    cout << "Displaying the matrix:" << endl;
+    cout << "Original Matrix:" << endl;
     instance.displayMatrix(matrix);
 
-    cout << "Displaying the transpose:" << endl;
-    instance.displayMatrix(instance.getTranspose(matrix));
+    auto [Q, R] = instance.computeQR(matrix);
 
-    vector<int> columnVector = {4, 3, 0};
+    cout << "Matrix Q:" << endl;
+    instance.displayMatrix(Q);
 
-    vector<vector<int>> householderMatrix = instance.generateHouseholderMatrix(columnVector);
-
-    cout << "Householder Matrix:" << endl;
-    instance.displayMatrix(householderMatrix);
+    cout << "Matrix R:" << endl;
+    instance.displayMatrix(R);
 
     return 0;
 }
