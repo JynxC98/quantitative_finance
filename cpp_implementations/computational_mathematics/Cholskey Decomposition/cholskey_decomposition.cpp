@@ -33,6 +33,14 @@ class CholskeyDecomposition
  * L = [l11    0      0   ]
  *     [l21    l22    0   ]
  *     [l31    l32    l33 ]
+
+ * Algorithm Overview:
+ * For each element L[i][j] in the lower triangular matrix:
+ * - If i == j (diagonal elements), compute:
+ *       L[i][i] = sqrt(A[i][i] - sum(L[i][k]^2 for k = 0 to i-1))
+ * - If i > j (off-diagonal elements), compute:
+ *       L[i][j] = (A[i][j] - sum(L[i][k] * L[j][k] for k = 0 to j-1)) / L[j][j]
+ * - If i < j (upper triangle), set L[i][j] = 0
  *
  * This method computes the Cholesky decomposition of the input matrix.
  * If the decomposition fails (e.g., if the matrix is not positive semidefinite),
@@ -40,6 +48,7 @@ class CholskeyDecomposition
  *
  * @param matrix: Reference to the original square matrix to decompose.
  * @return A lower triangular matrix L and its transpose L^T if decomposition succeeds.
+ * @cite https://www.geeksforgeeks.org/cholesky-decomposition-matrix-decomposition/
  */
 
 {
@@ -135,18 +144,6 @@ CholskeyDecomposition<T>::getRequiredMatrices()
 /**
  * @brief The function calculates the lower triangular matrix (L) and its transpose (L^T)
  * obtained from Cholesky Decomposition.
- * A = L * L^T
- * Algorithm Overview:
- * For each element L[i][j] in the lower triangular matrix:
- * - If i == j (diagonal elements), compute:
- *       L[i][i] = sqrt(A[i][i] - sum(L[i][k]^2 for k = 0 to i-1))
- * - If i > j (off-diagonal elements), compute:
- *       L[i][j] = (A[i][j] - sum(L[i][k] * L[j][k] for k = 0 to j-1)) / L[j][j]
- * - If i < j (upper triangle), set L[i][j] = 0
- * Computational Complexity:
- * - Time complexity: O(n^3), where n is the size of the matrix.
- * - Space complexity: O(n^2), due to storage of matrix L.
- *
  * Preconditions:
  * 1. The input matrix A must be symmetric (A[i][j] == A[j][i]).
  * 2. The matrix must be positive-definite (all eigenvalues > 0).
@@ -154,7 +151,6 @@ CholskeyDecomposition<T>::getRequiredMatrices()
  * @return A pair of matrices {L, L^T}, where L is the lower triangular matrix
  *         and L^T is its transpose.
  *
- * @cite https://www.geeksforgeeks.org/cholesky-decomposition-matrix-decomposition/
  */
 
 {
