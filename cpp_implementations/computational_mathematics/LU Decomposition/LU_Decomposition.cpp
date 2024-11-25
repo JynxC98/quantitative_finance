@@ -87,8 +87,8 @@ LUDecomposition<T>::getRequiredMatrices()
  */
 
 {
-    int num_rows = matrix.size();
-    int num_columns = matrix[0].size();
+    size_t num_rows = matrix.size();
+    size_t num_columns = matrix[0].size();
 
     if (num_rows != num_columns)
     {
@@ -105,10 +105,10 @@ LUDecomposition<T>::getRequiredMatrices()
     // Initialising the lower triangular matrix
     vector<vector<T>> U(num_rows, vector<T>(num_rows, 0));
 
-    for (int i = 0; i < num_rows; i++)
+    for (size_t i = 0; i < num_rows; i++)
     {
         // Working on upper triangular matrix
-        for (int j = 0; j < num_rows; j++)
+        for (size_t j = 0; j < num_rows; j++)
         {
 
             if (i == 0)
@@ -118,7 +118,7 @@ LUDecomposition<T>::getRequiredMatrices()
             }
 
             T sum = 0;
-            for (int k = 0; k < i; k++)
+            for (size_t k = 0; k < i; k++)
             {
                 sum += L[i][k] * U[k][j];
             }
@@ -126,14 +126,14 @@ LUDecomposition<T>::getRequiredMatrices()
         }
 
         // Working on lower triangular matrix
-        for (int j = i; j < num_rows; j++)
+        for (size_t j = i; j < num_rows; j++)
         {
             if (i == j)
                 L[i][i] = 1; // Diagonal elements of L are 1
             else
             {
                 T sum = 0;
-                for (int k = 0; k < i; k++)
+                for (size_t k = 0; k < i; k++)
                 {
                     sum += L[j][k] * U[k][i];
                 }
