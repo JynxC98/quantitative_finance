@@ -169,3 +169,6 @@ Release/
 *.sln
 *.vcxproj
 *.vcxproj.filters
+
+# Ignoring the CPP files
+test.cpp
