@@ -1,11 +1,13 @@
 /**
  * @file qr_algorithm.cpp
- * @brief A script that performs QR decomposition of a matrix.
+ * @brief A script that performs QR decomposition of a matrix using Householder method.
  * @author Harsh Parikh
  */
 
 #include <iostream>
 #include <vector>
+#include <cmath>
+#include <stdexcept>
 
 using namespace std;
 
@@ -14,7 +16,7 @@ class QRDecomposition
 {
     /**
      * @brief QR algorithm is an iterative method used to compute the eigenvalues
-     * and eigenvectors of a square matrix by factorising the matrix into:
+     * and eigenvectors of a square matrix by factorizing the matrix into:
      *
      * A = Q * R,
      * where,
@@ -22,7 +24,7 @@ class QRDecomposition
      * Q: Orthogonal matrix
      * R: Upper triangular matrix
      *
-     * This method applies the QR factorisation iteratively, updating A as:
+     * This method applies the QR factorization iteratively, updating A as:
      * A_k+1 = R_k * Q_k,
      * until convergence to a nearly diagonal matrix.
      *
@@ -31,7 +33,6 @@ class QRDecomposition
      * @param matrix: Reference to the square matrix to process.
      * @param maxIterations: Maximum number of iterations for the algorithm.
      * @param tolerance: Convergence threshold for the off-diagonal entries.
-     * @return A pair containing a matrix of eigenvalues and a matrix of eigenvectors if the process converges.
      */
 
 private:
@@ -46,12 +47,26 @@ public:
                     double tolerance = 1e-10)
         : matrix(matrix), maxIterations(maxIterations), tolerance(tolerance) {}
 
+    // Function to print matrix
     void displayMatrix(const vector<vector<T>> &inputMatrix);
-    T calculate_L2_norm(const vector<vector<T>> _vector);
+
+    // Function to calculate the L2 norm
+    T calculateL2Norm(const vector<T> &_vector);
+
+    // Function to normalize a vector
+    vector<T> normalizeVector(const vector<T> &_vector);
+
+    // Function to get dot product of two vectors
+    T getDotProduct(const vector<T> &_vector_A, const vector<T> &_vector_B);
+
+    // Function to get the transpose of a matrix
     vector<vector<T>> getTranspose(const vector<vector<T>> &inputMatrix);
-    vector<vector<T>>
-    mutliplyMatrices(const vector<vector<T>> inputMatrix_A, const vector<vector<T>> inputMatrix_B);
-    T getDotProduct(const vector<T> _vector_A, const vector<T> _vectorB);
+
+    // Function to multiply two matrices
+    vector<vector<T>> multiplyMatrices(const vector<vector<T>> &inputMatrix_A, const vector<vector<T>> &inputMatrix_B);
+
+    // Function to get the householder matrix
+    vector<vector<T>> generateHouseholderMatrix(const vector<T> &columnVector);
 };
 
 template <typename T>
@@ -60,7 +75,6 @@ void QRDecomposition<T>::displayMatrix(const vector<vector<T>> &inputMatrix)
  * @brief The function prints the input matrix.
  */
 {
-
     for (const auto &row : inputMatrix)
     {
         for (const auto &element : row)
@@ -72,7 +86,7 @@ void QRDecomposition<T>::displayMatrix(const vector<vector<T>> &inputMatrix)
 }
 
 template <typename T>
-T QRDecomposition<T>::calculate_L2_norm(const vector<vector<T>> _vector)
+T QRDecomposition<T>::calculateL2Norm(const vector<T> &_vector)
 /**
  * @brief The function calculates the L2 norm of a vector.
  */
@@ -87,18 +101,51 @@ T QRDecomposition<T>::calculate_L2_norm(const vector<vector<T>> _vector)
 }
 
 template <typename T>
+vector<T> QRDecomposition<T>::normalizeVector(const vector<T> &_vector)
+/**
+ * @brief The function normalizes the input vector using L2 norm.
+ */
+{
+    T vector_norm = calculateL2Norm(_vector);
+    vector<T> normalized_vector(_vector.size());
+    for (size_t i = 0; i < _vector.size(); ++i)
+    {
+        normalized_vector[i] = _vector[i] / vector_norm;
+    }
+    return normalized_vector;
+}
+
+template <typename T>
+T QRDecomposition<T>::getDotProduct(const vector<T> &_vector_A, const vector<T> &_vector_B)
+/**
+ * @brief The function evaluates the dot product of the input vectors.
+ */
+{
+    T result = 0;
+    if (_vector_A.size() != _vector_B.size())
+    {
+        throw invalid_argument("The dimensions must be the same for dot products.");
+    }
+    for (size_t i = 0; i < _vector_A.size(); ++i)
+    {
+        result += _vector_A[i] * _vector_B[i];
+    }
+    return result;
+}
+
+template <typename T>
 vector<vector<T>> QRDecomposition<T>::getTranspose(const vector<vector<T>> &inputMatrix)
 /**
  * @brief The function evaluates the transpose of the input matrix.
  */
 {
-    int num_rows = inputMatrix.size();
-    int num_cols = inputMatrix[0].size();
+    size_t num_rows = inputMatrix.size();
+    size_t num_cols = inputMatrix[0].size();
     vector<vector<T>> result(num_cols, vector<T>(num_rows, 0));
 
-    for (int i = 0; i < num_rows; i++)
+    for (size_t i = 0; i < num_rows; i++)
     {
-        for (int j = 0; j < num_cols; j++)
+        for (size_t j = 0; j < num_cols; j++)
         {
             result[j][i] = inputMatrix[i][j];
         }
@@ -107,52 +154,84 @@ vector<vector<T>> QRDecomposition<T>::getTranspose(const vector<vector<T>> &inpu
 }
 
 template <typename T>
-vector<vector<T>> QRDecomposition<T>::
-    mutliplyMatrices(const vector<vector<T>> inputMatrix_A, const vector<vector<T>> inputMatrix_B)
+vector<vector<T>> QRDecomposition<T>::multiplyMatrices(const vector<vector<T>> &inputMatrix_A,
+                                                       const vector<vector<T>> &inputMatrix_B)
 /**
  * @brief The function multiplies the input matrices.
  */
 {
-    int row_A = inputMatrix_A.size();
-    int col_A = inputMatrix_A[0].size();
-    int row_B = inputMatrix_B.size();
-    int col_B = inputMatrix_B[0].size();
+    size_t row_A = inputMatrix_A.size();
+    size_t col_A = inputMatrix_A[0].size();
+    size_t row_B = inputMatrix_B.size();
+    size_t col_B = inputMatrix_B[0].size();
 
     if (col_A != row_B)
     {
-        throw invalid_argument("Matrix multiplication not possible due to dimension mismatch");
+        throw invalid_argument("Matrix multiplication not possible due to dimension mismatch.");
     }
 
     vector<vector<T>> result(row_A, vector<T>(col_B, 0));
 
-    for (int i = 0; i < row_A; i++)
+    for (size_t i = 0; i < row_A; ++i)
     {
-        for (int j = 0; j < col_B; j++)
+        for (size_t j = 0; j < col_B; ++j)
         {
             T sum = 0;
-            for (int k = 0; k < col_A; k++)
+            for (size_t k = 0; k < col_A; ++k)
             {
-                sum += matrix_A[i][k] * matrix_B[k][j];
+                sum += inputMatrix_A[i][k] * inputMatrix_B[k][j];
             }
             result[i][j] = sum;
         }
     }
     return result;
 }
+
 template <typename T>
-T QRDecomposition<T>::getDotProduct(vector<T> _vector_A, vector<T> _vector_B)
+vector<vector<T>> QRDecomposition<T>::generateHouseholderMatrix(const vector<T> &columnVector)
+/**
+ * @brief Generates a Householder matrix to zero out below-diagonal elements of a vector.
+ */
 {
-    T result = 0;
-    if (_vector_A.size() != _vector_B.size())
+    size_t n = columnVector.size();
+
+    // Compute the L2 norm of the vector
+    T norm = calculateL2Norm(columnVector);
+
+    // Create the unit vector e1
+    vector<T> e1(n, 0);
+    e1[0] = 1;
+
+    // Compute v = x - norm(x) * e1
+    vector<T> v(n);
+    for (size_t i = 0; i < n; ++i)
     {
-        throw invalid_argument("The dimensions must be the same for dot products.")
+        // This condition ensures that only the first element is subtracted from
+        // the column vector
+        v[i] = columnVector[i] - (i == 0 ? norm : 0);
     }
-    for (int i = 0; i < _vector_A.size(); i++)
+
+    // Normalize v
+    vector<T> v_normalized = normalizeVector(v);
+
+    // Create the Householder matrix: H = I - 2 * v * v^T
+    vector<vector<T>> H(n, vector<T>(n, 0)); // Initialize H as an identity matrix
+
+    for (size_t i = 0; i < n; ++i)
     {
-        result += _vector_A[i] * _vector_B[i];
+        for (size_t j = 0; j < n; ++j)
+        {
+            // Subtracting the elements from the diagonal matrix.
+            if (i == j)
+                H[i][j] = 1 - 2 * v_normalized[i] * v_normalized[j];
+            else
+                H[i][j] = -2 * v_normalized[i] * v_normalized[j];
+        }
     }
-    return result;
+
+    return H;
 }
+
 int main()
 {
     vector<vector<int>> matrix = {{1, 2, 1},
@@ -160,9 +239,19 @@ int main()
                                   {4, 5, 2}};
 
     QRDecomposition<int> instance(matrix);
-    cout << "Displaying the matrix" << endl;
+
+    cout << "Displaying the matrix:" << endl;
     instance.displayMatrix(matrix);
-    cout << "Displaying the transpose" << endl;
+
+    cout << "Displaying the transpose:" << endl;
     instance.displayMatrix(instance.getTranspose(matrix));
+
+    vector<int> columnVector = {4, 3, 0};
+
+    vector<vector<int>> householderMatrix = instance.generateHouseholderMatrix(columnVector);
+
+    cout << "Householder Matrix:" << endl;
+    instance.displayMatrix(householderMatrix);
+
     return 0;
 }
