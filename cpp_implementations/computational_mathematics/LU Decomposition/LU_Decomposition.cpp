@@ -20,6 +20,30 @@ class LUDecomposition
  * matrix: The original square matrix
  * L: Lower triangular matrix
  * U: Upper triangular matrix
+ * * **Symbolic Example**:
+ * Let the original matrix A be:
+ * A = [a11  a12  a13]
+ *     [a21  a22  a23]
+ *     [a31  a32  a33]
+ *
+ * The resulting matrices are:
+ * L = [1      0      0   ]
+ *     [l21    1      0   ]
+ *     [l31    l32    1   ]
+ *
+ * U = [u11    u12    u13 ]
+ *     [0      u22    u23 ]
+ *     [0      0      u33 ]
+ *
+ * **Algorithm Overview**:
+ * 1. For each element in the matrix:
+ *   - Compute elements of U:
+ *       U[i][j] = A[i][j] - sum(L[i][k] * U[k][j] for k = 0 to i-1)
+ *       (for all i <= j)
+ *   - Compute elements of L:
+ *       L[i][j] = (A[i][j] - sum(L[i][k] * U[k][j] for k = 0 to j-1)) / U[j][j]
+ *       (for all i > j)
+ *   - Set L[i][j] = 1 for all diagonal elements (i == j).
  */
 {
 private:
@@ -54,58 +78,6 @@ LUDecomposition<T>::getRequiredMatrices()
 /**
  * @brief This function calculates the lower triangular matrix (L) and upper triangular
  * matrix (U) obtained from LU decomposition using the Doolittle Algorithm.
- *
- * LU decomposition is a matrix factorisation technique that expresses a square matrix A
- * as the product of a lower triangular matrix L and an upper triangular matrix U:
- *
- * A = L * U
- *
- * where:
- * - A: The original square matrix.
- * - L: A lower triangular matrix with diagonal elements set to 1.
- * - U: An upper triangular matrix.
- *
- * This method is particularly useful for solving systems of linear equations,
- * inverting matrices, and computing determinants efficiently.
- *
- * **Symbolic Example**:
- * Let the original matrix A be:
- * A = [a11  a12  a13]
- *     [a21  a22  a23]
- *     [a31  a32  a33]
- *
- * The resulting matrices are:
- * L = [1      0      0   ]
- *     [l21    1      0   ]
- *     [l31    l32    1   ]
- *
- * U = [u11    u12    u13 ]
- *     [0      u22    u23 ]
- *     [0      0      u33 ]
- *
- * **Algorithm Overview**:
- * 1. For each element in the matrix:
- *   - Compute elements of U:
- *       U[i][j] = A[i][j] - sum(L[i][k] * U[k][j] for k = 0 to i-1)
- *       (for all i <= j)
- *   - Compute elements of L:
- *       L[i][j] = (A[i][j] - sum(L[i][k] * U[k][j] for k = 0 to j-1)) / U[j][j]
- *       (for all i > j)
- *   - Set L[i][j] = 1 for all diagonal elements (i == j).
- *
- * **Preconditions**:
- * 1. The input matrix A must be square (i.e., the number of rows equals the number of columns).
- * 2. LU decomposition is possible for non-singular matrices, but pivoting may be required for stability
- *    (this implementation does not handle pivoting explicitly).
- *
- * **Computational Complexity**:
- * - Time complexity: O(n^3), where n is the size of the matrix.
- * - Space complexity: O(n^2), due to storage of matrices L and U.
-
- * **Key Notes**:
- * - The diagonal elements of L are always set to 1.
- * - LU decomposition without pivoting can fail for certain matrices; in such cases,
- *   consider using an LU decomposition method with partial pivoting (e.g., the PA = LU approach).
  *
  * @cite GeeksforGeeks (https://www.geeksforgeeks.org/doolittle-algorithm-lu-decomposition/)
  * @cite Wikipedia (https://en.wikipedia.org/wiki/LUdecomposition)

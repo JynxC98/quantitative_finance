@@ -88,16 +88,16 @@ bool CholskeyDecomposition<T>::isSymmetric()
  */
 
 {
-    int num_rows = matrix.size();
-    int num_columns = matrix[0].size();
+    size_t num_rows = matrix.size();
+    size_t num_columns = matrix[0].size();
 
     if (num_rows != num_columns)
     {
         throw invalid_argument("The matrix is not a square matrix hence asymmetric");
     }
-    for (int i = 0; i < num_rows; i++)
+    for (size_t i = 0; i < num_rows; i++)
     {
-        for (int j = 0; j < i; j++)
+        for (size_t j = 0; j < i; j++)
         {
             if (matrix[i][j] != matrix[j][i])
             {
@@ -114,14 +114,14 @@ vector<vector<T>> CholskeyDecomposition<T>::getTranspose(const vector<vector<T>>
  * @brief The function evaluates the transpose of the input matrix.
  */
 {
-    int num_rows = inputMatrix.size();
-    int num_columns = inputMatrix[0].size();
+    size_t num_rows = inputMatrix.size();
+    size_t num_columns = inputMatrix[0].size();
 
     vector<vector<T>> result(num_columns, vector<T>(num_rows, 0)); // Create a transposed matrix with swapped dimensions
 
-    for (int i = 0; i < num_rows; i++)
+    for (size_t i = 0; i < num_rows; i++)
     {
-        for (int j = 0; j < num_columns; j++)
+        for (size_t j = 0; j < num_columns; j++)
         {
             result[j][i] = inputMatrix[i][j];
         }
@@ -162,13 +162,13 @@ CholskeyDecomposition<T>::getRequiredMatrices()
     {
         throw invalid_argument("Cholskey decomposition is not possible as the matrix is asymettric");
     }
-    int num_rows = matrix.size();
+    size_t num_rows = matrix.size();
 
     vector<vector<T>> L(num_rows, vector<T>(num_rows, 0));
 
-    for (int i = 0; i < num_rows; i++)
+    for (size_t i = 0; i < num_rows; i++)
     {
-        for (int j = 0; j < num_rows; j++)
+        for (size_t j = 0; j < num_rows; j++)
         {
 
             T sum = 0;
@@ -177,7 +177,7 @@ CholskeyDecomposition<T>::getRequiredMatrices()
             if (i == j)
             {
 
-                for (int k = 0; k < j; k++)
+                for (size_t k = 0; k < j; k++)
                 {
                     sum += pow(L[j][k], 2);
                 }
@@ -191,7 +191,7 @@ CholskeyDecomposition<T>::getRequiredMatrices()
                 if (i > j)
                 {
 
-                    for (int k = 0; k < j; k++)
+                    for (size_t k = 0; k < j; k++)
                     {
                         sum += L[j][k] * L[i][k];
                     }
