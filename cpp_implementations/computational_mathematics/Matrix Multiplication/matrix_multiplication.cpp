@@ -5,7 +5,6 @@
 
 #include <iostream>
 #include <vector>
-#include <stdexcept>
 
 using namespace std;
 
@@ -142,15 +141,8 @@ int main()
 
     MatMul<int> matmul(matrix_A, matrix_B);
 
-    try
-    {
-        matmul.displayMatrices();
-        matmul.displayProduct();
-    }
-    catch (const exception &e)
-    {
-        cerr << e.what() << endl;
-    }
+    matmul.displayMatrices();
+    matmul.displayProduct();
 
     return 0;
 }
