@@ -406,62 +406,62 @@ bool QRDecomposition::isUpperTriangular(const vector<vector<double>> &matrix)
 pair<vector<double>, vector<vector<double>>> QRDecomposition::
     getEigenValuesandEigenVectors(const vector<vector<double>> &matrix)
 {
-
-    auto [Q, R] = computeQR(matrix);
-
-    // Creating a copy of the original input matrix
-
+    size_t num_elements = matrix.size();
     vector<vector<double>> matrix_new = matrix;
-    size_t num_elements = matrix_new.size();
-    for (int i = 0; i < maxIterations; ++i)
+
+    // Initialising eigenVectors as identity matrix
+    vector<vector<double>> eigenVectors(num_elements, vector<double>(num_elements, 0));
+    for (int i = 0; i < num_elements; ++i)
     {
+        eigenVectors[i][i] = 1.0;
+    }
+
+    // Iterative QR algorithm
+    for (int iter = 0; iter < maxIterations; ++iter)
+    {
+        // Perform QR decomposition
+        auto [Q, R] = computeQR(matrix_new);
+
+        // Accumulate eigenvectors - right multiplication
+        vector<vector<double>> newEigenVectors = multiplyMatrices(eigenVectors, Q);
+        eigenVectors = newEigenVectors;
+
+        // Update matrix_new to be R * Q for the next iteration
         matrix_new = multiplyMatrices(R, Q);
+
+        // Check convergence - more robust way
         if (isUpperTriangular(matrix_new))
         {
             break;
         }
     }
-    vector<double> eigen_values;
 
-    // Fetching the eigen values for the matrix
+    // Normalise the eigenvectors
+    for (int j = 0; j < num_elements; ++j)
+    {
+        vector<double> eigenvector(num_elements);
+        for (int i = 0; i < num_elements; ++i)
+        {
+            eigenvector[i] = eigenVectors[i][j];
+        }
+
+        eigenvector = normaliseVector(eigenvector);
+
+        for (int i = 0; i < num_elements; ++i)
+        {
+            eigenVectors[i][j] = eigenvector[i];
+        }
+    }
+
+    // Extracting eigenvalues from the diagonal of matrix_new
+    vector<double> eigen_values;
     for (size_t i = 0; i < num_elements; ++i)
     {
         eigen_values.push_back(matrix_new[i][i]);
     }
 
-    // Calculating approximate eigen vectors.
-    vector<vector<double>> eigenVectors(num_elements, vector<double>(num_elements, 0));
-
-    // Initialising the eigen vector matrix as I
-    for (size_t i = 0; i < num_elements; ++i)
-    {
-        eigenVectors[i][i] = 1.0;
-    }
-
-    // Approximating eigen vectors.
-
-    for (int i = 0; i < maxIterations; ++i)
-    {
-        // QR decompositio needs to be performed for each iteration.
-
-        auto [Q, R] = computeQR(matrix_new);
-
-        // Multiplying eigenVectors by Q to accumulate the eigenvectors
-        eigenVectors = multiplyMatrices(eigenVectors, Q);
-
-        // Update matrix_new to be R * Q for the next iteration
-        matrix_new = multiplyMatrices(R, Q);
-
-        // Check if the matrix has converged (approximately diagonal)
-        if (isUpperTriangular(matrix_new))
-        {
-            break;
-        }
-    }
-
     return {eigen_values, eigenVectors};
 }
-
 /**
  * @brief The function displays the eigen values and its corresponding eigen vectors.
 
