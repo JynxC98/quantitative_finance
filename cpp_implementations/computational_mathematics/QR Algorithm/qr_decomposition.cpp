@@ -64,7 +64,20 @@ public:
     vector<vector<double>> generateHouseholderMatrix(const vector<double> &columnVector);
 
     // Function to get Q and R matrices
-    pair<vector<vector<double>>, vector<vector<double>>> computeQR();
+    pair<vector<vector<double>>, vector<vector<double>>> computeQR(const vector<vector<double>> &matrix);
+
+    // Function to check whether the matrix is approximately diagonal.
+    bool isDiagonal(const vector<vector<double>> &matrix);
+
+    // Function to check whether the matrix is approximately upper triangular
+    bool isUpperTriangular(const vector<vector<double>> &matrix);
+
+    // Function to get Eigen Values and Eigen Vectors
+    pair<vector<double>, vector<vector<double>>> getEigenValuesandEigenVectors(const vector<vector<double>> &matrix);
+
+    // Function to display the values of eigen values and their corresponding eigen vectors.
+    void displayEigenValuesandEigenVectors(const vector<double> &eigenValues,
+                                           const vector<vector<double>> &eigenVectors);
 };
 
 /**
@@ -93,7 +106,7 @@ void QRDecomposition::displayMatrix(const vector<vector<double>> &matrix)
 double QRDecomposition::getL2Norm(const vector<double> &_vector)
 {
     double sum = 0;
-    for (auto element : _vector)
+    for (const auto &element : _vector)
     {
         sum += pow(element, 2);
     }
@@ -255,7 +268,8 @@ vector<vector<double>> QRDecomposition ::generateHouseholderMatrix(const vector<
  *
  * @return A pair of matrices {Q, R}, where Q is orthogonal and R is upper triangular.
  */
-pair<vector<vector<double>>, vector<vector<double>>> QRDecomposition::computeQR()
+pair<vector<vector<double>>, vector<vector<double>>> QRDecomposition::
+    computeQR(const vector<vector<double>> &matrix)
 {
     size_t num_elements = matrix.size();
     if (num_elements == 0 || matrix[0].size() != num_elements)
@@ -320,6 +334,154 @@ pair<vector<vector<double>>, vector<vector<double>>> QRDecomposition::computeQR(
 
     return {Q, R};
 }
+/**
+ * @brief Evalues whether the input matrix is diagonal based on the predetermined tolerance
+ * limit.
+ * @param: matrix
+ * @return A boolean number where
+ * 1: The matrix is approximately diagonal
+ * 0: The matrix is not diagonal
+ */
+
+bool QRDecomposition::isDiagonal(const vector<vector<double>> &matrix)
+{
+    // Since the input matrix will always be a square matrix, there
+    // is no need to explicitely check whether the number of rows
+    // will be equal to the number of columns.
+
+    size_t num_elements = matrix.size();
+
+    for (size_t i = 0; i < num_elements; ++i)
+    {
+        for (size_t j = 0; j < num_elements; ++j)
+        {
+            // Skip diagonal elements
+            if (i == j)
+                continue;
+
+            // Check if the off-diagonal element is greater than the tolerance
+            if (abs(matrix[i][j]) > tolerance)
+                return false;
+        }
+    }
+    return true;
+}
+/**
+ * @brief Evalues whether the input matrix is in the upper triangular based on the
+ * predetermined tolerance limit.
+ * @param: matrix
+ * @return A boolean number where
+ * 1: The matrix is approximately upper triangular
+ * 0: The matrix is not upper triangular
+ */
+bool QRDecomposition::isUpperTriangular(const vector<vector<double>> &matrix)
+{
+    // Since the input matrix will always be a square matrix, there
+    // is no need to explicitely check whether the number of rows
+    // will be equal to the number of columns.
+
+    size_t num_elements = matrix.size();
+    for (size_t i = 0; i < num_elements; ++i)
+    {
+        for (size_t j = 0; j < i; ++j) // Only check below the diagonal
+        {
+            if (abs(matrix[i][j]) > tolerance)
+            {
+                return false;
+            }
+        }
+    }
+    return true;
+}
+
+/**
+ * @brief The function calculates eigen values and eigen vectors using QR Decomposition.
+ * The function implements the following method to calculate the eigen values
+ * A_k = Q_k * R_k
+ * A_k+1 = R_k * Q_k
+ * @return A boolean number where
+ * 1: The matrix is approximately diagonal
+ * 0: The matrix is not diagonal
+ */
+pair<vector<double>, vector<vector<double>>> QRDecomposition::
+    getEigenValuesandEigenVectors(const vector<vector<double>> &matrix)
+{
+
+    auto [Q, R] = computeQR(matrix);
+
+    // Creating a copy of the original input matrix
+
+    vector<vector<double>> matrix_new = matrix;
+    size_t num_elements = matrix_new.size();
+    for (int i = 0; i < maxIterations; ++i)
+    {
+        matrix_new = multiplyMatrices(R, Q);
+        if (isUpperTriangular(matrix_new))
+        {
+            break;
+        }
+    }
+    vector<double> eigen_values;
+
+    // Fetching the eigen values for the matrix
+    for (size_t i = 0; i < num_elements; ++i)
+    {
+        eigen_values.push_back(matrix_new[i][i]);
+    }
+
+    // Calculating approximate eigen vectors.
+    vector<vector<double>> eigenVectors(num_elements, vector<double>(num_elements, 0));
+
+    // Initialising the eigen vector matrix as I
+    for (size_t i = 0; i < num_elements; ++i)
+    {
+        eigenVectors[i][i] = 1.0;
+    }
+
+    // Approximating eigen vectors.
+
+    for (int i = 0; i < maxIterations; ++i)
+    {
+        // QR decompositio needs to be performed for each iteration.
+
+        auto [Q, R] = computeQR(matrix_new);
+
+        // Multiplying eigenVectors by Q to accumulate the eigenvectors
+        eigenVectors = multiplyMatrices(eigenVectors, Q);
+
+        // Update matrix_new to be R * Q for the next iteration
+        matrix_new = multiplyMatrices(R, Q);
+
+        // Check if the matrix has converged (approximately diagonal)
+        if (isUpperTriangular(matrix_new))
+        {
+            break;
+        }
+    }
+
+    return {eigen_values, eigenVectors};
+}
+
+/**
+ * @brief The function displays the eigen values and its corresponding eigen vectors.
+
+ * @param: eigenValues and eigenVectors.
+ */
+void QRDecomposition::displayEigenValuesandEigenVectors(const vector<double> &eigenValues,
+                                                        const vector<vector<double>> &eigenVectors)
+{
+    for (size_t i = 0; i < eigenValues.size(); ++i)
+    {
+        cout << "Eigenvalue " << fixed << setprecision(6) << setw(12) << eigenValues[i] << " : ";
+        cout << "Eigenvector: [ ";
+        for (size_t j = 0; j < eigenVectors.size(); ++j)
+        {
+            // eigenVectors[j][i] is the i-th eigenvector
+            cout << fixed << setprecision(6) << setw(12) << eigenVectors[j][i] << " ";
+        }
+        cout << "]" << endl;
+    }
+}
 
 int main()
 {
@@ -334,7 +496,7 @@ int main()
     qr.displayMatrix(matrix);
     cout << endl;
 
-    auto [Q, R] = qr.computeQR();
+    auto [Q, R] = qr.computeQR(matrix);
 
     cout << "Q Matrix (orthogonal):" << endl;
     qr.displayMatrix(Q);
@@ -352,6 +514,12 @@ int main()
     // Verifying decomposition (Q * R should equal original matrix)
     cout << "Verification - Q * R (should equal original matrix):" << endl;
     qr.displayMatrix(qr.multiplyMatrices(Q, R));
+
+    // Getting the eigen values and eigen vectors
+
+    auto [eigenValues, eigenVectors] = qr.getEigenValuesandEigenVectors(matrix);
+
+    qr.displayEigenValuesandEigenVectors(eigenValues, eigenVectors);
 
     return 0;
 }
