@@ -47,9 +47,6 @@ public:
     // Function to calculate L2 norm.
     double getL2Norm(const vector<double> &_vector);
 
-    // Function to calculate dot product between two vectors.
-    double getDotProduct(const vector<double> &_vector1, const vector<double> &_vector2);
-
     // Function to normalise a vector
     vector<double> normaliseVector(const vector<double> &_vector);
 
@@ -65,9 +62,6 @@ public:
 
     // Function to get Q and R matrices
     pair<vector<vector<double>>, vector<vector<double>>> computeQR(const vector<vector<double>> &matrix);
-
-    // Function to check whether the matrix is approximately diagonal.
-    bool isDiagonal(const vector<vector<double>> &matrix);
 
     // Function to check whether the matrix is approximately upper triangular
     bool isUpperTriangular(const vector<vector<double>> &matrix);
@@ -111,26 +105,6 @@ double QRDecomposition::getL2Norm(const vector<double> &_vector)
         sum += pow(element, 2);
     }
     return sqrt(sum);
-}
-
-/**
- * @brief The function evaluates the dot product of the input vectors.
- * @param _vector1 First input vector
- * @param _vector2 Second input vector
- * @return Dot product result
- */
-double QRDecomposition ::getDotProduct(const vector<double> &_vector1, const vector<double> &_vector2)
-{
-    if (_vector1.size() != _vector2.size())
-    {
-        throw invalid_argument("Vectors must have the same dimension");
-    }
-    double result = 0.0;
-    for (size_t i = 0; i < _vector1.size(); ++i)
-    {
-        result += _vector1[i] * _vector2[i];
-    }
-    return result;
 }
 
 /**
@@ -333,38 +307,6 @@ pair<vector<vector<double>>, vector<vector<double>>> QRDecomposition::
     return {Q, R};
 }
 /**
- * @brief Evalues whether the input matrix is diagonal based on the predetermined tolerance
- * limit.
- * @param: matrix
- * @return A boolean number where
- * 1: The matrix is approximately diagonal
- * 0: The matrix is not diagonal
- */
-
-bool QRDecomposition::isDiagonal(const vector<vector<double>> &matrix)
-{
-    // Since the input matrix will always be a square matrix, there
-    // is no need to explicitely check whether the number of rows
-    // will be equal to the number of columns.
-
-    size_t num_elements = matrix.size();
-
-    for (size_t i = 0; i < num_elements; ++i)
-    {
-        for (size_t j = 0; j < num_elements; ++j)
-        {
-            // Skip diagonal elements
-            if (i == j)
-                continue;
-
-            // Check if the off-diagonal element is greater than the tolerance
-            if (abs(matrix[i][j]) > tolerance)
-                return false;
-        }
-    }
-    return true;
-}
-/**
  * @brief Evalues whether the input matrix is in the upper triangular based on the
  * predetermined tolerance limit.
  * @param: matrix
@@ -485,9 +427,9 @@ int main()
 {
     // Example matrix for QR decomposition
     vector<vector<double>> matrix = {
-        {1.0, 2.0, 4.0},
-        {0.0, 0.0, 5.0},
-        {0.0, 3.0, 6.0}};
+        {-1.0, 3.0, 5.0},
+        {4.0, 5.0, 6.0},
+        {7.0, 8.0, 9.0}};
 
     QRDecomposition qr(matrix);
     cout << "Original Matrix:" << endl;
