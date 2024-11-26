@@ -38,7 +38,7 @@ private:
 
 public:
     QRDecomposition(vector<vector<double>> &matrix,
-                    int maxIterations = 100000, double tolerance = 1e-6)
+                    int maxIterations = 100000, double tolerance = 1e-4)
         : matrix(matrix), maxIterations(maxIterations), tolerance(tolerance) {}
 
     // Function to display the matrix.
@@ -207,7 +207,7 @@ vector<vector<double>> QRDecomposition::multiplyMatrices(const vector<vector<dou
  * @param x Input vector to transform
  * @return Householder matrix
  */
-vector<vector<double>> QRDecomposition ::generateHouseholderMatrix(const vector<double> &columnVector)
+vector<vector<double>> QRDecomposition::generateHouseholderMatrix(const vector<double> &columnVector)
 {
     size_t num_elements = columnVector.size();
     double norm = getL2Norm(columnVector);
@@ -239,7 +239,6 @@ vector<vector<double>> QRDecomposition ::generateHouseholderMatrix(const vector<
     }
 
     // Computing the Householder's matrix `H`.
-
     vector<vector<double>> H(num_elements, vector<double>(num_elements, 0));
 
     for (size_t i = 0; i < num_elements; i++)
@@ -260,6 +259,7 @@ vector<vector<double>> QRDecomposition ::generateHouseholderMatrix(const vector<
     }
     return H;
 }
+
 /**
  * @brief Computes the QR decomposition of the input matrix using Householder transformations.
  * This implementation follows the Householder method which successively transforms
@@ -289,8 +289,6 @@ pair<vector<vector<double>>, vector<vector<double>>> QRDecomposition::
 
     // Performing the QR decomposition.
 
-    // Here we iterate until `num_elements - 1` as the last column computation
-    // is not required for calculation
     for (size_t k = 0; k < num_elements - 1; k++)
     {
         // Extract the column vector below the diagonal
@@ -327,9 +325,9 @@ pair<vector<vector<double>>, vector<vector<double>>> QRDecomposition::
             }
         }
 
-        // Update R and Q
-        R = multiplyMatrices(H, R);
-        Q = multiplyMatrices(Q, getTranspose(H));
+        // Update R and Q with correct signs
+        R = multiplyMatrices(H, R);               // Update R as H * R
+        Q = multiplyMatrices(Q, getTranspose(H)); // Update Q as Q * H^T
     }
 
     return {Q, R};
