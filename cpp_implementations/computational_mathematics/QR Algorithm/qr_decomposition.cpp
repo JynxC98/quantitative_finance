@@ -50,7 +50,7 @@ public:
     // Function to calculate dot product between two vectors.
     double getDotProduct(const vector<double> &_vector1, const vector<double> &_vector2);
 
-    // Function to normalize a vector
+    // Function to normalise a vector
     vector<double> normaliseVector(const vector<double> &_vector);
 
     // Function to get the transpose of the input matrix.
@@ -121,9 +121,9 @@ double QRDecomposition ::getDotProduct(const vector<double> &_vector1, const vec
 }
 
 /**
- * @brief The function normalizes the input vector using L2 norm.
- * @param _vector Input vector to normalize
- * @return Normalized vector
+ * @brief The function normalises the input vector using L2 norm.
+ * @param _vector Input vector to normalise
+ * @return Normalised vector
  */
 
 vector<double> QRDecomposition ::normaliseVector(const vector<double> &_vector)
@@ -172,7 +172,7 @@ vector<vector<double>> QRDecomposition::multiplyMatrices(const vector<vector<dou
         throw invalid_argument("Matrix dimensions don't match for multiplication");
     }
 
-    // Initialize the result matrix with appropriate dimensions
+    // Initialise the result matrix with appropriate dimensions
     vector<vector<double>> result(matrix1.size(), vector<double>(matrix2[0].size(), 0.0));
 
     // Perform matrix multiplication
@@ -238,6 +238,7 @@ vector<vector<double>> QRDecomposition ::generateHouseholderMatrix(const vector<
             {
                 H[i][j] = 1.0 - 2.0 * v[i] * v[j];
             }
+            // Case 2: Non-diagonal elements
             else
             {
                 H[i][j] = -2.0 * v[i] * v[j];
@@ -291,7 +292,7 @@ pair<vector<vector<double>>, vector<vector<double>>> QRDecomposition::computeQR(
         // Create the full-size Householder matrix
         vector<vector<double>> H(num_elements, vector<double>(num_elements));
 
-        // Initialize as identity matrix
+        // Initialise `H` as an identity matrix
         for (size_t i = 0; i < num_elements; i++)
         {
             for (size_t j = 0; j < num_elements; j++)
@@ -317,7 +318,7 @@ pair<vector<vector<double>>, vector<vector<double>>> QRDecomposition::computeQR(
         Q = multiplyMatrices(Q, getTranspose(H));
     }
 
-    return {Q, R}; // Add missing return statement
+    return {Q, R};
 }
 
 int main()
@@ -343,12 +344,12 @@ int main()
     qr.displayMatrix(R);
     cout << endl;
 
-    // Verify Q is orthogonal (Q * Q^T should be identity)
+    // Verifying Q is orthogonal (Q * Q^T should be identity)
     cout << "Verification - Q * Q^T (should be identity):" << endl;
     qr.displayMatrix(qr.multiplyMatrices(Q, qr.getTranspose(Q)));
     cout << endl;
 
-    // Verify decomposition (Q * R should equal original matrix)
+    // Verifying decomposition (Q * R should equal original matrix)
     cout << "Verification - Q * R (should equal original matrix):" << endl;
     qr.displayMatrix(qr.multiplyMatrices(Q, R));
 
