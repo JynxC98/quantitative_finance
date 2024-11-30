@@ -34,22 +34,28 @@ map<string, double> getArithmeticOptionPrice(double spot,
                                              int M = 5000,
                                              int N = 5000)
 {
-    double dt = T / N;                            // Time step
-    mt19937 generator(random_device{}());         // Random generator with seed
-    normal_distribution<double> normal(0.0, 1.0); // Standard normal distribution
+    // Time step
+    double dt = T / N;
+
+    // Random generator with seed
+    mt19937 generator(random_device{}());
+
+    // Standard normal distribution
+    normal_distribution<double> normal(0.0, 1.0);
 
     vector<double> option_prices(M);
 
     for (int path = 0; path < M; ++path)
     {
-        vector<double> spot_paths(N + 1); // Ensure size is N + 1
-        spot_paths[0] = spot;             // Initial spot price
+        vector<double> spot_paths(N + 1);
+        // Initial spot price
+        spot_paths[0] = spot;
 
         double floating_sum = spot;
 
-        for (int t = 0; t < N; ++t) // Iterate only to N - 1
+        for (int t = 0; t < N; ++t)
         {
-            double dW = normal(generator); // Brownian increment
+            double dW = normal(generator);
             spot_paths[t + 1] = spot_paths[t] * exp((r - 0.5 * sigma * sigma) * dt + sigma * sqrt(dt) * dW);
             floating_sum += spot_paths[t + 1];
         }
@@ -78,12 +84,13 @@ map<string, double> getArithmeticOptionPrice(double spot,
     double stddev = sqrt(variance);
 
     // Calculate the 95% confidence interval
-    double z_score = 1.96; // 95% confidence level
+    double z_score = 1.96;
     double margin_of_error = z_score * stddev / sqrt(M);
 
     // Store the results in a map
     map<string, double> results;
-    results["Option Price"] = exp(-r * T) * mean_price; // Discounted mean price
+    // Discounted mean price
+    results["Option Price"] = exp(-r * T) * mean_price;
     results["Confidence Interval Lower Bound"] = exp(-r * T) * (mean_price - margin_of_error);
     results["Confidence Interval Upper Bound"] = exp(-r * T) * (mean_price + margin_of_error);
 
