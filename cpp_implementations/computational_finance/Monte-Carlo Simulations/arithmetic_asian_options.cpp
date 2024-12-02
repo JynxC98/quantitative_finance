@@ -37,57 +37,45 @@ map<string, double> getArithmeticOptionPrice(double spot,
     // Time step
     double dt = T / N;
 
+    double sum_price = 0.0;
+    double sum_squared_price = 0.0;
+
     // Random generator with seed
     mt19937 generator(random_device{}());
 
     // Standard normal distribution
     normal_distribution<double> normal(0.0, 1.0);
 
-    vector<double> option_prices(M);
-
     for (int path = 0; path < M; ++path)
     {
-        vector<double> spot_paths(N + 1);
-        // Initial spot price
-        spot_paths[0] = spot;
 
+        double current_spot = spot;
         double floating_sum = spot;
 
         for (int t = 0; t < N; ++t)
         {
             double dW = normal(generator);
-            spot_paths[t + 1] = spot_paths[t] * exp((r - 0.5 * sigma * sigma) * dt + sigma * sqrt(dt) * dW);
-            floating_sum += spot_paths[t + 1];
+            current_spot = current_spot * exp((r - 0.5 * sigma * sigma) * dt + sigma * sqrt(dt) * dW);
+            floating_sum += current_spot;
         }
 
         double average_price = floating_sum / (N + 1);
-        option_prices[path] = isCall
-                                  ? max(average_price - strike, 0.0)
-                                  : max(strike - average_price, 0.0);
+        double payoff = isCall
+                            ? max(average_price - strike, 0.0)
+                            : max(strike - average_price, 0.0);
+        sum_price += payoff;
+        sum_squared_price += payoff * payoff;
     }
 
-    // Calculate the mean option price
-    double mean_price = 0.0;
-    for (double price : option_prices)
-    {
-        mean_price += price;
-    }
-    mean_price /= M;
-
-    // Calculate the standard deviation of the option prices
-    double variance = 0.0;
-    for (double price : option_prices)
-    {
-        variance += (price - mean_price) * (price - mean_price);
-    }
-    variance /= M;
+    // Computing the mean and variance
+    double mean_price = sum_price / M;
+    double variance = (sum_squared_price / M) - (mean_price * mean_price);
     double stddev = sqrt(variance);
 
-    // Calculate the 95% confidence interval
+    // Calculating the 95% confidence interval
     double z_score = 1.96;
     double margin_of_error = z_score * stddev / sqrt(M);
 
-    // Store the results in a map
     map<string, double> results;
     // Discounted mean price
     results["Option Price"] = exp(-r * T) * mean_price;
