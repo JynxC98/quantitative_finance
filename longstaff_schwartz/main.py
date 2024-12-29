@@ -59,7 +59,7 @@ def basis_function(k, X):
 
 
 def longstaff_schwartz(
-    spot, strike, sigma, T, r, N=500, M=10000, isCall=True, k=3, seed=42
+    spot, strike, sigma, T, r, N=1000, M=10000, isCall=True, k=3, seed=42
 ):
     r"""
     Implement the Longstaff Schwartz pricing engine for American options.
@@ -123,7 +123,7 @@ def longstaff_schwartz(
     diffusion = sigma * dZ
 
     # Generating vectorised form of stock paths.
-    stock_paths[:, 1:] = spot * np.exp(np.cumsum(drift + diffusion, axis=1))
+    stock_paths[:, 1:] = spot * np.cumprod(np.exp(drift + diffusion), axis=1)
 
     # Calculating the option payoff based on the option type.
     option_prices = (
@@ -143,6 +143,8 @@ def longstaff_schwartz(
         in_the_money = option_prices[:, t] > 0
 
         if not np.any(in_the_money):
+            # Discounting the cash flows part
+            cash_flows *= np.exp(-r * dt)
             continue
 
         # Current stock prices for in-the-money paths
