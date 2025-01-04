@@ -4,7 +4,7 @@
    1. MSc Quantitative Finance, University of Glasgow
    1. B.E Mechanical Engineering, University of Mumbai
 - **Email**: parikh.harsh.hp@gmail.com
-- **LinkedIn**: [LinkedIn](https://www.linkedin.com/in/harsh-parikh-417ba2167/)
+- **LinkedIn**: [Harsh Parikh](https://www.linkedin.com/in/harsh-parikh-417ba2167/)
 ## About Me
 I am a Quantitative Finance graduate with a keen interest in computational mathematics and finance. My academic background and projects are targeted towards quantitative methods, financial modeling, and programming.
 
