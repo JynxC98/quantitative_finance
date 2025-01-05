@@ -172,3 +172,4 @@ Release/
 
 # Ignoring the CPP files
 test.cpp
+.gitignore
