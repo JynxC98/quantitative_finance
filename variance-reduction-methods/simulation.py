@@ -1,5 +1,5 @@
 """
-A script to perform Monte-Carlo simulations using the control variate.
+A script to perform Monte-Carlo simulations.
 
 Author: Harsh Parikh
 Date: 31-01-2025
@@ -50,25 +50,13 @@ def control_variate(spot, strike, sigma, r, T, M=5000, N=5000, isCall=True):
         np.maximum(grid[:, -1] - strike, 0.0)
         if isCall
         else np.maximum(strike - grid[:, -1])
-    )
-
-    # Using the equivalent martingale measure as the control variable
-    control_variable = spot * np.exp(r * T) * np.ones(M)
-
-    # Calculating the control variate
-    difference = grid[:, -1] - control_variable
-
-    # Calculating the control variate coefficient
-    beta = -np.cov(payoff, grid[:, -1])[0, 1] / np.var(grid[:, -1])
-
-    # Updating the payoff
-    updated_payoff = np.exp(-r * T) * (payoff + beta * (difference))
+    ) * np.exp(-r * T)
 
     # Calculating the statistics
-    mean_price = np.mean(updated_payoff)
+    mean_price = np.mean(payoff)
 
     std_dev = np.std(
-        updated_payoff, ddof=1
+        payoff, ddof=1
     )  # ddof = 1 calculates the sample standard deviation
 
     # Assuming 95% confidence interval
@@ -81,7 +69,6 @@ def control_variate(spot, strike, sigma, r, T, M=5000, N=5000, isCall=True):
         "upper_limit": upper_limit,
         "lower_limit": lower_limit,
         "standard deviation": std_dev,
-        "coefficient": beta,
     }
 
 
