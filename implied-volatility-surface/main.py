@@ -68,14 +68,6 @@ class VolatilitySurface:
         self._ttm_grid = None
         self._strike_grid = None
 
-    def get_spot_price(self):
-        """
-        Returns the spot price of the stock.
-        """
-        stock = yf.Ticker(self._ticker)
-        self._spot = stock.history(period="1d")["Close"].iloc[-1]
-        return self._spot
-
     def get_strike_price_pivot_table(
         self,
         option_type="call",
@@ -112,15 +104,16 @@ class VolatilitySurface:
         valid_maturities = [
             mat
             for mat in option_data.options
-            if maturity_min < (pd.to_datetime(mat) - today).days / 252 < maturity_max
+            if maturity_min < (pd.to_datetime(mat) - today).days / 365 < maturity_max
         ]
 
-        spot_price = self.get_spot_price()
+        spot_price = option_data.history(period="1d")["Close"].iloc[-1]
+        self._spot = spot_price
         strikes_freq = defaultdict(int)
         all_data = []
         for maturity in valid_maturities:
             chain = option_data.option_chain(maturity).calls
-            ttm = (pd.to_datetime(maturity) - today).days / 252
+            ttm = (pd.to_datetime(maturity) - today).days / 365
 
             valid_strikes = chain[
                 (chain["strike"] >= moneyness_min * spot_price)
@@ -176,9 +169,7 @@ class VolatilitySurface:
         self._strike_grid = strike_grid
 
         iv_surface = RectBivariateSpline(time_to_mat, strikes, implied_vols)
-        iv_values = iv_surface.ev(ttm_grid.ravel(), strike_grid.ravel()).reshape(
-            ttm_grid.shape
-        )
+        iv_values = iv_surface.ev(ttm_grid, strike_grid)
         iv_values[iv_values < 0] = (
             0  # Using this to filter out the negative implied volatility generated due to interpolation.
         )
