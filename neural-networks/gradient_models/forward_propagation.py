@@ -8,7 +8,7 @@ Date: 03-02-2025
 from typing import Tuple, Dict
 import numpy as np
 from numpy.typing import NDArray
-from activation_functions import Tanh, Sigmoid, ReLU
+from .activation_functions import Tanh, Sigmoid, ReLU
 
 
 def propagate_regression(

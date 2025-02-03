@@ -13,7 +13,7 @@ from typing import Tuple
 import numpy as np
 from numpy.typing import NDArray
 
-from forward_propagation import propagate_classification, propagate_regression
+from .forward_propagation import propagate_classification, propagate_regression
 
 
 def batch_gradient_descent(
@@ -83,12 +83,22 @@ def mini_batch_gradient_descent(
     cost_mini_batch_gd = []  # To store cost history
 
     for _ in range(num_iterations):
+
+        # Shuffling the data points
         indices = np.random.permutation(num_samples)
+
+        # Extracting the features from the shuffled indices
         features_shuffled = features[indices]
+
+        # Extracting the target from the shuffled indices
         target_shuffled = target[indices]
 
         for batch_start in range(0, num_samples, batch_size):
+
+            # This LOC prevents the index overflow
             batch_end = min(batch_start + batch_size, num_samples)
+
+            # Slicing the required values
             features_batch = features_shuffled[batch_start:batch_end]
             target_batch = target_shuffled[batch_start:batch_end]
 
@@ -120,14 +130,21 @@ def stochastic_gradient_descent(
     num_iterations: int = 1000,
     learning_rate: float = 0.01,
     is_classification: bool = True,
-) -> Tuple[NDArray, NDArray, NDArray]:
+) -> Tuple[NDArray, float, NDArray]:
     """
     Vectorised stochastic gradient descent implementation for both classification and regression.
 
     Args:
-        num_iterations (int, optional): Number of iterations. Default is 1000.
-        learning_rate (float, optional): Learning rate. Default is 0.01.
-        is_classification (bool, optional): Whether the model is for classification or regression. Default is True.
+        - weights (NDArray): Model weights of shape (n,).
+        - bias (float): Model bias.
+        - features (NDArray): Training features of shape (m, n).
+        - target (NDArray): Training labels of shape (m,).
+        - num_iterations (int, optional): Number of iterations. Default is 1000.
+        - learning_rate (float, optional): Learning rate. Default is 0.01.
+        - is_classification (bool, optional): Whether the model is for classification or regression. Default is True.
+
+    Returns:
+        - Tuple[NDArray, float, NDArray]: Updated weights, bias, and cost history.
     """
     weights_stoch = weights.copy()
     bias_stoch = bias
@@ -140,8 +157,10 @@ def stochastic_gradient_descent(
         target_shuffled = target[indices]
 
         for i in range(num_samples):
-            feature_i = features_shuffled[i]
-            target_i = target_shuffled[i]
+
+            # Reshaping ensures that the values can be fed to the `forward_propagation` modules.
+            feature_i = features_shuffled[i].reshape(1, -1)
+            target_i = target_shuffled[i].reshape(-1)
 
             if is_classification:
                 gradients, cost = propagate_classification(
@@ -166,7 +185,7 @@ def stochastic_gradient_descent(
 
         cost_stoch_gd.append(cost)  # Append cost for each iteration
 
-    return weights_stoch, bias_stoch, cost_stoch_gd
+    return weights_stoch, bias_stoch, np.array(cost_stoch_gd)
 
 
 if __name__ == "__main__":
