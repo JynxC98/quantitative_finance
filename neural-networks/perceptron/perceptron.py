@@ -10,22 +10,13 @@ import warnings
 
 import numpy as np
 from numpy.typing import NDArray
-from sklearn.datasets import make_classification
-from sklearn.preprocessing import StandardScaler
 
-from sklearn.linear_model import (
-    Perceptron,
-)  # This module will be used for validating the current implementation
-from sklearn.metrics import classification_report
-from sklearn.model_selection import train_test_split
-
-
-from gradient_models import (
+from optimisation_modules.gradient_models import (
     batch_gradient_descent,
     mini_batch_gradient_descent,
     stochastic_gradient_descent,
 )
-from activation_functions import ReLU, Sigmoid
+from optimisation_modules.activation_functions import ReLU, Sigmoid
 
 warnings.filterwarnings("ignore")
 
@@ -87,7 +78,7 @@ class CustomPerceptron:
         elif self.activation_ == "relu":
             return ReLU(x).derivative()  # Since we need values between 0 and 1
 
-    def predict(self, X: NDArray) -> NDArray:
+    def predict(self, X: NDArray, threshold: float = 0.5) -> NDArray:
         """
         Predicts the class labels for given input features.
 
@@ -97,8 +88,11 @@ class CustomPerceptron:
         Returns:
             - NDArray: Predicted labels (0 or 1).
         """
-        linear_output = np.dot(X, self.weights) + self.bias
-        return self.activation(linear_output)
+        linear_output = np.dot(X, self.weights_) + self.bias_
+
+        output = self.activation(linear_output)
+        output = np.where(output < threshold, 0, 1)
+        return output
 
     def fit(self, X: NDArray, y: NDArray):
         """
@@ -108,44 +102,41 @@ class CustomPerceptron:
             - X (NDArray): Input feature matrix of shape (m, n).
             - y (NDArray): Target labels of shape (m,).
         """
-        m = X.shape[0]  # Number of training examples
 
         self.weights_ = np.zeros(X.shape[1])  # Initializing the weights
 
-        for _ in range(self.num_iterations_):
+        # Evaluating the gradients based on the type of optimizer selected
+        if self.optimizer_type_ == "batch":
+            weights, bias, _ = batch_gradient_descent(
+                weights=self.weights_,
+                bias=self.bias_,
+                features=X,
+                target=y,
+                num_iterations=self.num_iterations_,
+                learning_rate=self.learning_rate_,
+                is_classification=True,
+            )
+        elif self.optimizer_type_ == "mini-batch":
+            weights, bias, _ = mini_batch_gradient_descent(
+                weights=self.weights_,
+                bias=self.bias_,
+                features=X,
+                target=y,
+                num_iterations=self.num_iterations_,
+                learning_rate=self.learning_rate_,
+                is_classification=True,
+            )
 
-            # Evaluating the gradients based on the type of optimizer selected
-            if self.optimizer_type_ == "batch":
-                weights, bias, _ = batch_gradient_descent(
-                    weights=self.weights_,
-                    bias=self.bias_,
-                    features=X,
-                    target=y,
-                    num_iterations=self.num_iterations_,
-                    learning_rate=self.learning_rate_,
-                    is_classification=True,
-                )
-            elif self.optimizer_type_ == "mini-batch":
-                weights, bias, _ = mini_batch_gradient_descent(
-                    weights=self.weights_,
-                    bias=self.bias_,
-                    features=X,
-                    target=y,
-                    num_iterations=self.num_iterations_,
-                    learning_rate=self.learning_rate_,
-                    is_classification=True,
-                )
-
-            else:
-                weights, bias, _ = stochastic_gradient_descent(
-                    weights=self.weights_,
-                    bias=self.bias_,
-                    features=X,
-                    target=y,
-                    num_iterations=self.num_iterations_,
-                    learning_rate=self.learning_rate_,
-                    is_classification=True,
-                )
+        else:
+            weights, bias, _ = stochastic_gradient_descent(
+                weights=self.weights_,
+                bias=self.bias_,
+                features=X,
+                target=y,
+                num_iterations=self.num_iterations_,
+                learning_rate=self.learning_rate_,
+                is_classification=True,
+            )
 
         self.weights_ = weights
         self.bias_ = bias
@@ -162,43 +153,5 @@ class CustomPerceptron:
             - float: Accuracy score of the perceptron model.
         """
         predictions = self.predict(X)
-        accuracy = np.mean((predictions == y).astype(float))
+        accuracy = np.mean((predictions == y).astype(int))
         return accuracy
-
-
-if __name__ == "__main__":
-    feature_matrix, target_matrix = make_classification(
-        n_samples=100,
-        n_features=2,
-        n_informative=2,
-        n_redundant=0,
-        n_clusters_per_class=1,
-        random_state=42,
-    )
-
-    # Standardising the features
-    scaler = StandardScaler()
-    feature_matrix = scaler.fit_transform(feature_matrix)
-
-    X_train, X_test, y_train, y_test = train_test_split(
-        feature_matrix, target_matrix, random_state=42
-    )
-
-    # Initializing the `sklearn` implementation.
-    perceptron = Perceptron()
-
-    perceptron.fit(X_train, y_train)
-    y_pred_perceptron = perceptron.predict(X_test)
-    print("Classification report for sklearn implementation")
-    print("*" * 100)
-    print(classification_report(y_test, y_pred_perceptron))
-
-    # Initializing the custom perceptron
-    custom_percp = CustomPerceptron()
-    custom_percp.fit(X_train, y_train)
-
-    y_pred_custom = custom_percp.predict(X_test)
-    print("Classification report for custom implementation")
-    print("*" * 100)
-
-    print(classification_report(y_test, y_pred_custom))

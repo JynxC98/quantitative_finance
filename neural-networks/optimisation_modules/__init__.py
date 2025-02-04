@@ -1,5 +1,5 @@
 """
-Initialisation function for imports.
+Initialisation file for optimisation_modules package.
 
 Author: Harsh Parikh
 Date: 03-02-2024
@@ -10,9 +10,13 @@ from .gradient_models import (
     mini_batch_gradient_descent,
     stochastic_gradient_descent,
 )
+
 from .activation_functions import ReLU, Sigmoid
 
-from .forward_propagation import propagate_classification, propagate_regression
+from .forward_propagation import (
+    propagate_classification,
+    propagate_regression,
+)
 
 __all__ = [
     "batch_gradient_descent",
