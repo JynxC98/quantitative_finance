@@ -51,7 +51,7 @@ def main():
     print(classification_report(y_test, y_pred_perceptron))
 
     # Initializing the custom perceptron
-    custom_percp = CustomPerceptron(optimizer_type="mini-batch")
+    custom_percp = CustomPerceptron(optimizer_type="mini-batch", activation="relu")
     custom_percp.fit(X_train, y_train)
 
     y_pred_custom = custom_percp.predict(X_test)
