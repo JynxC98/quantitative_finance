@@ -101,3 +101,23 @@ class ReLU(ActivationFunction):
         """
 
         return np.heaviside(self.x, 0.0)
+
+
+@dataclass
+class Softplus(ActivationFunction):
+    """
+    The activation function for Softplus is given by:
+
+    F(x) = log(1 + e^x)
+
+    F(x) -> (0, inf)
+    """
+
+    def forward(self) -> NDArray:
+        """
+        Feeding into the activation function.
+        """
+        return np.log(1 + np.exp(self.x))
+
+    def derivative(self) -> NDArray:
+        return np.exp(self.x) / (1 + np.exp(self.x))
