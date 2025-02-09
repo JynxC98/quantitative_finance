@@ -8,7 +8,7 @@ Date: 03-02-2025
 from typing import Tuple, Dict
 import numpy as np
 from numpy.typing import NDArray
-from .activation_functions import Tanh, Sigmoid, ReLU
+from .activation_functions import Tanh, Sigmoid, ReLU, Softplus
 
 
 def propagate_regression(
@@ -70,7 +70,7 @@ def propagate_classification(
     """
     # Checking wheather the activation function is in the pre-determined list
 
-    if activation_function not in ("sigmoid", "tanh", "relu"):
+    if activation_function not in ("sigmoid", "tanh", "relu", "softplus"):
         raise ValueError("Please select one from sigmoid, tanh, relu")
 
     if activation_function == "sigmoid":
@@ -81,6 +81,8 @@ def propagate_classification(
 
     elif activation_function == "relu":
         activation_function = ReLU
+    else:
+        activation_function = Softplus
 
     num_samples = feature_vector.shape[0]  # Fetching the number of data points
 
