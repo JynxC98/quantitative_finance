@@ -18,11 +18,6 @@ from optimisation_modules.gradient_models import (
 )
 from optimisation_modules.activation_functions import Sigmoid, ReLU, Tanh, Softplus
 
-from optimisation_modules.forward_propagation import (
-    propagate_classification,
-    propagate_regression,
-)
-
 
 class NeuralNetworks:
     """
@@ -85,14 +80,13 @@ class NeuralNetworks:
         self.loss_history = None
 
         # Assigning the activation function
-        if self.activation_function_ == "sigmoid":
-            self.activation_function_ = Sigmoid
-        elif self.activation_function_ == "relu":
-            self.activation_function_ = ReLU
-        elif self.activation_function_ == "tanh":
-            self.activation_function_ = Tanh
-        else:
-            self.activation_function_ = Softplus
+        activation_functions = {
+            "sigmoid": Sigmoid,
+            "relu": ReLU,
+            "tanh": Tanh,
+            "softplus": Softplus,
+        }
+        self.activation_function_ = activation_functions[activation_function]
 
         # Assigning the optimisation method
         if self.optimiser_ == "batch":
@@ -107,7 +101,7 @@ class NeuralNetworks:
         The method to fit the neural network.
         """
         # Initializing the weights and bias
-        num_elements = X.shape[0]
+        num_elements = X.shape[1]  # Number of features.
 
         # Calculating the layer size
         layer_size = (
@@ -128,23 +122,30 @@ class NeuralNetworks:
 
         # Initialize weights and biases
         weights = [
-            np.random.standard_normal((self.layer_size_, num_elements)) * s
-            for s in sigma
+            np.random.standard_normal((layer_size[i + 1], layer_size[i])) * s
+            for (i, s) in zip(range(len(layer_size) - 1), sigma)
         ]
-        bias = [np.zeros(self.layer_size_) for _ in range(len(weights))]
 
-        # Storing the activations
-        activations = [X]  # The first activation is the input vectors itself
-
-        # Storing the loss for each iteration
-        loss = []
+        bias = [np.zeros((weight.shape[0], 1)) for weight in weights]
 
         for epoch in range(self.num_epochs_):
 
-            for weights, bias in zip(weights, bias):
+            # Storing the activations
+            activations = [X.T]  # The first activation is the input vectors itself
+
+            # Storing the z values
+            z_values = []
+
+            # Storing the loss for each iteration
+            loss_history = []
+
+            for itr, (weights, bias) in enumerate(zip(weights, bias)):
+
+                print(f"Iteration number {itr}")
 
                 # Calculating the dot product
                 z = np.dot(weights, activations[-1]) + bias
+                z_values.append(z)
 
                 # Calculating the activation
                 activation = self.activation_function_(z).forward()
@@ -153,52 +154,56 @@ class NeuralNetworks:
                 activations.append(activation)
 
             # These calculations are for the back propagation
-            y_pred = self.activation_function_(activations[-1]).forward()
+            y_pred = self.activation_function_(activations[-1]).forward().flatten()
 
-            # This variable will store the losses for the next layer
+            # Computing the loss
+            if problem_type == "Classification":
+                y_pred = np.where(y_pred >= 0.5, 1, 0)
+                loss = log_loss(y, y_pred)
+            else:
+                loss = mean_squared_error(y, y_pred)
 
-            delta = (
-                log_loss(y, y_pred)
-                if problem_type == "Classification"
-                else mean_squared_error(y, y_pred)
-            )
+            loss_history.append(loss)
 
-            # Backpropogation of the gradients.
-            for i in reversed(range(len(self.weights_)), 1):
+            # Backpropagation
+            for i in reversed(range(len(weights))):
 
-                # If the problem type is classification, we change the
-                # y_pred into a binary classification model with a
-                # threshold of 0.5
+                if (
+                    i == len(weights) - 1
+                ):  # Calculating the gradients at the final node (Output)
 
-                if problem_type == "Classification":
-                    y_pred = np.where(y_pred >= 0.5, 1, 0)
-
-                    gradients, cost = propagate_classification(
-                        weights=weights[i],
-                        bias=bias[i],
-                        feature_vector=activations[i],
-                        target_vector=y,
-                        activation_function=self.activation_function_,
+                    difference = (2 / num_elements) * (
+                        activations[-1] - y.reshape(-1, 1)
                     )
 
+                    # `delta` is the gradient of the loss with respect to z
+                    delta = np.dot(
+                        difference, self.activation_function_(z[i]).derivative()
+                    )
                 else:
 
-                    gradients, cost = propagate_regression(
-                        coef=weights, intercept=bias, feature_vector=X, target_vector=y
+                    delta = (
+                        np.dot(weights[i + 1].T, delta)
+                        * self.activation_function_(z_values[i]).derivative()
                     )
 
-                # Updating the weights and bias
-                weights -= self.learning_rate_ * gradients["dW"]
-                bias -= self.learning_rate_ * gradients["dB"]
+                # Compute gradients for weights and biases
+                gradient_weight = np.dot(delta, activations[i].T)
+                gradient_bias = (
+                    np.sum(delta, axis=1, keepdims=True)
+                    if delta.ndim > 1
+                    else np.sum(delta)
+                )
 
-                # Updating the cost
-                loss.append(cost)
+                # Update weights and biases
+                weights[i] -= self.learning_rate_ * gradient_weight
+                bias[i] -= self.learning_rate_ * gradient_bias
 
-            if self.verbose_ and problem_type == "Classification":
-                print(f"The f1 score for epoch {epoch} is {f1_score(y, y_pred)}")
+        if self.verbose_ and problem_type == "Classification":
+            print(f"The f1 score for epoch {epoch} is {f1_score(y, y_pred)}")
 
-            elif self.verbose_ and problem_type == "Regression":
-                print(f"The MSE for epoch {epoch} is {mean_squared_error(y, y_pred)}")
+        elif self.verbose_ and problem_type == "Regression":
+            print(f"The MSE for epoch {epoch} is {mean_squared_error(y, y_pred)}")
 
         # Storing the weights, bias, activations
         self.weights_ = weights
