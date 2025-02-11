@@ -1,28 +1,22 @@
 """
-A script to simulate the artificial neural networks for classification.
+A script to simulate the artificial neural networks.
 
 Author: Harsh Parikh
 
 Date: 04-02-2024
 """
 
-import sys
 from typing import Tuple, List
 import numpy as np
 from numpy.typing import NDArray
-from sklearn.metrics import f1_score, mean_squared_error, log_loss
+from sklearn.metrics import f1_score, mean_squared_error, log_loss, r2_score
 
-from optimisation_modules.gradient_models import (
-    batch_gradient_descent,
-    mini_batch_gradient_descent,
-    stochastic_gradient_descent,
-)
 from optimisation_modules.activation_functions import Sigmoid, ReLU, Tanh, Softplus
 
 
 class NeuralNetworks:
     """
-    The main class to initialise the multilayer perceptron model for classification.
+    The main class to initialise the multilayer perceptron model.
 
     References:
     1. Deep Learning by Ian Goodfellow, Yoshua Bengio and Aaron Courville.
@@ -89,13 +83,81 @@ class NeuralNetworks:
         }
         self.activation_function_ = activation_functions[activation_function]
 
-        # Assigning the optimisation method
-        if self.optimiser_ == "batch":
-            self.optimiser_ = batch_gradient_descent
-        elif self.optimiser_ == "mini-batch":
-            self.optimiser_ = mini_batch_gradient_descent
-        else:
-            self.optimiser_ = stochastic_gradient_descent
+    def _compute_loss(self, y_true: NDArray, y_pred: NDArray) -> float:
+        """
+        Compute appropriate loss based on problem type.
+        """
+        if self.problem_type_ == "Classification":
+            y_pred_binary = np.where(y_pred >= 0.5, 1, 0)
+            return log_loss(y_true, y_pred_binary)
+
+        # Loss for classification
+        return mean_squared_error(y_true, y_pred)
+
+    def _compute_metric(self, y_true: NDArray, y_pred: NDArray) -> float:
+        """
+        This method evaluates the goodness of the fit for the neural network.
+        """
+        if self.problem_type_ == "Classification":
+            y_pred_binary = np.where(y_pred >= 0.5, 1, 0)
+            return f1_score(y_true, y_pred_binary)
+
+        # Loss for regression
+        return r2_score(y_true, y_pred)
+
+    def _batch_gradient_descent(self, X: NDArray, y: NDArray) -> None:
+        """
+        This method performs the batch gradient descent
+        """
+
+        # Calculating the z values and the activation
+        z_values, activations = self._forward_pass(X)
+
+        # Updating the gradients based on backpropogation
+        graidents = self._backpropogation(z_values, activations, y)
+
+        for j in range(len(self.weights_)):
+            self.weights_[j] -= self.learning_rate_ * graidents["weights"][j]
+            self.bias_[j] -= self.learning_rate_ * graidents["bias"][j]
+
+    def _mini_batch(self, X: NDArray, y: NDArray, batch_size: int = 32) -> None:
+        """
+        This method performs mini-batch gradient descent.
+        """
+
+        num_samples = y.shape[0]
+
+        # Processing the mini-batch
+        indices = np.random.permutation(num_samples)
+
+        # Shuffling the feature and target values based on index
+        X_shuffled = X[indices]
+        y_shuffled = y[indices]
+
+        for batch_start in range(0, X.shape[0], batch_size):
+
+            # This LOC prevents the index overflow
+            batch_end = min(batch_start + batch_size, num_samples)
+
+            X_batch = X_shuffled[batch_start:batch_end]
+            y_batch = y_shuffled[batch_start:batch_end]
+
+            # Calculating the z values and the activation
+            z_values, activations = self._forward_pass(X_batch)
+
+            # Updating the gradients based on backpropogation
+            graidents = self._backpropogation(z_values, activations, y_batch)
+
+            # Updating the weights and bias
+            for j in range(len(self.weights_)):
+
+                self.weights_[j] -= self.learning_rate_ * graidents["weights"][j]
+                self.bias_[j] -= self.learning_rate_ * graidents["bias"][j]
+
+    def _stochastic_gradient_descent(
+        self, X: NDArray, y: NDArray
+    ) -> None:  # Placeholder, to be implemented later.
+        """ """
 
     def _forward_pass(self, X: NDArray) -> Tuple[List[NDArray], List[NDArray]]:
         """
@@ -134,33 +196,38 @@ class NeuralNetworks:
             0
         ]  # The first activation is the input vectors.
 
+        gradients = {
+            "weights": [np.zeros_like(weight) for weight in self.weights_],
+            "bias": [np.zeros_like(bias) for bias in self.bias_],
+        }
         # Initialize delta for the output layer
         delta = None
 
         for i in reversed(range(len(self.weights_))):
             # At terminal node, the cost is calculated for backpropagation
             if i == (len(self.weights_) - 1):
-                # Calculating the loss at the final node
+                # Loss is given by :
+                # Loss = (a[L] - y)^2
+
+                # Calculating the derivative of the loss at the final node
                 difference = (2 / num_elements) * (activations[-1] - y.T)
 
                 # `delta` is the gradient of the loss with respect to z
                 delta = difference * self.activation_function_(z_values[i]).derivative()
             else:
-                # Backpropagate the error
+                # Backpropagate the error in the hidden layers.
                 delta = (
                     np.dot(self.weights_[i + 1].T, delta)
                     * self.activation_function_(z_values[i]).derivative()
                 )
 
             # Computing the weight gradients based on the chain rule
-            gradient_weight = np.dot(delta, activations[i].T)
+            gradients["weights"][i] = np.dot(delta, activations[i].T)
 
             # Computing the bias gradient based on the chain rule
-            gradient_bias = np.sum(delta, axis=1, keepdims=True)
+            gradients["bias"][i] = np.sum(delta, axis=1, keepdims=True)
 
-            # Updating the weights and the bias
-            self.weights_[i] -= self.learning_rate_ * gradient_weight
-            self.bias_[i] -= self.learning_rate_ * gradient_bias
+        return gradients
 
     def fit(self, X: NDArray, y: NDArray) -> None:
         """
@@ -190,18 +257,30 @@ class NeuralNetworks:
         )
 
         # Initialize weights and biases
-        self.weights_ = [
-            np.random.standard_normal((layer_size[i + 1], layer_size[i])) * s
-            for (i, s) in zip(range(len(layer_size) - 1), sigma)
-        ]
+        if self.activation_function_ == "relu":  # He initialisation for ReLU
+            self.weights_ = [
+                np.random.randn(layer_size[i + 1], layer_size[i])
+                * np.sqrt(2 / layer_size[i])
+                for i in range(len(layer_size) - 1)
+            ]
+        else:
+
+            # Xavier initialisation for other activation functions.
+            self.weights_ = [
+                np.random.standard_normal((layer_size[i + 1], layer_size[i])) * s
+                for (i, s) in zip(range(len(layer_size) - 1), sigma)
+            ]
+
         self.bias_ = [np.zeros((weight.shape[0], 1)) for weight in self.weights_]
 
         for epoch in range(self.num_epochs_):
             # Implementing forward pass in the neural network
-            z_values, activations = self._forward_pass(X)
 
-            # Implementing backpropagation
-            self._backpropogation(z_values=z_values, activations=activations, y=y)
+            if self.optimiser_ == "mini-batch":
+                _ = self._mini_batch(X=X, y=y)
+
+            elif self.optimiser_ == "batch":
+                _ = self._batch_gradient_descent(X=X, y=y)
 
             # Predicting the output for the current epoch
             y_pred = self.predict(X)
@@ -210,17 +289,16 @@ class NeuralNetworks:
             if self.problem_type_ == "Classification":
                 y_pred = np.where(y_pred >= 0.5, 1, 0)
                 loss = log_loss(y, y_pred)
+                # Printing the progress if verbose is True
+                if self.verbose_:
+                    print(f"The f1 score for epoch {epoch} is {f1_score(y, y_pred)}")
             else:
                 loss = mean_squared_error(y, y_pred)
+                if self.verbose_:
+                    print(f"The r2 for epoch {epoch} is {r2_score(y, y_pred)}")
 
             # Storing the loss history
             self.loss_history_.append(loss)
-
-            # Printing the progress if verbose is True
-            if self.verbose_ and self.problem_type_ == "Classification":
-                print(f"The f1 score for epoch {epoch} is {f1_score(y, y_pred)}")
-            elif self.verbose_ and self.problem_type_ == "Regression":
-                print(f"The MSE for epoch {epoch} is {mean_squared_error(y, y_pred)}")
 
     def predict(self, X: NDArray) -> NDArray:
         """
@@ -238,42 +316,5 @@ class NeuralNetworks:
         for w, b in zip(self.weights_, self.bias_):
             z = np.dot(w, activations) + b
             activations = self.activation_function_(z).forward()
-        return np.where(activations > 0.5, 1, 0).T
 
-
-if __name__ == "__main__":
-    # These modules will be used for validating the current implementation
-    from sklearn.datasets import make_classification
-    from sklearn.preprocessing import StandardScaler
-
-    from sklearn.metrics import classification_report
-    from sklearn.model_selection import train_test_split
-
-    feature_matrix, target_matrix = make_classification(
-        n_samples=1000,
-        n_features=3,
-        n_informative=2,
-        n_redundant=1,
-        n_clusters_per_class=1,
-        random_state=42,
-    )
-
-    # Standardising the features
-    scaler = StandardScaler()
-    feature_matrix = scaler.fit_transform(feature_matrix)
-
-    X_train, X_test, y_train, y_test = train_test_split(
-        feature_matrix, target_matrix, random_state=42
-    )
-
-    # Initialising the neural network model
-
-    network = NeuralNetworks(
-        num_layers=2, layer_sizes=4, activation_function="sigmoid", optimiser="batch"
-    )
-
-    network.fit(X_train, y_train)
-
-    y_pred = network.predict(X_test)
-
-    print(classification_report(y_test, y_pred))
+        return activations.T
