@@ -165,15 +165,19 @@ class NeuralNetworks:
         """
         activations = [X.T]  # The first activation is the input vectors itself
         z_values = []
-        for weight, bias in zip(self.weights_, self.bias_):
+        for itr, (weight, bias) in enumerate(zip(self.weights_, self.bias_)):
 
             # Computing the dot product
             z = np.dot(weight, activations[-1]) + bias
             z_values.append(z)
 
             # Activation = f(z)
-            activation = self.activation_function_(z).forward()
-            activations.append(activation)
+            if (itr == len(self.weights_) - 1) and self.problem_type_ == "Regression":
+                activations.append(z)
+            else:
+                activation = self.activation_function_(z).forward()
+                activations.append(activation)
+
         return z_values, activations
 
     def _backpropogation(
@@ -213,7 +217,13 @@ class NeuralNetworks:
                 difference = (2 / num_elements) * (activations[-1] - y.T)
 
                 # `delta` is the gradient of the loss with respect to z
-                delta = difference * self.activation_function_(z_values[i]).derivative()
+
+                if self.problem_type_ == "Regression":
+                    delta = difference  # Since the output node for regression does not have an activation function.
+                else:
+                    delta = (
+                        difference * self.activation_function_(z_values[i]).derivative()
+                    )
             else:
                 # Backpropagate the error in the hidden layers.
                 delta = (
@@ -313,8 +323,14 @@ class NeuralNetworks:
         NDArray: The predicted output.
         """
         activations = X.T
-        for w, b in zip(self.weights_, self.bias_):
+        for itr, (w, b) in enumerate(zip(self.weights_, self.bias_)):
+
             z = np.dot(w, activations) + b
+            # For regression, the output node needs to be a linear function.
+            if itr == (len(self.weights_) - 1) and self.problem_type_ == "Regression":
+                return z.flatten()
+
+            # For classification, all nodes require an activation function.
             activations = self.activation_function_(z).forward()
 
         return activations.T

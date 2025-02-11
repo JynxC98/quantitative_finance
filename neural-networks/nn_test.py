@@ -88,7 +88,7 @@ def main_regression():
     network.fit(X_train, y_train)
 
     # Making predictions
-    y_pred = network.predict(X_test)
+    y_pred = network.predict(X_test).reshape(-1, 1)
 
     # Converting predictions back to original scale
     y_pred_original = target_scaler.inverse_transform(y_pred)
@@ -106,4 +106,4 @@ def main_regression():
 
 
 if __name__ == "__main__":
-    make_classification()
+    main_regression()
