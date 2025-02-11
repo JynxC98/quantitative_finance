@@ -323,9 +323,9 @@ class NeuralNetworks:
         NDArray: The predicted output.
         """
         activations = X.T
-        for itr, (w, b) in enumerate(zip(self.weights_, self.bias_)):
+        for itr, (weight, bias) in enumerate(zip(self.weights_, self.bias_)):
 
-            z = np.dot(w, activations) + b
+            z = np.dot(weight, activations) + bias
             # For regression, the output node needs to be a linear function.
             if itr == (len(self.weights_) - 1) and self.problem_type_ == "Regression":
                 return z.flatten()
