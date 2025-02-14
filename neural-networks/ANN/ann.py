@@ -114,7 +114,7 @@ class NeuralNetworks:
         z_values, activations = self._forward_pass(X)
 
         # Updating the gradients based on backpropogation
-        graidents = self._backpropogation(z_values, activations, y)
+        graidents = self._backpropagation(z_values, activations, y)
 
         for j in range(len(self.weights_)):
             self.weights_[j] -= self.learning_rate_ * graidents["weights"][j]
@@ -146,7 +146,7 @@ class NeuralNetworks:
             z_values, activations = self._forward_pass(X_batch)
 
             # Updating the gradients based on backpropogation
-            graidents = self._backpropogation(z_values, activations, y_batch)
+            graidents = self._backpropagation(z_values, activations, y_batch)
 
             # Updating the weights and bias
             for j in range(len(self.weights_)):
@@ -157,7 +157,32 @@ class NeuralNetworks:
     def _stochastic_gradient_descent(
         self, X: NDArray, y: NDArray
     ) -> None:  # Placeholder, to be implemented later.
-        """ """
+        """
+        An implementation of stochastic gradient descent.
+        """
+        num_samples = y.shape[0]
+
+        # Shuffling the data
+        indices = np.random.permutation(num_samples)
+
+        # Reshaping to make sure that the matrix multiplication works properly
+        X_shuffled = X[indices].reshape(num_samples, -1)
+        y_shuffled = y[indices].reshape(num_samples, -1)
+
+        for i in range(num_samples):
+            feature_i = X_shuffled[i : i + 1]
+            target_i = y_shuffled[i : i + 1]
+
+            # Forward pass
+            z_values, activations = self._forward_pass(feature_i)
+
+            # Compute gradients
+            gradients = self._backpropagation(z_values, activations, target_i)
+
+            # Update weights and biases
+            for j in range(len(self.weights_)):
+                self.weights_[j] -= self.learning_rate_ * gradients["weights"][j]
+                self.bias_[j] -= self.learning_rate_ * gradients["bias"][j]
 
     def _forward_pass(self, X: NDArray) -> Tuple[List[NDArray], List[NDArray]]:
         """
@@ -180,7 +205,7 @@ class NeuralNetworks:
 
         return z_values, activations
 
-    def _backpropogation(
+    def _backpropagation(
         self,
         z_values: List[NDArray],
         activations: List[NDArray],
