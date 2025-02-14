@@ -156,7 +156,7 @@ class NeuralNetworks:
 
     def _stochastic_gradient_descent(
         self, X: NDArray, y: NDArray
-    ) -> None:  # Placeholder, to be implemented later.
+    ) -> None:  # Placeholder, do not use it for the time being.
         """
         An implementation of stochastic gradient descent.
         """

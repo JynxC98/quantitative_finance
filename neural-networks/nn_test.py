@@ -41,7 +41,7 @@ def main_classification():
         num_layers=2,
         layer_sizes=16,
         activation_function="tanh",
-        optimiser="mini-batch",
+        optimiser="mini-batch",  # Don't use the `sgd` method, not yet functional
     )
 
     network.fit(X_train, y_train)
