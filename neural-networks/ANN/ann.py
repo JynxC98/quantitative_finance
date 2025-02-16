@@ -114,11 +114,11 @@ class NeuralNetworks:
         z_values, activations = self._forward_pass(X)
 
         # Updating the gradients based on backpropogation
-        graidents = self._backpropagation(z_values, activations, y)
+        gradients = self._backpropagation(z_values, activations, y)
 
         for j in range(len(self.weights_)):
-            self.weights_[j] -= self.learning_rate_ * graidents["weights"][j]
-            self.bias_[j] -= self.learning_rate_ * graidents["bias"][j]
+            self.weights_[j] -= self.learning_rate_ * gradients["weights"][j]
+            self.bias_[j] -= self.learning_rate_ * gradients["bias"][j]
 
     def _mini_batch(self, X: NDArray, y: NDArray, batch_size: int = 32) -> None:
         """
@@ -146,13 +146,13 @@ class NeuralNetworks:
             z_values, activations = self._forward_pass(X_batch)
 
             # Updating the gradients based on backpropogation
-            graidents = self._backpropagation(z_values, activations, y_batch)
+            gradients = self._backpropagation(z_values, activations, y_batch)
 
             # Updating the weights and bias
             for j in range(len(self.weights_)):
 
-                self.weights_[j] -= self.learning_rate_ * graidents["weights"][j]
-                self.bias_[j] -= self.learning_rate_ * graidents["bias"][j]
+                self.weights_[j] -= self.learning_rate_ * gradients["weights"][j]
+                self.bias_[j] -= self.learning_rate_ * gradients["bias"][j]
 
     def _stochastic_gradient_descent(
         self, X: NDArray, y: NDArray
