@@ -221,9 +221,7 @@ class NeuralNetworks:
         y: The target values.
         """
         # Calculating the number of input vectors
-        num_elements = activations[0].shape[
-            0
-        ]  # The first activation is the input vectors.
+        num_elements = y.shape[0]
 
         gradients = {
             "weights": [np.zeros_like(weight) for weight in self.weights_],
