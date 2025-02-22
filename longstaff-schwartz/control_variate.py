@@ -206,6 +206,7 @@ def longstaff_schwartz(
         "mean_option_price": mean_option_price,
         "upper_limit": upper_limit,
         "lower_limit": lower_limit,
+        "std dev": np.std(cash_flows),
     }
 
 
