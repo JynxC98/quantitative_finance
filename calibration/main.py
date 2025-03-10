@@ -184,9 +184,7 @@ class CalibrateModel:
                 ]
             )
 
-            mse = np.sum((model_prices - option_prices) ** 2) / (
-                len(strikes) * len(maturities)
-            )
+            mse = np.mean((model_prices - option_prices) ** 2)
 
             # Adding a penalty for violating Feller's condition
             feller_violation = max(0, sigma**2 - 2 * kappa * theta)
