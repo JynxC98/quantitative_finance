@@ -60,7 +60,7 @@ map<string, double> getArithmeticOptionPrice(double spot,
             floating_sum += current_spot;
         }
 
-        double average_price = floating_sum / (N + 1);
+        double average_price = floating_sum / N;
         double payoff = isCall
                             ? max(average_price - strike, 0.0)
                             : max(strike - average_price, 0.0);
