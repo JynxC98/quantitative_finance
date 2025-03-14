@@ -1,6 +1,7 @@
 /**
  * @file arithmetic_asian_options.cpp
- * @brief A script to calculate the value of an arithmetic Asian option with a 95% confidence interval.
+ * @brief A script to calculate the value of an arithmetic Asian option with a
+ * 95% confidence interval.
  * @author Harsh Parikh
  */
 
@@ -50,7 +51,7 @@ map<string, double> getArithmeticOptionPrice(double spot,
     {
 
         double current_spot = spot;
-        double floating_sum = spot;
+        double floating_sum = 0;
 
         for (int t = 0; t < N; ++t)
         {
@@ -79,6 +80,7 @@ map<string, double> getArithmeticOptionPrice(double spot,
     map<string, double> results;
     // Discounted mean price
     results["Option Price"] = exp(-r * T) * mean_price;
+    results["Standard Deviation"] = stddev;
     results["Confidence Interval Lower Bound"] = exp(-r * T) * (mean_price - margin_of_error);
     results["Confidence Interval Upper Bound"] = exp(-r * T) * (mean_price + margin_of_error);
 
@@ -99,6 +101,7 @@ int main()
 
     // Print the results
     cout << "Option Price: " << result["Option Price"] << endl;
+    cout << " Standard Deviation " << result["Standard Deviation"] << endl;
     cout << "95% Confidence Interval: [" << result["Confidence Interval Lower Bound"]
          << ", " << result["Confidence Interval Upper Bound"] << "]" << endl;
 
