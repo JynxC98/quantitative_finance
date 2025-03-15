@@ -82,7 +82,7 @@ map<string, double> getArithmeticOptionPrice(double spot,
     }
 
     // Calculating the value of beta for the control variate.
-    double beta = calculateCovariance(average_final_price, payoff) / calculateVariance(payoff);
+    double beta = calculateCovariance(average_final_price, payoff) / calculateVariance(average_final_price);
 
     // Storing the updated payoff
     vector<double> updated_payoff(M, 0.0);
