@@ -84,8 +84,8 @@ vector<int> getArange(int min_element, int max_element)
  * @param integrand: The function to be integrated
  * @param N: The number of grid points
  */
-template <typename function>
-double getIntegralTrapezoidal(function integrand,
+template <typename Func>
+double getIntegralTrapezoidal(Func integrand,
                               double lower_limit,
                               double upper_limit,
                               int N)
@@ -103,9 +103,9 @@ double getIntegralTrapezoidal(function integrand,
                                                               // at the range points
 
     // This variable stores the floating sum of the integrand values
-    // from range 1 to N - 1
+    // from range 1 to N
     double floating_sum = 0.0;
-    for (int i = 1; i < N - 1; ++i)
+    for (int i = 1; i < N; ++i)
     {
         floating_sum += integrand(grid_points[i]);
     }

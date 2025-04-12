@@ -86,7 +86,7 @@ public:
      *
      * @return Value of the integrand
      */
-    double calculateIntegrand();
+    double calculateIntegrand(double epsilon);
 
     /**
      * @brief Calculate the integral compoment of the geometric Asian option price.
@@ -101,6 +101,7 @@ public:
      *
      * @return Price of the geometric Asian call option
      */
+    double GeomAsianCall();
 };
 
 complex<double> HestonPricer::calculatePSI(complex<double> s, double w)
@@ -157,4 +158,76 @@ complex<double> HestonPricer::calculatePSI(complex<double> s, double w)
 
     // Returning the final value of the psi function
     return exp(-a1 * (H_tilde / H) - a2 * log(H) + a3 * s + a4 * w + a5);
+}
+
+double HestonPricer ::calculateIntegrand(double epsilon)
+{
+
+    complex<double> s1(1.0, epsilon); // 1 + i*ε
+    complex<double> s2(0.0, epsilon); // i*ε
+    double w = 0.0;
+
+    // Calculating the A, B and C terms as per the literature
+
+    complex<double> A = calculatePSI(s1, w);
+    complex<double> B = calculatePSI(s2, w);
+    complex<double> C = exp(-s2 * log(K)) / (s2);
+
+    // Calculating the complex arithmetic
+
+    auto result = (A - K * B) * C;
+    return result.real();
+}
+
+double HestonPricer::calculateIntegral()
+{
+    // Evaluating the integral using the trapezoidal method
+    int lower_limit = 0; // Setting the lower limit to 0
+    int N = 10000;       // Setting the number of steps
+
+    // Lambda capturing `this` to call the member function
+    auto boundIntegrand = [this](double epsilon)
+    {
+        return this->calculateIntegrand(epsilon);
+    };
+
+    auto result = getIntegralTrapezoidal(boundIntegrand, lower_limit, upper_limit, N);
+    return result;
+}
+
+double HestonPricer ::GeomAsianCall()
+{
+
+    // Calculating the value of the call option as per the literature
+
+    complex<double> s(1.0, 0.0);
+    double w = 0.0;
+    complex<double> psi_val = calculatePSI(s, w);
+
+    double integral_part = calculateIntegral();
+    double call = exp(-r * T) * ((psi_val.real() - K) * 0.5 + (1.0 / M_PI) * integral_part);
+    return call;
+}
+
+int main()
+{
+
+    double S0 = 100.0;        // Initial stock price
+    double v0 = 0.09;         // Initial volatility
+    double sigma = 0.39;      // Volatility of volatility
+    double theta = 0.348;     // Long-term mean of volatility
+    double kappa = 1.15;      // Mean reversion rate
+    double rho = -0.64;       // Correlation
+    double r = 0.05;          // Risk-free rate
+    int n = 10;               // Number of terms in series expansion
+    double T = 0.2;           // Time to maturity
+    double K = 90.0;          // Strike
+    int upper_limit = 100000; // Upper limit for the integral
+
+    // Initiating the Heston pricing engine
+    HestonPricer pricer(S0, v0, theta, sigma, kappa, rho, r, n, T, K, upper_limit);
+
+    auto option_price = pricer.GeomAsianCall();
+
+    cout << option_price << endl;
 }
