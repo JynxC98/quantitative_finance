@@ -26,15 +26,14 @@ struct LegendreNode
  */
 vector<LegendreNode> legendreQuadratureTable()
 {
-    // Five-point Gauss-Legendre quadrature nodes and weights for interval [-1, 1]
-    return {
-        {0.0, 0.56888888889},
-        {-0.53846931010, 0.47862867049},
-        {0.53846931010, 0.47862867049},
+    static const vector<LegendreNode> table = {
         {-0.90617984594, 0.23692688505},
+        {-0.53846931010, 0.47862867049},
+        {0.0, 0.56888888889},
+        {0.53846931010, 0.47862867049},
         {0.90617984594, 0.23692688505}};
+    return table;
 }
-
 /**
  * @brief This function is used to calculate the area under the curve using Gauss-Legendre quadrature
  *
