@@ -212,17 +212,17 @@ double HestonPricer ::GeomAsianCall()
 int main()
 {
 
-    double S0 = 100.0;         // Initial stock price
-    double v0 = 0.09;          // Initial volatility
-    double sigma = 0.39;       // Volatility of volatility
-    double theta = 0.348;      // Long-term mean of volatility
-    double kappa = 1.15;       // Mean reversion rate
-    double rho = -0.64;        // Correlation
-    double r = 0.05;           // Risk-free rate
-    int n = 10;                // Number of terms in series expansion
-    double T = 0.2;            // Time to maturity
-    double K = 90.0;           // Strike
-    int upper_limit = 1000000; // Upper limit for the integral
+    double S0 = 100.0;    // Initial stock price
+    double v0 = 0.09;     // Initial volatility
+    double sigma = 0.39;  // Volatility of volatility
+    double theta = 0.348; // Long-term mean of volatility
+    double kappa = 1.15;  // Mean reversion rate
+    double rho = -0.64;   // Correlation
+    double r = 0.05;      // Risk-free rate
+    int n = 10;           // Number of terms in series expansion
+    double T = 0.2;       // Time to maturity
+    double K = 90.0;      // Strike
+    int upper_limit = 50; // Upper limit for the integral
 
     // Initiating the Heston pricing engine
     HestonPricer pricer(S0, v0, theta, sigma, kappa, rho, r, n, T, K, upper_limit);
