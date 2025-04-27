@@ -53,17 +53,17 @@ double legendreIntegrate(Func func, double lower_limit, double upper_limit)
     double half_length = 0.5 * (upper_limit - lower_limit);
     double center = 0.5 * (upper_limit + lower_limit);
 
-    // Perform the Gauss-Legendre integration
+    // Performing the Gauss-Legendre integration
     for (const auto &node : nodes)
     {
-        // Map the nodes from [-1, 1] to [lower_limit, upper_limit]
+        // Mapping the nodes from [-1, 1] to [lower_limit, upper_limit]
         double x_mapped = center + half_length * node.x;
 
-        // Accumulate the weighted results
+        // Adding the elements
         result += node.w * func(x_mapped);
     }
 
-    // Scale the result by the half-length of the interval
+    // Scaling the result by the half-length of the interval
     return half_length * result;
 }
 
