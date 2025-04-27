@@ -184,7 +184,6 @@ double HestonPricer::calculateIntegral()
 {
     // Evaluating the integral using the trapezoidal method
     int lower_limit = 0; // Setting the lower limit to 0
-    int N = 10000;       // Setting the number of steps
 
     // Lambda capturing `this` to call the member function
     auto boundIntegrand = [this](double epsilon)
@@ -232,15 +231,3 @@ int main()
 
     cout << option_price << endl;
 }
-// price = geometric_asian_call(
-//     S0=100,  # Initial stock price
-//     v0=0.09,  # Initial volatility
-//     sigma=0.39,  # Volatility of volatility
-//     theta=0.348,  # Long-term mean of volatility
-//     kappa=1.15,  # Mean reversion rate
-//     rho=-0.64,  # Correlation
-//     r=0.05,  # Risk-free rate
-//     n=10,  # Number of terms in series expansion
-//     T=0.2,  # Time to maturity
-//     K=90,  # Strike price
-// )
