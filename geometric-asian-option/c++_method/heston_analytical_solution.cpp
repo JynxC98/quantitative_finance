@@ -14,7 +14,7 @@
 #include <vector>
 #include <complex>
 #include <cmath>
-#include "helper_functions.h"
+#include "helper_functions.hpp"
 #include "gauss_legendre.hpp"
 
 using namespace std;

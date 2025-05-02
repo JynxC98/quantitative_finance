@@ -115,20 +115,5 @@ double getIntegralTrapezoidal(Func integrand,
 
     return required_value;
 }
-/**
- * @brief This function calculates the integral of a function using Gaussian
- * quadrature method
- *
- * @param upper_limit: The upper limit of the integral
- * @param lower_limit: The lower limit of the integral
- * @param integrand: The function to be integrated
- * @param N: The number of grid points
- */
-template <typename Func>
-double getIntegralGuassianQuadrature(Func integrand,
-                                     double upper_limit,
-                                     double lower_limit,
-                                     int N)
-{
-}
+
 #endif
