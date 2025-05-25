@@ -1,6 +1,7 @@
 """
 Codes related to fetching option data and other calculations 
 """
+
 from collections import defaultdict
 import numpy as np
 import pandas as pd
@@ -8,7 +9,15 @@ from scipy.stats import norm
 from scipy.optimize import brentq
 import yfinance as yf
 
-def get_strike_price_pivot_table(ticker, maturity_min=0.1, maturity_max=2, moneyness_min=0.95, moneyness_max=1.2, option_type="call"):
+
+def get_strike_price_pivot_table(
+    ticker,
+    maturity_min=0.1,
+    maturity_max=2,
+    moneyness_min=0.95,
+    moneyness_max=1.2,
+    option_type="call",
+):
     """
     Generate a pivot table of option strike prices for a given ticker.
 
@@ -34,7 +43,8 @@ def get_strike_price_pivot_table(ticker, maturity_min=0.1, maturity_max=2, money
 
     today = pd.Timestamp.today()
     valid_maturities = [
-        mat for mat in option_data.options
+        mat
+        for mat in option_data.options
         if maturity_min < (pd.to_datetime(mat) - today).days / 365 < maturity_max
     ]
 
@@ -49,8 +59,8 @@ def get_strike_price_pivot_table(ticker, maturity_min=0.1, maturity_max=2, money
         ttm = (pd.to_datetime(maturity) - today).days / 365
 
         valid_strikes = chain[
-            (chain["strike"] >= moneyness_min * spot_price) &
-            (chain["strike"] <= moneyness_max * spot_price)
+            (chain["strike"] >= moneyness_min * spot_price)
+            & (chain["strike"] <= moneyness_max * spot_price)
         ]
 
         for strike in valid_strikes["strike"]:
@@ -59,20 +69,25 @@ def get_strike_price_pivot_table(ticker, maturity_min=0.1, maturity_max=2, money
         valid_strikes["TTM"] = ttm
         all_data.append(valid_strikes[["strike", "lastPrice", "TTM"]])
 
-    common_strikes = {strike for strike, freq in strikes_freq.items() if freq == len(valid_maturities)}
+    common_strikes = {
+        strike for strike, freq in strikes_freq.items() if freq == len(valid_maturities)
+    }
 
     combined_data = pd.concat(all_data, ignore_index=True)
     combined_data = combined_data[combined_data["strike"].isin(common_strikes)]
 
-    pivot_table = combined_data.pivot_table(index="TTM", columns="strike", values="lastPrice", fill_value=0)
+    pivot_table = combined_data.pivot_table(
+        index="TTM", columns="strike", values="lastPrice", fill_value=0
+    )
 
     data = {
         "Pivot Table": pivot_table,
         "Valid Maturities": valid_maturities,
-        "spot_price": spot_price
+        "spot_price": spot_price,
     }
 
     return data
+
 
 def calculate_option_price(
     spot_price,
@@ -151,7 +166,7 @@ def bsm_implied_volatility(spot, strike, risk_free, tau, market_price):
         If the root-finding algorithm fails to converge within the specified bounds.
     """
     low, high = 1e-4, 5.0
-    
+
     def objective_function(imp_vol):
         """
         Define the objective function for root-finding.
@@ -169,6 +184,8 @@ def bsm_implied_volatility(spot, strike, risk_free, tau, market_price):
         float
             The difference between Black-Scholes and Heston prices.
         """
-        return (calculate_option_price(spot, strike, tau, risk_free, imp_vol) - market_price)
-    
+        return (
+            calculate_option_price(spot, strike, tau, risk_free, imp_vol) - market_price
+        )
+
     return brentq(lambda x: objective_function(x), a=low, b=high)

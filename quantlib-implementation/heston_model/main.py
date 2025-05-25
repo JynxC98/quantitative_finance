@@ -1,6 +1,8 @@
 """
 Calibration of Heston model using Quantlib.
 Refer this site for documentation: https://www.quantlib.org/docs.shtml
+
+Author: Harsh Parikh
 """
 
 from datetime import datetime
@@ -77,9 +79,9 @@ class QuantlibCalibration:
         strikes = pivot_table.columns.values
         option_prices = pivot_table.values
 
-        # Second argument below gives us the statistics of the curve fit, not required 
-        # for the current implementation. 
-    
+        # Second argument below gives us the statistics of the curve fit, not required
+        # for the current implementation.
+
         curve_fit, _ = calibrate_nss_ols(self.yield_maturities, self.yields)
 
         # Converting the percentage values to absolute values
@@ -96,9 +98,9 @@ class QuantlibCalibration:
         # The expiration date is in the form of YYYY-MM-DD
         expiration_dates = [
             ql.Date(
-                int(date.split("-")[2]), # Extracting year
-                int(date.split("-")[1]), # Extracting month
-                int(date.split("-")[0]), # Extracting day
+                int(date.split("-")[2]),  # Extracting year
+                int(date.split("-")[1]),  # Extracting month
+                int(date.split("-")[0]),  # Extracting day
             )
             for date in valid_maturities
         ]
@@ -341,7 +343,7 @@ class QuantlibCalibration:
 
 
 if __name__ == "__main__":
-    # Fetched from 
+    # Fetched from
     # https://home.treasury.gov/resource-center/data-chart-center/interest-rates/TextView?type=daily_treasury_yield_curve&field_tdr_date_value_month=202409
     YIELDS = np.array(
         [5.47, 5.48, 5.52, 5.46, 5.40, 5.16, 4.87, 4.62, 4.48, 4.47, 4.47, 4.68, 4.59]
