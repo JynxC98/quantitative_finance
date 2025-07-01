@@ -1,21 +1,31 @@
-MIT License
+Custom Open License – Non-Commercial Variant
 
-Copyright (c) 2023 HARSH PARIKH
+Copyright (c) 2023–2025 HARSH PARIKH
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files `quantitative_finance`, to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+of this software and associated documentation files ("quantitative_finance"), 
+to use, copy, modify, merge, publish, and distribute the Software for 
+**personal, educational, or research purposes**, subject to the following conditions:
 
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
+1. **Commercial Restrictions**:  
+   - You may not sell, sublicense, or charge for access to this Software or any derivative works.
+   - You may not use this Software as part of a paid course, tutorial, or educational content offering.
+   - You may not bundle, distribute, or embed this Software in any product or service intended for sale, rent, or subscription without the author's prior written permission.
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
+2. **Attribution**:  
+   - The above copyright notice and this permission notice shall 
+     be included in all copies or substantial portions of the Software.
+
+3. **No Warranty**:  
+   - THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, 
+     EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES 
+     OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. 
+     IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY CLAIM, DAMAGES, OR OTHER LIABILITY, 
+     WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF, 
+     OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+If you wish to use this Software commercially or in a monetized context, 
+please contact the author to obtain explicit permission.
+
+Author: Harsh Parikh  
+Date: July 1, 2025
