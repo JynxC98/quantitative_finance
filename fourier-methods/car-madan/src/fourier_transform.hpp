@@ -99,7 +99,7 @@ ComplexVec<T> discrete_fourier_transform(const ComplexVec<T> &input)
     {
         // Evaluating the complex numerator and denominator
         std::complex<double> num(0, 1.0);
-        auto frequency = (2 * M_PI * num) / (double)n;
+        auto frequency = (2 * M_PI * num * (double)i) / (double)n;
 
         // Calculating the root of nth degree of unity
         auto omega = exp(frequency);
@@ -182,7 +182,7 @@ inverse_fourier_transform(const ComplexVec<T> &input)
     {
         // Evaluating the complex numerator and denominator
         std::complex<double> num(0, 1.0);
-        auto frequency = -(2 * M_PI * num) / (double)n;
+        auto frequency = -(2 * M_PI * num * (double)i) / (double)n;
 
         // Calculating the root of nth degree of unity
         auto omega = exp(frequency) / (double)n;
