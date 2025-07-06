@@ -38,3 +38,16 @@ std::vector<double> getLinSpace(double lower_val, double upper_val, int N)
 
     return grid_points;
 }
+
+/**
+ * @brief This function calculates the next greatest power of 2 using the
+ * bitwise left shift operator.
+ */
+int next_power_of_two(int n)
+{
+    int res = 1;
+    while (res < n)
+        res <<= 1; // This code shifts the bit to the left until the
+                   // power of two is greater than the input number.
+    return res;
+}

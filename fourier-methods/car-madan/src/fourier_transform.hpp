@@ -80,7 +80,7 @@ ComplexVec<T> discrete_fourier_transform(const ComplexVec<T> &input)
     }
 
     // Splitting into even and odd indices
-    std::vector<std::complex<double>>
+    std::vector<std::complex<T>>
         even(n / 2),
         odd(n / 2);
 
@@ -93,15 +93,15 @@ ComplexVec<T> discrete_fourier_transform(const ComplexVec<T> &input)
     auto odd_transformed = discrete_fourier_transform(odd);
 
     // Initialising the grid for the transformed inputs
-    std::vector<std::complex<double>> result(n);
+    std::vector<std::complex<T>> result(n);
 
     for (int i = 0; i < n / 2; ++i)
     {
         // Evaluating the complex numerator and denominator
         std::complex<double> num(0, 1.0);
-        auto frequency = (2 * M_PI * num * (double)i) / (double)n;
+        auto frequency = -2 * M_PI * num * static_cast<T>(i) / static_cast<T>(n);
 
-        // Calculating the root of nth degree of unity
+        // Calculating the nth root of unity
         auto omega = exp(frequency);
 
         result[i] = even_transformed[i] + omega * odd_transformed[i];
@@ -145,7 +145,7 @@ ComplexVec<T> discrete_fourier_transform(const ComplexVec<T> &input)
 template <typename T>
 
 ComplexVec<T>
-inverse_fourier_transform(const ComplexVec<T> &input)
+ifft_recursive(const ComplexVec<T> &input)
 {
     // Checking the number of elements in the input vector
     int n = input.size();
@@ -163,7 +163,7 @@ inverse_fourier_transform(const ComplexVec<T> &input)
     }
 
     // Splitting into even and odd indices
-    std::vector<std::complex<double>>
+    std::vector<std::complex<T>>
         even(n / 2),
         odd(n / 2);
 
@@ -172,23 +172,51 @@ inverse_fourier_transform(const ComplexVec<T> &input)
         even[i] = input[2 * i];
         odd[i] = input[2 * i + 1];
     }
-    auto even_transformed = inverse_fourier_transform(even);
-    auto odd_transformed = inverse_fourier_transform(odd);
+    auto even_transformed = ifft_recursive(even);
+    auto odd_transformed = ifft_recursive(odd);
 
     // Initialising the grid for the transformed inputs
-    std::vector<std::complex<double>> result(n);
+    std::vector<std::complex<T>> result(n);
 
     for (int i = 0; i < n / 2; ++i)
     {
         // Evaluating the complex numerator and denominator
         std::complex<double> num(0, 1.0);
-        auto frequency = -(2 * M_PI * num * (double)i) / (double)n;
+        auto frequency = (2 * M_PI * num * static_cast<T>(i)) / static_cast<T>(n);
 
         // Calculating the root of nth degree of unity
-        auto omega = exp(frequency) / (double)n;
+        auto omega = exp(frequency);
 
-        result[i] = even_transformed[i] + omega * odd_transformed[i];
-        result[i + n / 2] = even_transformed[i] - omega * odd_transformed[i];
+        // The results are required to be scaled
+        result[i] = (even_transformed[i] + omega * odd_transformed[i]);
+        result[i + n / 2] = (even_transformed[i] - omega * odd_transformed[i]);
+    }
+
+    return result;
+}
+
+/**
+ * @brief Computes the Inverse Discrete Fourier Transform (IDFT) by scaling the output
+ *        of the recursive inverse FFT.
+ *
+ * This function wraps the `ifft_recursive` implementation and applies the necessary
+ * normalization factor \( 1/N \) to each element of the result, ensuring that the
+ * inverse transform adheres to the standard IDFT definition.
+ *
+ * @param input A vector of complex numbers representing the frequency-domain signal.
+ * @return A vector of complex numbers representing the scaled time-domain reconstruction.
+ */
+
+template <typename T>
+ComplexVec<T> inverse_fourier_transform(ComplexVec<T> &input)
+{
+    // Fetching the time-domain signal
+
+    auto result = ifft_recursive(input);
+    int n = result.size();
+    for (auto &element : result)
+    {
+        element /= static_cast<T>(n);
     }
     return result;
 }
