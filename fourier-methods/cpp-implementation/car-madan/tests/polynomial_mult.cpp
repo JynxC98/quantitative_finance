@@ -75,6 +75,37 @@ std::vector<std::complex<double>> multiply_polynomials(const std::vector<double>
     return C_time;
 }
 
+/**
+ * @brief The brute force method of polynomial multiplication.
+ * @param poly_A A vector representing the coefficients of the first polynomial,
+ *               in ascending order of degree (i.e., poly_A[i] corresponds to x^i).
+ * @param poly_B A vector representing the coefficients of the second polynomial,
+ *               also in ascending order of degree.
+ *
+ * @return A vector representing polynomial multiplication
+ */
+
+std::vector<double> naive_multiplication(const std::vector<double> &poly_A,
+                                         const std::vector<double> &poly_B)
+{
+    // Calculating the resultant size
+    int result_size = poly_A.size() + poly_B.size() - 1; // Accounting for indexing
+
+    // Initialising the resultant vector
+    std::vector<double> result(result_size, 0.0);
+
+    // Multipying polynomials
+    for (int i = 0; i < poly_A.size(); ++i)
+    {
+        for (int j = 0; j < poly_B.size(); ++j)
+        {
+            result[i + j] += poly_A[i] * poly_B[j];
+        }
+    }
+
+    return result;
+}
+
 int main()
 {
     // Initialising dummy vectors
@@ -87,12 +118,24 @@ int main()
     auto result = multiply_polynomials(poly_A, poly_B);
 
     // Printing the result (real-part)
-    std::cout << "Resultant Coefficients: \n";
+    std::cout << "Resultant Coefficients FFT: \n";
     for (int i = 0; i < result_size; ++i) // The iteration will only be carried
                                           // till the result size as the rest
                                           // of the elements would be 0.
     {
         std::cout << round(result[i].real()) << " ";
     }
+    std::cout << std::endl;
+
+    // Printing the results for naive method
+    auto result_naive = naive_multiplication(poly_A, poly_B);
+    std::cout << "Resultant coefficients naive method: \n";
+    for (int i = 0; i < result_size; ++i) // The iteration will only be carried
+                                          // till the result size as the rest
+                                          // of the elements would be 0.
+    {
+        std::cout << result_naive[i] << " ";
+    }
+
     return 0;
 }
