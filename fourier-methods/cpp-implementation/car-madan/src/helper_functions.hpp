@@ -51,3 +51,36 @@ int next_power_of_two(int n)
                    // power of two is greater than the input number.
     return res;
 }
+
+/**
+ * @brief This function is used to calculate the value of the call option
+ * based on the required strike price, array of strikes, and call option outputs.
+ * (Completely generated using ChatGPT)
+ *
+ * @param K: The required strike price
+ * @param strikes: The vector of strikes
+ * @param call_prices: The vector of call options
+ */
+double linear_interpolate(double K,
+                          const std::vector<double> &strikes,
+                          const std::vector<double> &prices)
+{
+    // Bounds check
+    if (K <= strikes.front())
+        return prices.front();
+    if (K >= strikes.back())
+        return prices.back();
+
+    // Binary search for index such that: strikes[i] <= K < strikes[i+1]
+    auto upper = std::upper_bound(strikes.begin(), strikes.end(), K);
+    size_t idx = std::distance(strikes.begin(), upper) - 1;
+
+    double x0 = strikes[idx];
+    double x1 = strikes[idx + 1];
+    double y0 = prices[idx];
+    double y1 = prices[idx + 1];
+
+    // Linear interpolation formula
+    double weight = (K - x0) / (x1 - x0);
+    return y0 + weight * (y1 - y0);
+}

@@ -91,18 +91,18 @@ Complex<T> psi(double alpha,
                double r,
                double sigma,
                double S0,
-               double T,
+               double TT,
                double t = 0)
 {
     // Evaluating the characteristic function term
-    Complex<T> i(0.0, 1.0);                                           // Complex number
-    Complex<T> u_modified = u - i * (alpha + 1);                      // Modified frequency variable
-    auto char_term = bsm_characteristic_function(u, r, sigma, S0, T); // Characteristic function
+    Complex<T> i(0.0, 1.0);                                                    // Complex number
+    Complex<T> u_modified = u - i * (alpha + 1);                               // Modified frequency variable
+    auto char_term = bsm_characteristic_function(u_modified, r, sigma, S0, T); // Characteristic function
 
     // Initialising numerator and denominator terms
     Complex<T> numerator, denominator;
 
-    numerator = exp(-r * T) * char_term;                           // Calculating the numerator
+    numerator = exp(-r * TT) * char_term;                          // Calculating the numerator
     denominator = alpha * alpha - u * u + i * (2 * alpha + 1) * u; // Calculating the denominator
 
     return numerator / denominator;
