@@ -84,3 +84,48 @@ double linear_interpolate(double K,
     double weight = (K - x0) / (x1 - x0);
     return y0 + weight * (y1 - y0);
 }
+/**
+ * @brief Computes the price of a European call or put option using the Black-Scholes formula.
+ *
+ * This function implements the closed-form Black-Scholes model under risk-neutral assumptions.
+ * It calculates the fair price of a European-style call or put option on a non-dividend-paying asset.
+ *
+ * @param S       Spot price of the underlying asset (S₀)
+ * @param K       Strike price of the option
+ * @param sigma   Volatility of the underlying asset (annualized)
+ * @param r       Risk-free interest rate (annualized, continuously compounded)
+ * @param T       Time to maturity (in years)
+ * @param isCall  If true, returns the price of a call option; otherwise, returns the price of a put
+ *
+ * @return The Black-Scholes price of the option
+ */
+
+double BlackScholesPrice(double S,
+                         double K,
+                         double sigma,
+                         double r,
+                         double T,
+                         bool isCall = true)
+{
+    // Guard against zero maturity or volatility
+    if (T <= 0 || sigma <= 0)
+    {
+        if (isCall)
+            return std::max(0.0, S - K);
+        else
+            return std::max(0.0, K - S);
+    }
+
+    double d1 = (std::log(S / K) + (r + 0.5 * sigma * sigma) * T) / (sigma * std::sqrt(T));
+    double d2 = d1 - sigma * std::sqrt(T);
+
+    auto N = [](double x)
+    {
+        return 0.5 * std::erfc(-x / std::sqrt(2.0)); // CDF of standard normal
+    };
+
+    if (isCall)
+        return S * N(d1) - K * std::exp(-r * T) * N(d2);
+    else
+        return K * std::exp(-r * T) * N(-d2) - S * N(-d1);
+}

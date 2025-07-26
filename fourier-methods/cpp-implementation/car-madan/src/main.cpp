@@ -29,23 +29,20 @@
  * @param r        Risk-free interest rate (annualized)
  * @param T        Time to maturity (in years)
  * @param t        Current time (typically 0.0)
- * @param isCall   Set to true for call options, false for puts (currently not used in FFT logic)
  * @param dv       Frequency domain spacing (Δv); controls integration resolution
  * @param N        Number of grid points (must be a power of 2 for FFT efficiency)
  * @param alpha    Damping factor α > 0 to ensure square-integrability of the payoff transform
  *
  * @return The computed option price for the specified strike.
  */
-
 double CarMadanFourierEngine(double spot,
                              double strike,
                              double sigma,
                              double r,
                              double T,
-                             double t = 0.0,
-                             bool isCall = true,
-                             double dv = 0.25,
                              int N,
+                             double t = 0.0,
+                             double dv = 0.25,
                              double alpha = 0.25)
 {
 
@@ -115,4 +112,32 @@ double CarMadanFourierEngine(double spot,
     auto price = linear_interpolate(strike, strikes, call_price_output);
 
     return price;
+}
+
+int main()
+{
+    // Option properties
+    double spot = 100.0;
+    double strike = 110.0;
+    double T = 1.0;
+    double sigma = 0.25;
+    double r = 0.035;
+
+    // Car Madan engine properties
+    double alpha = 0.25;
+    double N = pow(2, 12);
+
+    // Calculating the Carr-Madan price
+    double carr_madan_price = CarMadanFourierEngine(spot, strike, sigma, r, T, N);
+
+    // Calculating the BSM Price
+    double bsm_price = BlackScholesPrice(spot, strike, sigma, r, T);
+
+    // Printing the Carr-Madan price
+    std::cout << "The Carr-Madan price is " << carr_madan_price << std::endl;
+
+    // Printing the Black-Scholes price
+    std::cout << "The Black-Scholes price is " << bsm_price << std::endl;
+
+    return 0;
 }

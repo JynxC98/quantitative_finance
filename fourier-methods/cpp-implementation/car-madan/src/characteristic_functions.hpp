@@ -39,7 +39,7 @@ using Complex = std::complex<T>;
  * @param r     Risk-free interest rate
  * @param sigma Volatility of the underlying asset
  * @param S0    Initial spot price of the underlying
- * @param T     Time to maturity
+ * @param TT     Time to maturity
  * @param t     Initial time (typically 0)
  *
  * @return The complex-valued characteristic function φ(u) of log(S_T)
@@ -50,14 +50,14 @@ Complex<T> bsm_characteristic_function(Complex<T> u,
                                        double r,
                                        double sigma,
                                        double S0,
-                                       double T,
+                                       double TT,
                                        double t = 0)
 {
     // Initialising the complex number
     Complex<T> i(0.0, 1.0);
 
     // Calculating the `phi` term of the characteristic function
-    Complex<double> phi = exp(i * u * log(S0) + (r - 0.5 * sigma * sigma * (T - t) - 0.5 * sigma * sigma * u * u * (T - t)));
+    Complex<double> phi = exp(i * u * log(S0) + (r - 0.5 * sigma * sigma * (TT - t) - 0.5 * sigma * sigma * u * u * (TT - t)));
 
     return phi;
 }
@@ -95,9 +95,9 @@ Complex<T> psi(double alpha,
                double t = 0)
 {
     // Evaluating the characteristic function term
-    Complex<T> i(0.0, 1.0);                                                    // Complex number
-    Complex<T> u_modified = u - i * (alpha + 1);                               // Modified frequency variable
-    auto char_term = bsm_characteristic_function(u_modified, r, sigma, S0, T); // Characteristic function
+    Complex<T> i(0.0, 1.0);                                                     // Complex number
+    Complex<T> u_modified = u - i * (alpha + 1);                                // Modified frequency variable
+    auto char_term = bsm_characteristic_function(u_modified, r, sigma, S0, TT); // Characteristic function
 
     // Initialising numerator and denominator terms
     Complex<T> numerator, denominator;
