@@ -61,6 +61,48 @@ Complex<T> bsm_characteristic_function(Complex<T> u,
 
     return phi;
 }
+/**
+ * @brief Computes the Heston characteristic function for log-asset price.
+ *
+ * This function returns the characteristic function φ(u) = E[e^{iu log(S_T)}]
+ * under the Heston stochastic volatility model. It is used in Fourier-based
+ * option pricing methods, particularly in the Carr–Madan framework.
+ *
+ * @param u     Complex frequency variable (usually shifted externally as u - i(α + 1))
+ * @param r     Risk-free interest rate
+ * @param sigma Volatility of the volatility (Heston model parameter)
+ * @param S0    Initial spot price of the underlying
+ * @param TT    Time to maturity
+ * @param t     Initial time (typically 0)
+ * @param v0    Initial variance (Heston model parameter)
+ * @param kappa Heston mean reversion speed
+ * @param theta Heston long-term variance level
+ * @param rho   Heston correlation between the asset and its volatility
+ *
+ * @return The complex-valued characteristic function φ(u) of log(S_T)
+ */
+template <typename T>
+Complex<T> heston_characteristic_function(Complex<T> u,
+                                          double r,
+                                          double sigma,
+                                          double S0,
+                                          double TT,
+                                          double v0,
+                                          double kappa,
+                                          double theta,
+                                          double rho,
+                                          double t = 0)
+{
+    // Initialising the complex number
+    Complex<T> i(0.0, 1.0);
+
+    // Heston characteristic function formula
+    Complex<T> phi = exp(i * u * (log(S0) + (r - 0.5 * v0) * (TT - t)) +
+                         (v0 / (sigma * sigma)) * ((kappa - rho * sigma * u) * (1 - exp(-kappa * (TT - t))) / (kappa + rho * sigma * u) -
+                                                   rho * sigma * u * (exp(-kappa * (TT - t)) - 1)));
+
+    return phi;
+}
 
 /**
  * @brief Computes the Carr–Madan integrand Ψ(u) for Fourier option pricing.
