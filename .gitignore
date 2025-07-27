@@ -173,3 +173,20 @@ Release/
 # Ignoring the CPP files
 test.cpp
 .gitignore
+
+# Adding binary files
+# Ignore common C++ compiled binaries
+*.o
+*.out
+*.exe
+*.obj
+*.a
+*.so
+*.dll
+*.lib
+
+# Ignore binaries without extensions (like ./test or ./main)
+test
+main
+build/
+bin/
