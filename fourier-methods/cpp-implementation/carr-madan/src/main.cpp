@@ -41,9 +41,9 @@ double CarMadanFourierEngine(double spot,
                              double r,
                              double T,
                              int N,
+                             double alpha,
                              double t = 0.0,
-                             double dv = 0.25,
-                             double alpha = 0.25)
+                             double dv = 0.3)
 {
 
     // Creating the grid points for the frequency domain
@@ -119,11 +119,11 @@ int main()
     double r = 0.035;
 
     // Car Madan engine properties
-    double alpha = 10;
-    double N = 1 << 8;
+    double alpha = 1;
+    double N = 1 << 15; // Using a power of 2 for FFT efficiency
 
     // Calculating the Carr-Madan price
-    double carr_madan_price = CarMadanFourierEngine(spot, strike, sigma, r, T, N);
+    double carr_madan_price = CarMadanFourierEngine(spot, strike, sigma, r, T, N, alpha);
 
     // Calculating the BSM Price
     double bsm_price = BlackScholesPrice(spot, strike, sigma, r, T);
