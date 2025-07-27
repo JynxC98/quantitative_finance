@@ -1,6 +1,10 @@
 /**
  * @file main.cpp
- * @brief The main script to price options using Car-Madan FFT technique.
+ * @brief Option pricing engine using the Carr-Madan Fast Fourier Transform method.
+ * This implementation provides a high-performance option pricing framework based on the
+ * Carr-Madan (1999) Fourier transform approach. The method leverages characteristic
+ * functions and FFT algorithms to efficiently compute option prices across multiple
+ * strikes simultaneously
  *
  * @author Harsh Parikh
  * @date 19th July 2025

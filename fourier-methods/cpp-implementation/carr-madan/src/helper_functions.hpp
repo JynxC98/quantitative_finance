@@ -55,7 +55,6 @@ int next_power_of_two(int n)
 /**
  * @brief This function is used to calculate the value of the call option
  * based on the required strike price, array of strikes, and call option outputs.
- * (Completely generated using ChatGPT)
  *
  * @param K: The required strike price
  * @param strikes: The vector of strikes
