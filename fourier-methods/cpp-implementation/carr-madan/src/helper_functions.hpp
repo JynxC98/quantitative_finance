@@ -6,6 +6,7 @@
 
 #include <iostream>
 #include <vector>
+#include <cmath>
 
 /**
  * @brief This function creates a linspace between two values
@@ -116,16 +117,16 @@ double BlackScholesPrice(double S,
             return std::max(0.0, K - S);
     }
 
-    double d1 = (std::log(S / K) + (r + 0.5 * sigma * sigma) * T) / (sigma * std::sqrt(T));
-    double d2 = d1 - sigma * std::sqrt(T);
+    double d1 = (log(S / K) + (r + 0.5 * sigma * sigma) * T) / (sigma * sqrt(T));
+    double d2 = d1 - sigma * sqrt(T);
 
     auto N = [](double x)
     {
-        return 0.5 * std::erfc(-x / std::sqrt(2.0)); // CDF of standard normal
+        return 0.5 * erfc(-x / sqrt(2.0)); // CDF of standard normal
     };
 
     if (isCall)
-        return S * N(d1) - K * std::exp(-r * T) * N(d2);
+        return S * N(d1) - K * exp(-r * T) * N(d2);
     else
-        return K * std::exp(-r * T) * N(-d2) - S * N(-d1);
+        return K * exp(-r * T) * N(-d2) - S * N(-d1);
 }
