@@ -84,6 +84,7 @@ double linear_interpolate(double K,
     double weight = (K - x0) / (x1 - x0);
     return y0 + weight * (y1 - y0);
 }
+
 /**
  * @brief Computes the price of a European call or put option using the Black-Scholes formula.
  *

@@ -57,7 +57,7 @@ Complex<T> bsm_characteristic_function(Complex<T> u,
     Complex<T> i(0.0, 1.0);
 
     // Calculating the `phi` term of the characteristic function
-    Complex<double> phi = exp(i * u * log(S0) + (r - 0.5 * sigma * sigma * (TT - t) - 0.5 * sigma * sigma * u * u * (TT - t)));
+    Complex<T> phi = exp(i * u * (log(S0) + (r - 0.5 * sigma * sigma) * (TT - t)) - 0.5 * sigma * sigma * u * u * (TT - t));
 
     return phi;
 }
@@ -70,7 +70,7 @@ Complex<T> bsm_characteristic_function(Complex<T> u,
  * recover option prices via inverse Fourier transform (typically implemented with FFT).
  *
  * The formula is given by:
- *    Ψ(u) = [e^{-rT} * φ(u - i(α + 1))] / [α^2 + α - u^2 + i(2α + 1)u]
+ *    Ψ(u) = [φ(u - i(α + 1))] / [α^2 + α - u^2 + i(2α + 1)u]
  *
  * where:
  *    - φ(u) is the characteristic function of log(S_T)
@@ -102,8 +102,8 @@ Complex<T> psi(double alpha,
     // Initialising numerator and denominator terms
     Complex<T> numerator, denominator;
 
-    numerator = char_term;                                         // Calculating the numerator
-    denominator = alpha * alpha - u * u + i * (2 * alpha + 1) * u; // Calculating the denominator
+    numerator = char_term;                                                 // Calculating the numerator
+    denominator = alpha * alpha + alpha - u * u + i * (2 * alpha + 1) * u; // Calculating the denominator
 
     return numerator / denominator;
 }
