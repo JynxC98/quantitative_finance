@@ -125,7 +125,7 @@ int main()
 
     // Car Madan engine properties
     double alpha = 0.25;
-    double N = pow(2, 12);
+    double N = pow(2, 2);
 
     // Calculating the Carr-Madan price
     double carr_madan_price = CarMadanFourierEngine(spot, strike, sigma, r, T, N);

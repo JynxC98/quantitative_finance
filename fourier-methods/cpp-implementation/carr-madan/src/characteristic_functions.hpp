@@ -102,7 +102,7 @@ Complex<T> psi(double alpha,
     // Initialising numerator and denominator terms
     Complex<T> numerator, denominator;
 
-    numerator = exp(-r * TT) * char_term;                          // Calculating the numerator
+    numerator = char_term;                                         // Calculating the numerator
     denominator = alpha * alpha - u * u + i * (2 * alpha + 1) * u; // Calculating the denominator
 
     return numerator / denominator;
