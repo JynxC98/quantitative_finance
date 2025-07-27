@@ -86,9 +86,6 @@ double CarMadanFourierEngine(double spot,
         psi_grid[j] = exp(-r * (T - t)) * dv * psi(alpha, v_mod, r, sigma, spot, T) * exp(i * b * v) * w;
     }
 
-    // // Feeding the psi_grid to the FFT engine
-    // auto fourier_rep = discrete_fourier_transform(psi_grid);
-
     // Fetching the complex representation of the call prices vector
     auto call_prices = discrete_fourier_transform(psi_grid);
 
