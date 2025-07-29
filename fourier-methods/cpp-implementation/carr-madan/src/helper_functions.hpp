@@ -4,7 +4,11 @@
  * @author Harsh Parikh
  */
 
+#if !defined(HELPER_FUNCTIONS_HPP)
+#define HELPER_FUNCTIONS_HPP
+
 #include <iostream>
+#include <algorithm>
 #include <vector>
 #include <cmath>
 
@@ -130,3 +134,5 @@ double BlackScholesPrice(double S,
     else
         return K * exp(-r * T) * N(-d2) - S * N(-d1);
 }
+
+#endif

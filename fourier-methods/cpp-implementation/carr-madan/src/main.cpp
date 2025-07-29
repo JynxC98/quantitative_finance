@@ -15,7 +15,7 @@
 #include <complex>
 #include <cmath>
 #include "characteristic_functions.hpp"
-#include <helper_functions.hpp>
+#include "helper_functions.hpp"
 #include "fourier_transform.hpp"
 
 /**
