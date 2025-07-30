@@ -104,7 +104,6 @@ double linear_interpolate(double K,
  *
  * @return The Black-Scholes price of the option
  */
-
 double BlackScholesPrice(double S,
                          double K,
                          double sigma,
