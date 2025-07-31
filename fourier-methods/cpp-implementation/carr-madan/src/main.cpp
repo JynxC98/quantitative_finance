@@ -13,6 +13,7 @@
 #include <iostream>
 #include <vector>
 #include <complex>
+#include <algorithm>
 #include <cmath>
 #include "characteristic_functions.hpp"
 #include "helper_functions.hpp"
@@ -90,7 +91,7 @@ double CarMadanFourierEngine(double spot,
         psi_grid[j] = exp(-r * (T - t)) * dv * psi(alpha, v_mod, r, sigma, spot, T) * exp(i * b * v) * w;
     }
 
-    // Fetching the complex representation of the call prices vector
+    // Fetching the complex-valued call prices (via FFT of psi grid)
     auto call_prices = discrete_fourier_transform(psi_grid);
 
     // Calculating the call prices
@@ -134,6 +135,9 @@ int main()
 
     // Printing the Black-Scholes price
     std::cout << "The Black-Scholes price is " << bsm_price << std::endl;
+
+    // Printing the error
+    std::cout << "Pricing error " << std::abs(bsm_price - carr_madan_price) << std::endl;
 
     return 0;
 }

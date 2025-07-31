@@ -8,6 +8,8 @@
  * Carr–Madan framework, where characteristic functions are transformed
  * to obtain option values efficiently.
  *
+ * @ref https://cp-algorithms.com/algebra/fft.html
+ *
  * @author Harsh Parikh
  * @date July 1, 2025
  */

@@ -39,7 +39,7 @@ def carr_madan_fourier_engine(spot, strike, sigma, r, T, N, alpha, dv=0.3, t=0):
     The computed option price for the specified strike.
     """
     # Creating grid points for the frequency domain
-    freq_grid_pts = np.arange(0, N) * dv
+    freq_grid_pts = dv * np.arange(0, N).astype(np.complex128)
 
     # Creating log-strike spacing
     dk = 2 * np.pi / (N * dv)  # Nyquist-Shannon condition to avoid aliasing
@@ -51,23 +51,26 @@ def carr_madan_fourier_engine(spot, strike, sigma, r, T, N, alpha, dv=0.3, t=0):
     # Computing the `Psi` grid
     psi_grid = np.zeros((N), dtype=np.complex128)
 
-    for i in range(N):
-        # Trapezoidal rule for integration weight based on index `i`
-        w = 0.5 if (i == 0 or i == N - 1) else 1.0
+    # Computing the trapezoidal weights
+    weights = np.ones((N))
+    weights[0] = 0.5  # Weight corresponding to index `0`
+    weights[-1] = 0.5  # Weight corresponding to index `N-1`
 
-        # Fetching the frequency grid point
-        v = freq_grid_pts[i]
+    # Calculating the Psi grid
+    psi_inputs = (
+        r,
+        sigma,
+        spot,
+        T,
+    )  # The order of the parameters should match the corresponding characteristic function's input
 
-        # Calculating the value of the characteristic function
-        psi_inputs = (r, sigma, spot, T)
-
-        psi_grid[i] = (
-            np.exp(-r * (T - t))
-            * dv
-            * psi(alpha, v, bsm_characteristic_function, psi_inputs)
-            * np.exp(1j * b * v)
-            * w
-        )
+    psi_grid = (
+        np.exp(-r * (T - t))
+        * dv
+        * psi(alpha, freq_grid_pts, bsm_characteristic_function, psi_inputs)
+        * np.exp(1j * b * freq_grid_pts)
+        * weights
+    )
 
     # Reverting the complex representation of the call prices vector
     call_prices = np.fft.fft(psi_grid)
@@ -87,7 +90,7 @@ if __name__ == "__main__":
 
     # Option properties
     spot = 100
-    strike = 100
+    strike = 110
     T = 1.0
     sigma = 0.25
     r = 0.035
@@ -107,3 +110,6 @@ if __name__ == "__main__":
 
     # Printing the BSM price
     print(f"The BSM price is {bsm_price}")
+
+    # Printing the pricing error
+    print(f"Pricing error: {np.absolute(bsm_price - carr_madan_price)}")
