@@ -12,7 +12,9 @@ from analytical_solutions import bsm_option_price
 from fourier_methods import psi
 
 
-def carr_madan_fourier_engine(spot, strike, sigma, r, T, N, alpha, dv=0.3, t=0):
+def carr_madan_fourier_engine(
+    spot, strike, sigma, r, T, N, alpha, dv=0.3, t=0, option_type="call"
+):
     """
     Computes the price of a European option using the Carr-Madan FFT method.
 
@@ -33,11 +35,17 @@ def carr_madan_fourier_engine(spot, strike, sigma, r, T, N, alpha, dv=0.3, t=0):
     dv: Frequency domain spacing
     N: Number of grid points (must be a power of 2)
     alpha: Damping factor
+    option_type: Call or put
 
     Returns
     -------
     The computed option price for the specified strike.
     """
+
+    # Initial check
+    if option_type not in ("put", "call"):
+        raise ValueError("Please select one from `put` or `call`")
+
     # Creating grid points for the frequency domain
     freq_grid_pts = dv * np.arange(0, N).astype(np.complex128)
 
@@ -83,7 +91,12 @@ def carr_madan_fourier_engine(spot, strike, sigma, r, T, N, alpha, dv=0.3, t=0):
 
     price = np.interp(strike, strikes, call_price_output)
 
-    return price
+    if option_type == "call":
+        return price
+
+    # Pricing put options using the put-call parity
+    else:
+        return price - (spot - strike * np.exp(-r * (T - t)))
 
 
 if __name__ == "__main__":

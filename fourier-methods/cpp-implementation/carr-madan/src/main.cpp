@@ -37,6 +37,7 @@
  * @param dv       Frequency domain spacing (Δv); controls integration resolution
  * @param N        Number of grid points (must be a power of 2 for FFT efficiency)
  * @param alpha    Damping factor α > 0 to ensure square-integrability of the payoff transform
+ * @param isCall   The option type, true for call, false for put (default = true)
  *
  * @return The computed option price for the specified strike.
  */
@@ -48,7 +49,8 @@ double CarMadanFourierEngine(double spot,
                              int N,
                              double alpha,
                              double t = 0.0,
-                             double dv = 0.3)
+                             double dv = 0.3,
+                             bool isCall = true)
 {
 
     // Creating the grid points for the frequency domain
@@ -108,7 +110,10 @@ double CarMadanFourierEngine(double spot,
     // Calculating the required price of the call option
     auto price = linear_interpolate(strike, strikes, call_price_output);
 
-    return price;
+    // Calculating the put option price using put-call parity
+    auto result = isCall ? price : price - (spot - strike * exp(-r * (T - t)));
+
+    return result;
 }
 
 int main()
