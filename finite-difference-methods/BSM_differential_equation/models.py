@@ -3,9 +3,11 @@ A Python script to perform finite difference analysis.
 """
 
 import numpy as np
+from numba import jit
 from scipy.stats import norm
 
 
+@jit(nopython=True)
 def black_scholes_merton(S, K, T, r, sigma, option_type="call"):
     """
     Calculate the price of a European option using the Black-Scholes-Merton formula.
@@ -37,6 +39,7 @@ def black_scholes_merton(S, K, T, r, sigma, option_type="call"):
     return price
 
 
+@jit(nopython=True)
 def explicit_scheme(Smax, K, T, r, sigma, M, N, option_type="call"):
     """
     Implement the explicit finite difference scheme for option pricing.
@@ -107,6 +110,7 @@ def explicit_scheme(Smax, K, T, r, sigma, M, N, option_type="call"):
     return grid, S_values
 
 
+@jit(nopython=True)
 def implicit_scheme(Smax, K, T, r, sigma, M, N, option_type="call"):
     """
     Implement the implicit finite difference scheme for option pricing.
@@ -182,6 +186,7 @@ def implicit_scheme(Smax, K, T, r, sigma, M, N, option_type="call"):
     return grid, S_values
 
 
+@jit(nopython=True)
 def thomas_algorithm(a, b, c, d):
     """
     The code has been referenced from this post:
