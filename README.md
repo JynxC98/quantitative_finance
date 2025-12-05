@@ -1,24 +1,27 @@
 # Quantitative Finance Portfolio
-- **Name**: Harsh Parikh
-- **Education**: 
-   1. MSc Quantitative Finance, University of Glasgow
-   1. B.E Mechanical Engineering, University of Mumbai
-- **Email**: parikh.harsh.hp@gmail.com
-- **LinkedIn**: [Harsh Parikh](https://www.linkedin.com/in/harsh-parikh-417ba2167/)
+
+**Name:** Harsh Parikh  
+**Email:** parikh.harsh.hp@gmail.com  
+**LinkedIn:** [Harsh Parikh](https://www.linkedin.com/in/harsh-parikh-417ba2167/)
+
+## Education
+- MSc in Quantitative Finance, University of Glasgow  
+- B.E. in Mechanical Engineering, University of Mumbai  
+
 ## About Me
-I am a Quantitative Finance graduate with a keen interest in computational mathematics and finance. My academic background and projects are targeted towards quantitative methods, financial modeling, and programming.
+I’m interested in quantitative finance, computational methods, and building models that help explain financial markets. This repository collects the projects I have worked on, ranging from option pricing to portfolio theory and numerical modeling. Each project focuses on applying mathematical ideas through code.
 
 ## Skills
-- Computational Mathematics/ Finance
-- Mathematical Modelling
-- Machine Learning
-- Programming Languages: Python, C++, Java, MATLAB
-- Version Control: Git
+- Quantitative finance and numerical methods  
+- Mathematical modeling  
+- Machine learning  
+- Programming: Python, C++, MATLAB, Java  
+- Version control with Git  
 
 ## Repository Structure
-Each project is contained in its own directory with a dedicated README file explaining the concept, methodology, and implementation details.
+Each project is organized in its own folder with a short README explaining the idea, the methods used, and how to run the code.
 
 ## Contact
-Feel free to reach out to me for collaborations or questions about my work in quantitative finance.
+If you would like to discuss any of the projects or collaborate, feel free to reach out.
 
-Harsh Parikh
+**Harsh Parikh**
