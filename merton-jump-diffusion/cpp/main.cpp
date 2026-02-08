@@ -66,6 +66,12 @@ std::map<std::string, double> CalculateOptionPrice(const MertonJumpDiffusion &p,
 
     // Developing the overall grid
     std::vector<std::vector<double>> grid(M, std::vector<double>(N, 0.0));
+
+    // Generating Normal distribution
+    std::normal_distribution norm(0.0, 1.0);
+
+    // Generating Poission's distribution
+    std::poisson_distribution poisson(p.lambdaJ * dt);
     // Populating the grid
     for (int m = 0; m < M; ++m)
     {
@@ -91,11 +97,8 @@ std::map<std::string, double> CalculateOptionPrice(const MertonJumpDiffusion &p,
 
             // Calculating the random variables
             // Generating the Brownian increment.
-            std::normal_distribution norm(0.0, 1.0);
-            double dZ = norm(rng);
 
-            // Generating the Poission's increment
-            std::poisson_distribution poisson(p.lambdaJ * dt);
+            double dZ = norm(rng);
 
             // Calculating the number of Jumps
             int num_jumps = poisson(rng);
