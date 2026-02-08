@@ -44,7 +44,7 @@ T normcdf(T x)
 template <typename T>
 T calculateOptionPrice(T spot, T strike, T ttm, T r, T q, T sigma, bool isCall)
 {
-    T d1 = (log(spot / strike) + (r + 0.5 * pow(sigma, 2)) * T) / (sigma * sqrt(ttm));
+    T d1 = (log(spot / strike) + (r + 0.5 * pow(sigma, 2)) * ttm) / (sigma * sqrt(ttm));
     T d2 = d1 - sigma * sqrt(ttm);
 
     T option_value;
@@ -52,8 +52,8 @@ T calculateOptionPrice(T spot, T strike, T ttm, T r, T q, T sigma, bool isCall)
     // As per the option pricing theory, the value of the spot price decreases by
     // the dividend amount to ensure no arbitrage pricing takes place.
 
-    option_value = isCall ? (spot * exp(-q * ttm) * normcdf(d1) - strike * exp(-r * T) * normcdf(d2))
-                          : (strike * exp(-r * T) * normcdf(-d2) - spot * exp(-q * ttm) * normcdf(-d1));
+    option_value = isCall ? (spot * exp(-q * ttm) * normcdf(d1) - strike * exp(-r * ttm) * normcdf(d2))
+                          : (strike * exp(-r * ttm) * normcdf(-d2) - spot * exp(-q * ttm) * normcdf(-d1));
 
     return option_value;
 }

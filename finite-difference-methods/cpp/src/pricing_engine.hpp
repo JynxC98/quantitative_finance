@@ -69,7 +69,7 @@ private:
     std::string exercise_type;
 
 public:
-    PricingEngine(T spot, T strike, T ttm, T r, T sigma, int M, int N, bool isCall, string exercise_type)
+    PricingEngine(T spot, T strike, T ttm, T r, T sigma, T q, int M, int N, bool isCall, std::string exercise_type)
     {
         this->spot = spot;
         this->strike = strike;
@@ -103,8 +103,7 @@ public:
      *
      * @return The value of the option.
      */
-    T computePrice(const std::vector<vector<T>> &option_grid,
-                   const std::vector<T> &spot_vals);
+    T computePrice();
 
     /**
      * @brief Computes delta: the first derivative of option price with respect to spot price.
@@ -117,7 +116,7 @@ public:
      *
      * @return The delta of the option.
      */
-    T computeDelta(const std::vector<vector<T>> &option_grid,
+    T computeDelta(const std::vector<std::vector<T>> &option_grid,
                    const std::vector<T> &spot_vals);
 
     /**
@@ -131,7 +130,7 @@ public:
      *
      * @return The gamma of the option.
      */
-    T computeGamma(const std::vector<vector<T>> &option_grid,
+    T computeGamma(const std::vector<std::vector<T>> &option_grid,
                    const std::vector<T> &spot_vals);
     /**
      * @brief Computes rho: the sensitivity of option price to changes in the risk-free rate.
@@ -145,7 +144,7 @@ public:
      *
      * @return The rho of the option.
      */
-    T computeRho(const std::vector<vector<T>> &option_grid,
+    T computeRho(const std::vector<std::vector<T>> &option_grid,
                  const std::vector<T> &spot_vals);
 
     /**
@@ -160,7 +159,7 @@ public:
      *
      * @return The vega of the option.
      */
-    T computeVega(const std::vector<vector<T>> &option_grid,
+    T computeVega(const std::vector<std::vector<T>> &option_grid,
                   const std::vector<T> &spot_vals);
 };
 
@@ -187,7 +186,7 @@ std::pair<std::vector<std::vector<T>>, std::vector<T>> PricingEngine<T>::getOpti
     std::vector<std::vector<T>> grid(M + 1, std::vector<T>(N + 1, 0.0));
 
     // Fetching the equidistant spot values
-    auto spot_grid = getEquidistantGrid(M, 0, spot_max); // Assuming the minimum spot would be zero
+    auto spot_grid = getEquidistantGrid(M, 0.0, spot_max); // Assuming the minimum spot would be zero
 
     // Setting up the terminal conditions
     for (int i = 0; i <= M; ++i)
@@ -199,7 +198,7 @@ std::pair<std::vector<std::vector<T>>, std::vector<T>> PricingEngine<T>::getOpti
         grid[i][N] = value;
     }
     // Setting up the boundary conditions.
-    auto time_grid = getEquidistantGrid(N, 0, ttm); // ensure this returns N+1 points [0..N]
+    auto time_grid = getEquidistantGrid(N, 0.0, ttm); // ensure this returns N+1 points [0..N]
 
     for (int i = 0; i <= N; ++i)
     {
@@ -244,7 +243,7 @@ std::pair<std::vector<std::vector<T>>, std::vector<T>> PricingEngine<T>::getOpti
     // Avoiding the boundary values for calculating the coefficients
     for (int i = 1; i < M; ++i)
     {
-        auto current_spot = spot_grid[i]; // Spot value at index i  // FIX: was spot[i]
+        auto current_spot = spot_grid[i]; // Spot value at index i
 
         // Coefficient for V_{n+1, i-1}
         a[i - 1] = 0.5 * dt * (sigma * sigma * (current_spot * current_spot / (dS * dS)) - (r - q) * (current_spot / dS));
@@ -264,19 +263,19 @@ std::pair<std::vector<std::vector<T>>, std::vector<T>> PricingEngine<T>::getOpti
         // Setting up the RHS of the linear system
         for (int i = 1; i < M; ++i)
         {
-            rhs[i - 1] = -grid[i][n + 1]; // consistent with sign convention in b
+            rhs[i - 1] = -grid[i][n + 1];
         }
         // Adjusting the boundary conditions in the RHS
         // FIX: use rhs (not d), and correct indices (first and last interior rows)
         rhs[0] -= a[0] * grid[0][n];
-        rhs[M - 2] -= c[M - 2] * grid[M][n];
+        rhs[rhs.size() - 1] -= c[c.size() - 1] * grid[M][n];
 
         // Using the Thomas algorithm to solve the tridiagonal system
         auto solution = thomas_algorithm(a, b, c, rhs);
 
         // This loop is to compare the intrinsic value with the present value
         // in the event of an American option exercise type.
-        for (int i = 1; i < M; ++i)
+        for (int i = 1; i <= M; ++i)
         {
             auto tau = ttm - time_grid[n];
 
@@ -294,6 +293,31 @@ std::pair<std::vector<std::vector<T>>, std::vector<T>> PricingEngine<T>::getOpti
         }
     }
     return {grid, spot_grid};
+}
+template <typename T>
+T PricingEngine<T>::computePrice()
+{
+    auto result = this->getOptionGrid();
+    auto &option_grid = result.first;
+    auto &spot_vals = result.second;
+    // Lambda function to find the index of the closest spot value to the current spot
+    auto findClosestSpotIndex = [spot_vals, this]() -> size_t
+    {
+        // Use std::min_element with a custom comparator to find the closest spot value
+        auto it = std::min_element(spot_vals.begin(), spot_vals.end(),
+                                   [this](const T &a, const T &b)
+                                   {
+                                       return std::abs(a - this->spot) < std::abs(b - this->spot);
+                                   });
+
+        return std::distance(spot_vals.begin(), it);
+    };
+
+    // Finding the index of the closest spot value
+    size_t spot_index = findClosestSpotIndex();
+
+    // Returning the price at time 0 (column 0) for the closest spot value
+    return option_grid[spot_index][0];
 }
 
 #endif

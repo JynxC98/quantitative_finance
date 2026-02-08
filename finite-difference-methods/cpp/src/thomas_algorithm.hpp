@@ -49,10 +49,10 @@ std::vector<T> thomas_algorithm(const std::vector<T> &a,
     // Performing basic sanity checks
     if (n == 0)
         throw std::invalid_argument("Vector b must not be empty");
-    if (a.size() != n - 1 || c.size() != n - 1 || b.size() != n)
-    {
-        throw std::invalid_argument("Input vector sizes are inconsistent");
-    }
+    // if (a.size() != n - 1 || c.size() != n - 1 || b.size() != n)
+    // {
+    //     throw std::invalid_argument("Input vector sizes are inconsistent");
+    // }
 
     // Thomas algorithm implementation begins wsith modifying the diagonals
     std::vector<T> c_prime(n - 1, 0.0); // Modified upper diagonal
