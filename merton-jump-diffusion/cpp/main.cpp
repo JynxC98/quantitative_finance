@@ -134,16 +134,16 @@ std::map<std::string, double> CalculateOptionPrice(const MertonJumpDiffusion &p,
         mean += delta / (m + 1);
         M2 += delta * (payoff - mean);
     }
+    double discounted_mean = mean * std::exp(-p.r * p.T);
+
     double variance = M2 / (M - 1);
     double std_dev = std::sqrt(variance);
     double std_error = std_dev / std::sqrt(M);
 
-    double left_error = mean - 1.96 * std_error;
-    double right_error = mean + 1.96 * std_error;
+    double left_error = discounted_mean - 1.96 * std_error;
+    double right_error = discounted_mean + 1.96 * std_error;
 
     std::map<std::string, double> results;
-
-    double discounted_mean = mean * std::exp(-p.r * p.T);
 
     results["Mean Price"] = discounted_mean;
     results["Std Dev"] = std_dev;
