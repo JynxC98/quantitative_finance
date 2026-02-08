@@ -44,8 +44,7 @@ struct MertonJumpDiffusion
 /**
  * @brief The main function to calculate the price of an option using the
  * Merton's JD framework. The price of the call option is calculated under the risk-
- * neutral framework. The price of the put option will be calculated as per the
- * put-call parity. The functions takes in the following parameters:
+ * neutral framework. The functions takes in the following parameters:
  * @param p: The struct input of the MJD parameters
  * @param M: The number of Monte-Carlo paths
  * @param N: The number of time steps
@@ -53,9 +52,105 @@ struct MertonJumpDiffusion
  * @returns The value of the underlying option.
  */
 
-long CalculateOptionPrice(const MertonJumpDiffusion &p, int M, int N, bool isCall)
+std::map<std::string, double> CalculateOptionPrice(const MertonJumpDiffusion &p, int M, int N, bool isCall)
 {
-    return 0.0;
+    // Initializing the random number generator.
+    std::random_device dev;
+    std::mt19937 rng(dev());
+
+    // Calculating the time step
+    double dt = p.T / static_cast<double>(N);
+
+    // Calculating the value of `k`term
+    double k = std::exp(p.muJ + 0.5 * p.sigmaJ * p.sigmaJ) - 1;
+
+    // Developing the overall grid
+    std::vector<std::vector<double>> grid(M, std::vector<double>(N, 0.0));
+    // Populating the grid
+    for (int m = 0; m < M; ++m)
+    {
+        // Calculating the drift of the path.
+        // The drift will remain the same throughout the paths.
+        auto drift = (p.r - 0.5 * (p.sigma * p.sigma) - p.lambdaJ * k) * dt;
+
+        for (int n = 0; n < N; ++n)
+        {
+
+            double previous_spot_log;
+
+            if (n == 0)
+            {
+                // Storing the log-evolution of the underlying spot
+                previous_spot_log = std::log(p.spot);
+            }
+            else
+            {
+                previous_spot_log = grid[m][n - 1]; // Fetching the spot price from
+                                                    // the previous iteration.
+            }
+
+            // Calculating the random variables
+            // Generating the Brownian increment.
+            std::normal_distribution norm(0.0, 1.0);
+            double dZ = norm(rng);
+
+            // Generating the Poission's increment
+            std::poisson_distribution poisson(p.lambdaJ * dt);
+
+            // Calculating the number of Jumps
+            int num_jumps = poisson(rng);
+
+            // Calculating the `Y_t`term
+            double Y_t = 0.0;
+
+            for (int i = 0; i < num_jumps; ++i)
+            {
+                // Log-normal jump distribution
+
+                std::normal_distribution dJ(p.muJ, p.sigmaJ);
+
+                double jump = dJ(rng);
+                Y_t += jump;
+            }
+
+            grid[m][n] = previous_spot_log + drift + p.sigma * std::sqrt(dt) * dZ + Y_t;
+        }
+    }
+
+    // Fetching the payoff
+
+    double mean = 0.0;
+    double M2 = 0.0; // sum of squared deviations
+
+    for (int m = 0; m < M; ++m)
+    {
+        double final_price = std::exp(grid[m][N - 1]);
+
+        double payoff = isCall
+                            ? std::max(final_price - p.strike, 0.0)
+                            : std::max(p.strike - final_price, 0.0);
+
+        double delta = payoff - mean;
+        mean += delta / (m + 1);
+        M2 += delta * (payoff - mean);
+    }
+    double variance = M2 / (M - 1);
+    double std_dev = std::sqrt(variance);
+    double std_error = std_dev / std::sqrt(M);
+
+    double left_error = mean - 1.96 * std_error;
+    double right_error = mean + 1.96 * std_error;
+
+    std::map<std::string, double> results;
+
+    double discounted_mean = mean * std::exp(-p.r * p.T);
+
+    results["Mean Price"] = discounted_mean;
+    results["Std Dev"] = std_dev;
+    results["Left error"] = left_error;
+    results["Right error"] = right_error;
+
+    return results;
 }
 
 int main()
@@ -76,9 +171,12 @@ int main()
 
     MertonJumpDiffusion params = {spot, strike, T, r, sigma, muJ, sigmaJ, lambdaJ};
 
-    auto option_price = CalculateOptionPrice(params, M, N, isCall);
+    auto results = CalculateOptionPrice(params, M, N, isCall);
 
-    std::cout << option_price << std::endl;
+    for (const auto &[key, value] : results)
+    {
+        std::cout << key << ": " << value << std::endl;
+    }
 
     return 0;
 }
