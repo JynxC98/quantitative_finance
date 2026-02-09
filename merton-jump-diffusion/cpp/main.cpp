@@ -17,6 +17,8 @@
 #include <cmath>
 #include <map>
 
+#include "helper.hpp"
+
 /**
  * @brief This structure acts as a skeleton for the framework of the overall Jump-
  * Diffusion model. The parameters are as follows:
@@ -180,6 +182,10 @@ int main()
     {
         std::cout << key << ": " << value << std::endl;
     }
+
+    double bs_price = BlackScholesPrice(spot, strike, r, sigma, T, isCall);
+
+    std::cout << "BSM theoretical price is " << bs_price << std::endl;
 
     return 0;
 }

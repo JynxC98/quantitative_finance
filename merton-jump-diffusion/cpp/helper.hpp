@@ -53,4 +53,44 @@ std::vector<double> createEquidistantGrid(double lower, double upper, std::size_
     return grid;
 }
 
+/**
+ * @brief This function calculates the theoretical value of the Black-Scholes
+ * option contract. The input parameters are as follows:
+ * @param spot: The current spot price
+ * @param strike: The pre-determined strike
+ * @param r: Risk-free rate
+ * @param sigma: The volatility of the underlying
+ * @param T: Time to maturity
+ * @param isCall: True for call and false for put
+ */
+double BlackScholesPrice(
+    double spot,
+    double strike,
+    double r,
+    double sigma,
+    double T,
+    bool isCall)
+{
+
+    // Generating the Normal CDF
+    auto N = [](double x)
+    {
+        return 0.5 * std::erfc(-x / std::sqrt(2));
+    };
+
+    // Calculating d1 and d2
+    double d1 = (std::log(spot / strike) + (r + 0.5 * sigma * sigma) * T) / sigma * std::sqrt(T);
+
+    double d2 = d1 - std::sqrt(T) * sigma;
+
+    // The sign is 1 for call option and -1 for put option. This is to ensure that
+    // no if-else clause is used.
+
+    int sign = isCall ? 1 : -1;
+
+    double price = sign * spot * N(sign * d1) - sign * strike * std::exp(-r * T) * N(sign * -d2);
+
+    return price;
+}
+
 #endif
