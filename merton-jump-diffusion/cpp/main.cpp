@@ -163,13 +163,13 @@ int main()
     double T = 1.0;
     double r = 0.045;
     double sigma = 0.25;
-    double muJ = 0.05;
+    double muJ = -0.05;
     double sigmaJ = 0.15;
-    double lambdaJ = 1;
+    double lambdaJ = 0.0;
 
     // Functional parameters for the `CalculateOptionPrice` method
-    int M = 5000;
-    int N = 5000;
+    int M = 100000;
+    int N = 100;
     bool isCall = true;
 
     MertonJumpDiffusion params = {spot, strike, T, r, sigma, muJ, sigmaJ, lambdaJ};
