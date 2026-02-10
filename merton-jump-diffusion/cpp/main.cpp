@@ -72,6 +72,9 @@ std::map<std::string, double> CalculateOptionPrice(const MertonJumpDiffusion &p,
     // Generating Normal distribution
     std::normal_distribution norm(0.0, 1.0);
 
+    // Log-normal jump distribution
+    std::normal_distribution dJ(p.muJ, p.sigmaJ);
+
     // Generating Poission's distribution
     std::poisson_distribution poisson(p.lambdaJ * dt);
     // Populating the grid
@@ -110,9 +113,6 @@ std::map<std::string, double> CalculateOptionPrice(const MertonJumpDiffusion &p,
 
             for (int i = 0; i < num_jumps; ++i)
             {
-                // Log-normal jump distribution
-
-                std::normal_distribution dJ(p.muJ, p.sigmaJ);
 
                 double jump = dJ(rng);
                 Y_t += jump;
