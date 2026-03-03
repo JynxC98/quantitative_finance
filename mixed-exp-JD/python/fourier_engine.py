@@ -60,7 +60,7 @@ def psi(alpha, u, char_func, params, t=0.0):
 
 
 def carr_madan_fourier_engine(
-    spot, strike, sigma, r, T, N, char_func, alpha, dv=0.25, t=0, option_type="call"
+    spot, strike, sigma, r, T, N, char_func, alpha, dv=0.3, t=0, option_type="call"
 ):
     """
     Computes the price of a European option using the Carr-Madan FFT method.

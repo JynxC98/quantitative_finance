@@ -93,9 +93,9 @@ def calculate_price_med(spot, strike, sigma, r, T, option_type, **params):
 
     # Fetching the MEM parameters
 
-    lambda_ = params.get("lambda_", 2)
+    lambda_ = params.get("lambda_", 3)
 
-    assert lambda_ > 0 and np.isreal(
+    assert lambda_ >= 0 and np.isreal(
         lambda_
     ), "The value of lambda must be positive and real"
 
@@ -211,7 +211,17 @@ if __name__ == "__main__":
     sigma = 0.3
     r = 0.05
     T = 1.0
-    lambda_ = 3
     option_type = "call"
 
-print(calculate_price_med(spot, strike, sigma, r, T, option_type))
+    ## MEM parameters
+    params = {
+        "lambda_": 0,
+        "p_up": 0.4,
+        "p_down": 0.6,
+        "weights_up": [1.2, -0.2],
+        "weights_down": [1.3, -0.3],
+        "scaling_up": [20, 50],
+        "scaling_down": [20, 50],
+    }
+
+print(calculate_price_med(spot, strike, sigma, r, T, option_type, **params))
