@@ -153,7 +153,6 @@ def calculate_price_med(spot, strike, sigma, r, T, option_type, **params):
         + p_d * np.sum((weights_down * scaling_down) / (scaling_down + 1))
     ) - 1
 
-    print(k)
     # Calculating the overall drift of the process.
     mu = r - 0.5 * sigma**2 - lambda_ * k
 
@@ -224,4 +223,4 @@ if __name__ == "__main__":
         "scaling_down": [20, 50],
     }
 
-print(calculate_price_med(spot, strike, sigma, r, T, option_type, **params))
+    print(calculate_price_med(spot, strike, sigma, r, T, option_type, **params))
