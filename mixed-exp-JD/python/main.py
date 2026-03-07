@@ -141,9 +141,6 @@ def main():
     print(f"\nBenchmark Table for European {option_type} Options under MEJD\n")
     print(table)
 
-    # Optional: Export to LaTeX for paper use
-    # table.to_latex("mejd_benchmark_table.tex", multirow=True)
-
 
 if __name__ == "__main__":
     main()
