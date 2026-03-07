@@ -110,7 +110,7 @@ def main():
     r = 0.05
 
     # Contract parameters
-    option_type = "put"
+    option_type = "call"
 
     # Parameter grids
     lambda_vals = [0, 1, 3]
@@ -134,7 +134,7 @@ def main():
         lambda_vals=lambda_vals,
         sigmas=sigmas,
         maturities=maturities,
-        option_type="put",
+        option_type=option_type,
         **params,
     )
 
