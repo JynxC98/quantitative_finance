@@ -36,7 +36,7 @@ std::complex<double> PowerScheme(std::complex<double> z,
 
     // The following formula is calculated using the recurrence method.
     /*
-    term_k/term_{k-1} = 0.25 * zˆ2 * 1/(k(alpha + k))
+    term_k/term_{k-1} = 0.25 * z^2 * 1/(k(alpha + k))
 
     More details can be found in `CALCULATIONS.md` file.
     */
@@ -72,6 +72,13 @@ std::complex<double> PowerScheme(std::complex<double> z,
  * @param num_iterations: The number of terms for the expansion.
  *
  * @returns The Bessel value function at point z.
+ *
+ * @note The asymptotic series is NOT convergent —
+ * it is an asymptotic expansion that eventually diverges for any fixed z.
+ *
+ * The fix is a minimum-term stopping rule: halt as soon as the magnitude of
+ * the current term exceeds that of the previous term, keeping only the
+ * partial sum up to the smallest term.
  */
 std::complex<double> AsymptoticExpansion(std::complex<double> z,
                                          double alpha,
@@ -81,6 +88,7 @@ std::complex<double> AsymptoticExpansion(std::complex<double> z,
     // First term, k=0
     std::complex<double> term(1.0, 0.0);
     std::complex<double> sum = term;
+    double prev_abs = std::abs(term);
 
     for (int k = 1; k < num_iterations; ++k)
     {
@@ -89,17 +97,45 @@ std::complex<double> AsymptoticExpansion(std::complex<double> z,
 
             I_alpha(z) ~ e^z / sqrt(2*pi*z) * sum_{k=0}^inf (-1)^k * a_k(alpha) / z^k
 
+        where:
+
+            a_k(alpha) = prod_{j=1}^{k} (4*alpha^2 - (2j-1)^2) / (k! * 8^k)
+
         The recurrence for the term ratio is:
 
-            term_k / term_{k-1} = -(4*alpha^2 - (2k-1)^2) / (8*k*z)
-                                 = -(0.5 + alpha + k - 1) * (0.5 - alpha + k - 1) / (k * 2 * z)
+            term_k / term_{k-1} = -(4*alpha^2 - (2k-1)^2) / (8 * k * z)
+
+        Expanding with mk = (2k - 1):
+
+            -(4*alpha^2 - mk^2) / (8 * k * z)
 
         The negation produces the required alternating signs: without it the
         series accumulates same-sign terms and converges to the wrong value.
         */
-        term *= -(0.5 + alpha + static_cast<double>(k) - 1.0) *
-                (0.5 - alpha + static_cast<double>(k) - 1.0) /
-                (static_cast<double>(k) * 2.0 * z);
+        double mk = 2.0 * static_cast<double>(k) - 1.0;
+        term *= -(4.0 * alpha * alpha - mk * mk) /
+                (8.0 * static_cast<double>(k) * z);
+
+        double curr_abs = std::abs(term);
+
+        /*
+        Minimum-term stopping rule for asymptotic series:
+
+        Unlike a convergent power series, this asymptotic expansion eventually
+        diverges for any fixed z. Once the term magnitude starts growing again,
+        adding further terms only increases the error. We therefore stop as
+        soon as the current term is larger than the previous one, keeping only
+        the partial sum accumulated so far (up to and not including the
+        diverging term).
+
+        This rule is applied BEFORE adding the current term to the sum so that
+        only the well-behaved portion of the series is retained.
+        */
+        if (curr_abs > prev_abs)
+        {
+            break;
+        }
+
         sum += term;
 
         /*
@@ -110,13 +146,16 @@ std::complex<double> AsymptoticExpansion(std::complex<double> z,
         proportion of x/sum should be greater than the tolerance in order to
         ensure a significant contribution.
         */
-        if (std::abs(term) < tolerance * std::abs(sum))
+        if (curr_abs < tolerance * std::abs(sum))
         {
-            // For I_alpha(z), the leading factor is e^z / sqrt(2πz)
-            return (std::exp(z) / std::sqrt(2.0 * M_PI * z)) * sum;
+            break;
         }
+
+        prev_abs = curr_abs;
     }
-    throw std::runtime_error("AsymptoticExpansion: Convergence not achieved within iteration limit");
+
+    // For I_alpha(z), the leading factor is e^z / sqrt(2*pi*z)
+    return (std::exp(z) / std::sqrt(2.0 * M_PI * z)) * sum;
 }
 
 /**
@@ -151,6 +190,7 @@ std::complex<double> ModifiedBessel(std::complex<double> z,
         // For negative integers, I_{-n}(z) = I_n(z)
         return ModifiedBessel(z, -alpha, num_iterations, tolerance, threshold);
     }
+
     // Base cases for zero values
     // For real order α:
     // I_0(0) = 1 (by analytic continuation)
@@ -159,7 +199,6 @@ std::complex<double> ModifiedBessel(std::complex<double> z,
 
     if (z == std::complex<double>(0.0, 0.0))
     {
-
         if (alpha < 0.0)
         {
             throw std::domain_error("I_alpha(0) diverges to infinity for alpha < 0");

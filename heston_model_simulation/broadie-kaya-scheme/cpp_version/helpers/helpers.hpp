@@ -12,21 +12,31 @@
 #include <complex>
 #include "gamma.hpp"
 
+constexpr double EPS = 1e-8;
+
+bool approx_equal(double a, double b, double tol = EPS)
+{
+    return std::abs(a - b) < tol;
+}
+
 /**
  * @brief This function stores calculates the value of the modified Bessel's
  * function for the value of `z`. The function uses power series for the small
  * value of |z| and asymptomatic expansion for the large value of |z| depending
  * on the threshold.
  *
+ * @note: This implementation was seggregated into PowerExpansion and Asymptotic
+ * method in the `bessel.hpp` file. This Function is no longer used anywhere.
+ *
  * @param z: The point at which the function needs to be evaluated.
  * @param alpha: Order of the Bessel function
  * @param upper_lim: The upper value for the summation.
  */
-std::complex<double> ModifiedBessel(std::complex<double> z,
-                                    double alpha,
-                                    int upper_lim = 1000,
-                                    double tolerance = 1e-12,
-                                    double threshold = 10.0) // Removed semicolon here
+std::complex<double> ModifiedBesselOld(std::complex<double> z,
+                                       double alpha,
+                                       int upper_lim = 1000,
+                                       double tolerance = 1e-12,
+                                       double threshold = 10.0) // Removed semicolon here
 {
     // Base cases for zero values
     // For real order α:
