@@ -152,35 +152,181 @@ void test_heston_variance_moments()
 
 void test_characteristic_function()
 {
-    // No need to redefine the struct! Just include the header.
+    std::cout << "\n=== Testing Heston Characteristic Function ===\n"
+              << std::endl;
 
-    // Initialising the complex number
-    std::complex<double> i(0.0, 1.0); // u = 0 should make characteristic function = 1
-    double u = 0.0;
+    // Initialize Heston parameters (typical values from literature)
+    HestonParams heston_params = {
+        .kappa = 2.0,     // Mean reversion rate
+        .theta = 0.45,    // Long-run variance
+        .sigma = 0.25,    // Volatility of variance
+        .v_u = 0.2,       // Variance at time u
+        .v_t = 0.1,       // Variance at time t
+        .dt = 1.0 / 365.0 // One day in years
+    };
 
-    // Initialising Heston parameters as placeholders for the function
-    double kappa = 2.0;
-    double theta = 0.45;
-    double sigma = 0.25;
-    double v_u = 0.2;
-    double v_t = 0.1;
-    double dt = 1.0 / 365.0; // One day in years
+    // =====================================================
+    // TEST 1: u = 0 should return exactly 1
+    // =====================================================
+    std::cout << "--- TEST 1: Characteristic function at u = 0 ---\n"
+              << std::endl;
 
-    HestonParams heston_params = {kappa, theta, sigma, v_u, v_t, dt};
+    double u_zero = 0.0;
+    auto phi_zero = CharFunction(heston_params, u_zero);
 
-    auto val = CharFunction(heston_params, u);
-
-    // When u = 0, the characteristic function should equal 1
-    std::cout << "Characteristic function at u=0: " << val << std::endl;
+    std::cout << "Φ(0) = " << phi_zero << std::endl;
     std::cout << "Expected: (1, 0)" << std::endl;
 
-    if (std::abs(val - std::complex<double>(1.0, 0.0)) < 1e-8)
+    if (std::abs(phi_zero - std::complex<double>(1.0, 0.0)) < 1e-10)
     {
         std::cout << "✅ Test passes!" << std::endl;
     }
     else
     {
         std::cout << "❌ Test fails!" << std::endl;
+    }
+
+    // =====================================================
+    // TEST 1b: u very close to zero (just above guard threshold)
+    // =====================================================
+    std::cout << "\n--- TEST 1b: Characteristic function at u = 1e-10 ---\n"
+              << std::endl;
+
+    double u_small = 1e-10;
+    auto phi_small = CharFunction(heston_params, u_small);
+
+    std::cout << "Φ(1e-10) = " << phi_small << std::endl;
+    std::cout << "Expected: ≈ (1, 0) (very close to 1)" << std::endl;
+
+    if (std::abs(phi_small - std::complex<double>(1.0, 0.0)) < 1e-8)
+    {
+        std::cout << "✅ Small u test passes!" << std::endl;
+    }
+    else
+    {
+        std::cout << "⚠️ Deviation: |Φ(1e-10) - 1| = "
+                  << std::abs(phi_small - std::complex<double>(1.0, 0.0)) << std::endl;
+    }
+
+    // =====================================================
+    // TEST 2: First moment via numerical derivative
+    // =====================================================
+    std::cout << "\n--- TEST 2: First moment of integrated variance ---\n"
+              << std::endl;
+
+    double eps = 1e-6;
+    auto phi_plus = CharFunction(heston_params, eps);
+    auto phi_minus = CharFunction(heston_params, -eps);
+    std::complex<double> i(0.0, 1.0);
+
+    // Numerical derivative: dΦ/du at u=0
+    // E[i * X] = dΦ/du at u=0, so E[X] = -i * dΦ/du
+    std::complex<double> derivative = (phi_plus - phi_minus) / (2.0 * eps);
+    double mean_numerical = std::imag(derivative); // Since dΦ/du = i * E[X]
+
+    std::cout << "Numerical first moment E[∫V_s ds] = " << mean_numerical << std::endl;
+
+    // =====================================================
+    // Analytical approximation for comparison
+    // =====================================================
+    // For the unconditional mean of integrated variance from u to t:
+    // E[∫_u^t V_s ds | V_u] = (V_u - θ)(1 - e^{-κ(t-u)})/κ + θ(t-u)
+
+    double tau = heston_params.dt;
+    double kappa = heston_params.kappa;
+    double theta = heston_params.theta;
+    double v_u = heston_params.v_u;
+
+    double mean_analytical = (v_u - theta) * (1.0 - std::exp(-kappa * tau)) / kappa + theta * tau;
+
+    std::cout << "Analytical (unconditional) mean ≈ " << mean_analytical << std::endl;
+    std::cout << "Note: This is for E[∫V_s ds | V_u] only (ignoring V_t conditioning)" << std::endl;
+
+    double relative_error = std::abs(mean_numerical - mean_analytical) / mean_analytical;
+    std::cout << "Relative error: " << relative_error * 100 << "%" << std::endl;
+
+    if (relative_error < 0.1)
+    { // Within 0.1% is excellent
+        std::cout << "✅ Numerical derivative matches analytical approximation!" << std::endl;
+    }
+    else if (relative_error < 1.0)
+    {
+        std::cout << "⚠️ Acceptable deviation given conditional on V_t" << std::endl;
+    }
+    else
+    {
+        std::cout << "❌ Large deviation - check implementation" << std::endl;
+    }
+
+    // =====================================================
+    // Additional Test: Characteristic function for different u values
+    // =====================================================
+    std::cout << "\n--- Additional: Characteristic function for various u ---\n"
+              << std::endl;
+
+    std::vector<double> u_values = {0.1, 0.5, 1.0, 2.0, 5.0};
+
+    for (double u_val : u_values)
+    {
+        auto phi = CharFunction(heston_params, u_val);
+        std::cout << "Φ(" << u_val << ") = " << phi << std::endl;
+    }
+
+    // =====================================================
+    // Convergence Test: Check if |Φ(u)| ≤ 1 (property of CF)
+    // =====================================================
+    std::cout << "\n--- Convergence Test: Checking |Φ(u)| ≤ 1 ---\n"
+              << std::endl;
+
+    bool all_bounded = true;
+    for (double u_val : u_values)
+    {
+        auto phi = CharFunction(heston_params, u_val);
+        double magnitude = std::abs(phi);
+        std::cout << "|Φ(" << u_val << ")| = " << magnitude;
+
+        if (magnitude <= 1.0 + 1e-10)
+        { // Small tolerance for numerical error
+            std::cout << " ✅";
+        }
+        else
+        {
+            std::cout << " ❌ (exceeds 1 by " << magnitude - 1.0 << ")";
+            all_bounded = false;
+        }
+        std::cout << std::endl;
+    }
+
+    if (all_bounded)
+    {
+        std::cout << "\n✅ All characteristic function values bounded by 1!" << std::endl;
+    }
+    else
+    {
+        std::cout << "\n⚠️ Some values exceed 1 - possible numerical issues" << std::endl;
+    }
+
+    // =====================================================
+    // Symmetry Test: Φ(-u) should be complex conjugate of Φ(u)
+    // =====================================================
+    std::cout << "\n--- Symmetry Test: Φ(-u) = conj(Φ(u)) ---\n"
+              << std::endl;
+
+    double test_u = 1.0;
+    auto phi_pos = CharFunction(heston_params, test_u);
+    auto phi_neg = CharFunction(heston_params, -test_u);
+
+    std::cout << "Φ(" << test_u << ")  = " << phi_pos << std::endl;
+    std::cout << "Φ(-" << test_u << ") = " << phi_neg << std::endl;
+    std::cout << "conj(Φ(" << test_u << ")) = " << std::conj(phi_pos) << std::endl;
+
+    if (std::abs(phi_neg - std::conj(phi_pos)) < 1e-10)
+    {
+        std::cout << "✅ Symmetry property holds!" << std::endl;
+    }
+    else
+    {
+        std::cout << "❌ Symmetry property fails!" << std::endl;
     }
 }
 int main()

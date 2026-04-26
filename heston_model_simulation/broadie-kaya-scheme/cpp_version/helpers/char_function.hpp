@@ -78,8 +78,8 @@ std::complex<double> CharFunction(const HestonParams &p, double u)
 
     // Evaluating the second term
     std::complex<double> second_term = std::exp(((p.v_u + p.v_t) / (p.sigma * p.sigma)) *
-                                                ((p.kappa * (1.0 + exp_kappa_dt)) / (1.0 - exp_kappa_dt) -
-                                                 (const_gamma * (1.0 + exp_gamma_dt)) / (1.0 - exp_gamma_dt)));
+                                                (((p.kappa * (1.0 + exp_kappa_dt)) / (1.0 - exp_kappa_dt)) -
+                                                 ((const_gamma * (1.0 + exp_gamma_dt)) / (1.0 - exp_gamma_dt))));
 
     // Evaluating the third term
     double d = 4.0 * p.kappa * p.theta / (p.sigma * p.sigma);
