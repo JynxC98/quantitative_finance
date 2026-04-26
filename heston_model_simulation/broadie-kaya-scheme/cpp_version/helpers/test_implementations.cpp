@@ -8,6 +8,7 @@
 
 #include "bessel.hpp"
 #include "non_central_chi_sqd.hpp"
+#include "char_function.hpp"
 
 void test_generator()
 {
@@ -148,9 +149,44 @@ void test_heston_variance_moments()
     // assert(mean_ok && "Mean outside 5-sigma bound");
     // assert(var_ok  && "Variance outside 5-sigma bound");
 }
+
+void test_characteristic_function()
+{
+    // No need to redefine the struct! Just include the header.
+
+    // Initialising the complex number
+    std::complex<double> i(0.0, 1.0); // u = 0 should make characteristic function = 1
+    double u = 0.0;
+
+    // Initialising Heston parameters as placeholders for the function
+    double kappa = 2.0;
+    double theta = 0.45;
+    double sigma = 0.25;
+    double v_u = 0.2;
+    double v_t = 0.1;
+    double dt = 1.0 / 365.0; // One day in years
+
+    HestonParams heston_params = {kappa, theta, sigma, v_u, v_t, dt};
+
+    auto val = CharFunction(heston_params, u);
+
+    // When u = 0, the characteristic function should equal 1
+    std::cout << "Characteristic function at u=0: " << val << std::endl;
+    std::cout << "Expected: (1, 0)" << std::endl;
+
+    if (std::abs(val - std::complex<double>(1.0, 0.0)) < 1e-8)
+    {
+        std::cout << "✅ Test passes!" << std::endl;
+    }
+    else
+    {
+        std::cout << "❌ Test fails!" << std::endl;
+    }
+}
 int main()
 {
     test_generator();
     test_heston_variance_moments();
+    test_characteristic_function();
     return 0;
 }
