@@ -14,19 +14,6 @@
 #include <complex>
 #include "gamma.hpp"
 
-// /**
-//  * @brief This function is used to calculate the absolute value of the complex number.
-//  *
-//  * @param z: The complex number to be evaluated.
-//  *
-//  * @returns |z|
-//  */
-// double AbsoluteValue(std::complex<double> z)
-// {
-//     return std::sqrt(std::real(z) * std::real(z) +
-//                      std::imag(z) * std::imag(z));
-// }
-
 /**
  * @brief This function is the implementation of the power scheme for the
  * Bessel's function when |z| <= threshold.
@@ -153,6 +140,11 @@ std::complex<double> ModifiedBessel(std::complex<double> z,
                                     double tolerance = 1e-10,
                                     double threshold = 10.0)
 {
+    // NOTE: Negative integer orders (alpha < 0, integer) currently return
+    // inf/nan due to a known bug in the symmetry redirect.
+    // This does not affect Broadie-Kaya usage where alpha = d/2 - 1 > 0
+    // for valid Heston parameters. Deferred for future fix.
+
     // Handling negative integer orders using symmetry
     if (alpha < 0.0 && std::abs(std::round(alpha) - alpha) < 1e-12)
     {
