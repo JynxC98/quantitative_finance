@@ -1,7 +1,6 @@
 /**
  * @brief This script stores the characteristic function of the conditional
  * variance for the Heston Model simulation.
- * * Corrected to handle the u=0 singularity and complex Bessel arguments.
  *
  * @author Harsh Parikh
  */
