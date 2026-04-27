@@ -96,10 +96,10 @@ std::complex<double> CharFunction(const HestonParams &p, double u)
     /*
      * Evaluating the ratio of Modified Bessel functions.
      */
-    std::complex<double> numerator = ModifiedBessel(bessel_arg_num, alpha);
-    std::complex<double> denominator = ModifiedBessel(bessel_arg_den, alpha);
+    std::complex<double> log_numerator = ModifiedBessel(bessel_arg_num, alpha);
+    std::complex<double> log_denominator = ModifiedBessel(bessel_arg_den, alpha);
 
-    std::complex<double> third_term = numerator / denominator;
+    std::complex<double> third_term = std::exp(log_numerator - log_denominator);
 
     return first_term * second_term * third_term;
 }

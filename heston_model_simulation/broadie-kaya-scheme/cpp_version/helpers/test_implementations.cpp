@@ -219,45 +219,6 @@ void test_characteristic_function()
     auto phi_minus = CharFunction(heston_params, -eps);
     std::complex<double> i(0.0, 1.0);
 
-    // Numerical derivative: dΦ/du at u=0
-    // E[i * X] = dΦ/du at u=0, so E[X] = -i * dΦ/du
-    std::complex<double> derivative = (phi_plus - phi_minus) / (2.0 * eps);
-    double mean_numerical = std::imag(derivative); // Since dΦ/du = i * E[X]
-
-    std::cout << "Numerical first moment E[∫V_s ds] = " << mean_numerical << std::endl;
-
-    // =====================================================
-    // Analytical approximation for comparison
-    // =====================================================
-    // For the unconditional mean of integrated variance from u to t:
-    // E[∫_u^t V_s ds | V_u] = (V_u - θ)(1 - e^{-κ(t-u)})/κ + θ(t-u)
-
-    double tau = heston_params.dt;
-    double kappa = heston_params.kappa;
-    double theta = heston_params.theta;
-    double v_u = heston_params.v_u;
-
-    double mean_analytical = (v_u - theta) * (1.0 - std::exp(-kappa * tau)) / kappa + theta * tau;
-
-    std::cout << "Analytical (unconditional) mean ≈ " << mean_analytical << std::endl;
-    std::cout << "Note: This is for E[∫V_s ds | V_u] only (ignoring V_t conditioning)" << std::endl;
-
-    double relative_error = std::abs(mean_numerical - mean_analytical) / mean_analytical;
-    std::cout << "Relative error: " << relative_error * 100 << "%" << std::endl;
-
-    if (relative_error < 0.1)
-    { // Within 0.1% is excellent
-        std::cout << "✅ Numerical derivative matches analytical approximation!" << std::endl;
-    }
-    else if (relative_error < 1.0)
-    {
-        std::cout << "⚠️ Acceptable deviation given conditional on V_t" << std::endl;
-    }
-    else
-    {
-        std::cout << "❌ Large deviation - check implementation" << std::endl;
-    }
-
     // =====================================================
     // Additional Test: Characteristic function for different u values
     // =====================================================
@@ -329,10 +290,49 @@ void test_characteristic_function()
         std::cout << "❌ Symmetry property fails!" << std::endl;
     }
 }
+
+void test_first_moment_sanity()
+{
+    std::cout << "\n--- First Moment Sanity Check ---\n"
+              << std::endl;
+
+    // For very short time dt → 0, the integrated variance should be ≈ V_u * dt
+    HestonParams very_short = {
+        .kappa = 2.0,
+        .theta = 0.45,
+        .sigma = 0.25,
+        .v_u = 0.2,
+        .v_t = 0.2, // Almost same as V_u for very short dt
+        .dt = 1e-6  // Very short time
+    };
+
+    double eps = 1e-6;
+    auto phi_plus = CharFunction(very_short, eps);
+    auto phi_minus = CharFunction(very_short, -eps);
+    std::complex<double> i(0.0, 1.0);
+    std::complex<double> derivative = (phi_plus - phi_minus) / (2.0 * eps);
+    double mean_numerical = std::imag(derivative);
+
+    double expected_mean_approx = very_short.v_u * very_short.dt;
+
+    std::cout << "For very short dt (1e-6):" << std::endl;
+    std::cout << "  Numerical E[∫V_s ds] ≈ " << mean_numerical << std::endl;
+    std::cout << "  Approximation V_u * dt = " << expected_mean_approx << std::endl;
+
+    if (std::abs(mean_numerical - expected_mean_approx) / expected_mean_approx < 0.01)
+    {
+        std::cout << "  ✅ Reasonable agreement for short time!" << std::endl;
+    }
+    else
+    {
+        std::cout << "  ⚠️ Deviation larger than expected" << std::endl;
+    }
+}
 int main()
 {
     test_generator();
     test_heston_variance_moments();
     test_characteristic_function();
+    test_first_moment_sanity();
     return 0;
 }

@@ -23,7 +23,7 @@
  * @param tolerance: The error term used to evaluate the convergence.
  * @param num_iterations: The number of terms for the expansion.
  *
- * @returns The Bessel value function at point z.
+ * @returns The logarithm of the Bessel value function at point z.
  */
 std::complex<double> PowerScheme(std::complex<double> z,
                                  double alpha,
@@ -56,7 +56,9 @@ std::complex<double> PowerScheme(std::complex<double> z,
         */
         if (std::abs(term) < tolerance * std::abs(sum))
         {
-            return std::pow(0.5 * z, alpha) * sum;
+            // Returning the logarithmic variant
+            return alpha * std::log(0.5 * z) + sum;
+            // return std::pow(0.5 * z, alpha) * sum;
         }
     }
     throw std::runtime_error("PowerScheme: Convergence not achieved within iteration limit");
@@ -71,7 +73,7 @@ std::complex<double> PowerScheme(std::complex<double> z,
  * @param tolerance: The error term used to evaluate the convergence.
  * @param num_iterations: The number of terms for the expansion.
  *
- * @returns The Bessel value function at point z.
+ * @returns The logarithm of the Bessel value function at point z.
  *
  * @note The asymptotic series is NOT convergent —
  * it is an asymptotic expansion that eventually diverges for any fixed z.
@@ -155,7 +157,9 @@ std::complex<double> AsymptoticExpansion(std::complex<double> z,
     }
 
     // For I_alpha(z), the leading factor is e^z / sqrt(2*pi*z)
-    return (std::exp(z) / std::sqrt(2.0 * M_PI * z)) * sum;
+
+    // Returning the logarithmic value to avoid overflow for large z
+    return z - 0.5 * std::log(2.0 * M_PI * z) + std::log(sum);
 }
 
 /**
@@ -172,6 +176,8 @@ std::complex<double> AsymptoticExpansion(std::complex<double> z,
  * @param num_iterations: The upper value for the summation.
  * @param tolerance: The error term used to evaluate the convergence.
  * @param threshold: The threshold at which the method is decided.
+ *
+ * @returns: The logarithm of the Bessel function at `z` to avoid overflow.
  */
 std::complex<double> ModifiedBessel(std::complex<double> z,
                                     double alpha,
