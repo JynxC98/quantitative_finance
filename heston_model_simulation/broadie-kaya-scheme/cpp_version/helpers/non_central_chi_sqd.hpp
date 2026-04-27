@@ -32,17 +32,8 @@ double NonCentralChi2PDF(double z,
                          double lambda_)
 {
     // Edge cases
-    if (z < 0.0)
-        return 0.0; // PDF is zero for negative values
-
-    if (z == 0.0)
-    {
-        // Special case: PDF at zero is only non-zero when dof = 0
-        // For dof > 0, the term (z/lambda)^(dof/4-0.5) = 0^(positive) = 0
-        if (dof <= 0.0)
-            return 0.0; // or handle degenerate case
-        return 0.0;     // For all practical purposes, PDF at 0 is 0
-    }
+    if (z <= 0.0)
+        return 0.0; // PDF is zero for values leq 0.
 
     // Edge cases for negative values of lambda and dof
     if (dof <= 0.0)

@@ -28,7 +28,8 @@
 std::complex<double> PowerScheme(std::complex<double> z,
                                  double alpha,
                                  double tolerance = 1e-8,
-                                 int num_iterations = 100)
+                                 int num_iterations = 100,
+                                 bool log_space = true)
 {
     // First term: k = 0
     std::complex<double> term = 1.0 / GammaFunction(alpha + 1.0);
@@ -57,8 +58,7 @@ std::complex<double> PowerScheme(std::complex<double> z,
         if (std::abs(term) < tolerance * std::abs(sum))
         {
             // Returning the logarithmic variant
-            return alpha * std::log(0.5 * z) + sum;
-            // return std::pow(0.5 * z, alpha) * sum;
+            return log_space ? (alpha * std::log(0.5 * z) + sum) : std::pow(0.5 * z, alpha) * sum;
         }
     }
     throw std::runtime_error("PowerScheme: Convergence not achieved within iteration limit");
@@ -85,7 +85,8 @@ std::complex<double> PowerScheme(std::complex<double> z,
 std::complex<double> AsymptoticExpansion(std::complex<double> z,
                                          double alpha,
                                          double tolerance = 1e-8,
-                                         int num_iterations = 100)
+                                         int num_iterations = 100,
+                                         bool log_space = true)
 {
     // First term, k=0
     std::complex<double> term(1.0, 0.0);
@@ -159,7 +160,8 @@ std::complex<double> AsymptoticExpansion(std::complex<double> z,
     // For I_alpha(z), the leading factor is e^z / sqrt(2*pi*z)
 
     // Returning the logarithmic value to avoid overflow for large z
-    return z - 0.5 * std::log(2.0 * M_PI * z) + std::log(sum);
+    return log_space ? z - 0.5 * std::log(2.0 * M_PI * z) + std::log(sum)
+                     : (std::exp(z) / std::sqrt(2.0 * M_PI * z)) * sum;
 }
 
 /**
@@ -183,12 +185,18 @@ std::complex<double> ModifiedBessel(std::complex<double> z,
                                     double alpha,
                                     int num_iterations = 100,
                                     double tolerance = 1e-10,
-                                    double threshold = 10.0)
+                                    double threshold = 10.0,
+                                    bool log_space = true)
 {
     // NOTE: Negative integer orders (alpha < 0, integer) currently return
     // inf/nan due to a known bug in the symmetry redirect.
     // This does not affect Broadie-Kaya usage where alpha = d/2 - 1 > 0
     // for valid Heston parameters. Deferred for future fix.
+
+    if (log_space && (alpha == 0))
+    {
+        throw std::domain_error("The log space cannot exist when alpha=0.");
+    }
 
     // Handling negative integer orders using symmetry
     if (alpha < 0.0 && std::abs(std::round(alpha) - alpha) < 1e-12)
@@ -211,20 +219,22 @@ std::complex<double> ModifiedBessel(std::complex<double> z,
         }
         if (alpha == 0.0)
         {
-            return std::complex<double>(1.0, 0.0); // I_0(0) = 1
+            return log_space ? std::complex<double>(0.0, 0.0) : std::complex<double>(0.0, 0.0); // I_0(0) = 1
         }
         // alpha > 0
+        // Here, the value of log(0) would be -inf. Hence, the code will raise a warning first if
+        // the log space is activated.
         return std::complex<double>(0.0, 0.0);
     }
 
     // Choose method based on threshold (not tolerance!)
     if (std::abs(z) <= threshold)
     {
-        return PowerScheme(z, alpha, tolerance, num_iterations);
+        return PowerScheme(z, alpha, tolerance, num_iterations, log_space);
     }
     else
     {
-        return AsymptoticExpansion(z, alpha, tolerance, num_iterations);
+        return AsymptoticExpansion(z, alpha, tolerance, num_iterations, log_space);
     }
 }
 
