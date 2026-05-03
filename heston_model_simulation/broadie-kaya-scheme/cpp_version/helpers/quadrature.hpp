@@ -1,9 +1,11 @@
 /**
  * @brief This script is used for calculating the integral of a function
- * using the Gaussian Quadrature method. More details on the same can be found
- * here:
+ * using the Gauss-Laguerre Quadrature method, suitable for integrals
+ * over [0, inf). More details:
  *
- * https://en.wikipedia.org/wiki/Gaussian_quadrature
+ * https://en.wikipedia.org/wiki/Gauss%E2%80%93Laguerre_quadrature
+ *
+ * Nodes and weights sourced from scipy.special.roots_laguerre(8)
  *
  * @author Harsh Parikh
  */
@@ -13,61 +15,59 @@
 
 #include <iostream>
 #include <vector>
-#include <algorithm>
 #include <cmath>
 
 /**
- * @brief A struct for representing the weights and nodes.
+ * @brief A struct for representing the nodes and weights.
  */
-struct LegendreNode
+struct LaguerreNode
 {
     double x; // node
     double w; // weight
 };
 
 /**
- * @brief A function to store the weights and nodes for 5-point Gauss-Legendre quadrature
+ * @brief 8-point Gauss-Laguerre quadrature nodes and weights.
+ * Sourced from scipy.special.roots_laguerre(8)
+ *
+ * Designed for integrals of the form:
+ * ∫₀^∞ e^{-u} g(u) du ≈ Σ wᵢ * g(xᵢ)
  */
-std::vector<LegendreNode> legendreQuadratureTable()
+std::vector<LaguerreNode> laguerreQuadratureTable()
 {
-    static const std::vector<LegendreNode> table = {
-        {-0.90617984594, 0.23692688505},
-        {-0.53846931010, 0.47862867049},
-        {0.0, 0.56888888889},
-        {0.53846931010, 0.47862867049},
-        {0.90617984594, 0.23692688505}};
+    static const std::vector<LaguerreNode> table = {
+        {0.17027963230510099979, 0.36918858934163752992},
+        {0.90370177679937991219, 0.41878678081434295608},
+        {2.2510866298661306893, 0.17579498663717180570},
+        {4.2667001702876587937, 0.03334349226121565152},
+        {7.0459054023934656973, 0.00279453623522567252},
+        {10.758516010180995224, 0.00009076508773358213},
+        {15.740678641278004578, 0.00000084857467162725},
+        {22.863131736889264106, 0.00000000104800117487}};
     return table;
 }
-/**
- * @brief This function is used to calculate the area under the curve using Gauss-Legendre quadrature
- *
- * @param function: The main function to be integrated
- * @param lower_limit: The lower limit of the integral
- * @param upper_limit: The upper limit of the integral
- */
 
+/**
+ * @brief Numerical integration over [0, ∞) using Gauss-Laguerre quadrature.
+ *
+ * Approximates ∫₀^∞ f(u) du by rewriting as ∫₀^∞ e^{-u} [e^u f(u)] du
+ * The e^u correction is applied internally so the caller just passes f(u).
+ *
+ * @param func The integrand f(u) to integrate from 0 to infinity
+ * @return Numerical approximation of ∫₀^∞ f(u) du
+ */
 template <typename Func>
-double legendreIntegrate(Func func, double lower_limit, double upper_limit)
+double laguerreIntegrate(Func func)
 {
-    auto nodes = legendreQuadratureTable();
+    auto nodes = laguerreQuadratureTable();
     double result = 0.0;
 
-    // Scaling factors for the finite interval [lower_limit, upper_limit]
-    double half_length = 0.5 * (upper_limit - lower_limit);
-    double center = 0.5 * (upper_limit + lower_limit);
-
-    // Performing the Gauss-Legendre integration
     for (const auto &node : nodes)
     {
-        // Mapping the nodes from [-1, 1] to [lower_limit, upper_limit]
-        double x_mapped = center + half_length * node.x;
-
-        // Adding the elements
-        result += node.w * func(x_mapped);
+        result += node.w * std::exp(node.x) * func(node.x);
     }
 
-    // Scaling the result by the half-length of the interval
-    return half_length * result;
+    return result;
 }
 
 #endif // QUADRATURE_HPP

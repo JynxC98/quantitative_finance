@@ -39,37 +39,11 @@ const static std::vector<double> p = {
  * @param z: Input value (real or complex)
  * @return Approximate Gamma(z)
  */
-template <typename T>
-std::complex<double> GammaFunction(std::complex<T> z)
-{
 
-    // Reflection formula for Re(z)
-    if (std::real(z) < 0.5)
-    {
-        return M_PI / (std::sin(M_PI * z) * GammaFunction(1.0 - z));
-    }
-
-    // Lanczos approximation
-    z -= 1.0;
-    std::complex<double> x = p[0];
-
-    for (size_t i = 1; i < p.size(); ++i)
-    {
-        x += p[i] / (z + static_cast<double>(i));
-    }
-    std::complex<double> t = z + static_cast<double>(g) + 0.5;
-
-    return std::sqrt(2.0 * M_PI) *
-           std::pow(t, z + 0.5) *
-           std::exp(-t) * x;
-}
+std::complex<double> GammaFunction(std::complex<double> z);
 
 /**
  * @brief Overload for real inputs
  */
-inline double GammaFunction(double z)
-{
-    auto result = GammaFunction(std::complex<double>(z, 0.0));
-    return std::real(result);
-}
+double GammaFunction(double z);
 #endif

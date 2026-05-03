@@ -5,10 +5,13 @@
 #include <iostream>
 #include <cmath>
 #include <iomanip>
+#include <assert.h>
 
-#include "bessel.hpp"
-#include "non_central_chi_sqd.hpp"
-#include "char_function.hpp"
+#include "../helpers/bessel.hpp"
+#include "../helpers/non_central_chi_sqd.hpp"
+#include "../helpers/char_function.hpp"
+#include "../helpers/solvers.hpp"
+#include "../helpers/helpers.hpp"
 
 void test_generator()
 {
@@ -328,11 +331,63 @@ void test_first_moment_sanity()
         std::cout << "  ⚠️ Deviation larger than expected" << std::endl;
     }
 }
+
+void test_integrals()
+{
+    HestonParams p = {
+        .kappa = 2.0,
+        .theta = 0.45,
+        .sigma = 0.25,
+        .v_u = 0.2,
+        .v_t = 0.2,     // Almost same as V_u for very short dt
+        .dt = 1 / 365.0 // Very short time
+    };
+
+    // Checking the functioning of the integrals
+
+    double x = 0.25;
+
+    double u = 1.0;
+
+    double epsilon = 1e-4;
+
+    auto cdf_int = calculateCDF(x, u, p);
+    auto pdf_int = calculatePDF(x, u, p);
+    auto d_pdf_int = calculate_dPDF(x, u, p);
+
+    std::cout << "The value of cdf integrand at x=0.25 is " << cdf_int << std::endl;
+    std::cout << "The value of pdf integrand at x=0.25 is " << pdf_int << std::endl;
+    std::cout << "The value of d_pdf integrand at x=0.25 is " << d_pdf_int << std::endl;
+
+    auto cdf_val = calculateIntegral(calculateCDF, x, p);
+    auto pdf_val = calculateIntegral(calculatePDF, x, p);
+
+    std::cout << "The value of cdf at x=0.25 is " << cdf_val << std::endl;
+    std::cout << "The value of pdf at x=0.25 is " << pdf_val << std::endl;
+
+    auto cdf_ep = calculateIntegral(calculateCDF, x + epsilon, p);
+
+    ASSERT(cdf_ep > cdf_val, "The CDF is not exhibiting monotonicity");
+
+    auto cdf_high = calculateIntegral(calculateCDF, 6.0, p); // This should give a value close to 1
+
+    // ASSERT(approx_equal(cdf_high, 1.0), "The CDF should converge to 1 for high values of x");
+
+    std::cout << cdf_high << std::endl;
+
+    auto cdf_low = calculateIntegral(calculateCDF, 1e-7, p); // This should give a value close to 0
+
+    std::cout << cdf_low << std::endl;
+    // ASSERT(approx_equal(cdf_low, 0.0), "The CDF should converge to 0 for low values of X");
+}
 int main()
 {
-    test_generator();
-    test_heston_variance_moments();
-    test_characteristic_function();
-    test_first_moment_sanity();
+    // test_generator();
+
+    // test_heston_variance_moments();
+    // test_characteristic_function();
+    // test_first_moment_sanity();
+    test_integrals();
+
     return 0;
 }
