@@ -337,15 +337,15 @@ void test_integrals()
     HestonParams p = {
         .kappa = 2.0,
         .theta = 0.45,
-        .sigma = 0.25,
-        .v_u = 0.2,
-        .v_t = 0.2,     // Almost same as V_u for very short dt
+        .sigma = 0.45,
+        .v_u = 0.25,
+        .v_t = 0.25,    // Almost same as V_u for very short dt
         .dt = 1 / 365.0 // Very short time
     };
 
     // Checking the functioning of the integrals
 
-    double x = 0.25;
+    double x = 1.0;
 
     double u = 1.0;
 
@@ -355,15 +355,15 @@ void test_integrals()
     auto pdf_int = calculatePDF(x, u, p);
     auto d_pdf_int = calculate_dPDF(x, u, p);
 
-    std::cout << "The value of cdf integrand at x=0.25 is " << cdf_int << std::endl;
-    std::cout << "The value of pdf integrand at x=0.25 is " << pdf_int << std::endl;
-    std::cout << "The value of d_pdf integrand at x=0.25 is " << d_pdf_int << std::endl;
+    std::cout << "The value of cdf integrand at x = " << x << " is " << cdf_int << std::endl;
+    std::cout << "The value of pdf integrand at x = " << x << " is " << pdf_int << std::endl;
+    std::cout << "The value of d_pdf integrand at x = " << x << " is " << d_pdf_int << std::endl;
 
     auto cdf_val = calculateIntegral(calculateCDF, x, p);
     auto pdf_val = calculateIntegral(calculatePDF, x, p);
 
-    std::cout << "The value of cdf at x=0.25 is " << cdf_val << std::endl;
-    std::cout << "The value of pdf at x=0.25 is " << pdf_val << std::endl;
+    std::cout << "The value of cdf at x = " << x << " is " << cdf_val << std::endl;
+    std::cout << "The value of pdf at x = " << x << " is " << pdf_val << std::endl;
 
     auto cdf_ep = calculateIntegral(calculateCDF, x + epsilon, p);
 
@@ -379,6 +379,14 @@ void test_integrals()
 
     std::cout << cdf_low << std::endl;
     // ASSERT(approx_equal(cdf_low, 0.0), "The CDF should converge to 0 for low values of X");
+
+    // PDF should approximately equal the finite difference of CDF
+    double cdf_plus = calculateIntegral(calculateCDF, x + epsilon, p);
+    double cdf_minus = calculateIntegral(calculateCDF, x - epsilon, p);
+    double fd_pdf = (cdf_plus - cdf_minus) / (2.0 * epsilon);
+
+    std::cout << "PDF from integration : " << pdf_val << std::endl;
+    std::cout << "PDF from finite diff : " << fd_pdf << std::endl;
 }
 int main()
 {

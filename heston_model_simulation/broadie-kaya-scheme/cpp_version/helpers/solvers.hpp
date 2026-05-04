@@ -55,10 +55,23 @@ struct NewtonMethod
  */
 double calculateCDF(double x, double u, const HestonParams &p)
 {
-    auto char_func_val = CharFunction(p, u);
-    return (2.0 * M_1_PI) * (std::sin(u * x) / u) * std::real(char_func_val);
-}
+    if (std::abs(u) < 1e-8)
+    {
+        // Avoid division by zero (limit as u → 0)
+        auto phi = CharFunction(p, u);
+        return (1.0 / M_PI) * x * std::real(phi);
+    }
 
+    auto phi = CharFunction(p, u);
+
+    double real_phi = std::real(phi);
+    double imag_phi = std::imag(phi);
+
+    return (1.0 / M_PI) *
+           ((std::sin(u * x) * real_phi -
+             std::cos(u * x) * imag_phi) /
+            u);
+}
 /**
  * @brief Integrand for computing the probability density function (PDF)
  *
@@ -72,8 +85,12 @@ double calculateCDF(double x, double u, const HestonParams &p)
  */
 double calculatePDF(double x, double u, const HestonParams &p)
 {
-    auto char_func_val = CharFunction(p, u);
-    return (2.0 * M_1_PI) * std::cos(u * x) * std::real(char_func_val);
+    auto phi = CharFunction(p, u);
+
+    double real_phi = std::real(phi);
+    double imag_phi = std::imag(phi);
+
+    return (1.0 / M_PI) * ((std::cos(u * x) * real_phi + std::sin(u * x) * imag_phi));
 }
 
 /**
@@ -104,7 +121,7 @@ double calculate_dPDF(double x, double u, const HestonParams &p)
  * @param x The quantile value at which to evaluate the integrand
  * @param p Heston model parameters
  * @param lower_lim Lower integration limit (default: 0)
- * @param upper_lim Upper integration limit (default: 50)
+ * @param upper_lim Upper integration limit (default: 80)
  * @return Numerical approximation of the definite integral
  *
  * @note The integration limits are for the variable u (frequency space)
@@ -116,10 +133,16 @@ double calculateIntegral(Func function, double x,
 {
     auto func = [&](double u)
     {
-        return static_cast<double>(function(x, u, p));
+        return function(x, u, p);
     };
 
-    auto result = laguerreIntegrate(func);
+    // Segment the domain
+    double result = 0.0;
+
+    result += legendreIntegrate(func, 0.0, 5.0);
+    result += legendreIntegrate(func, 5.0, 20.0);
+    result += legendreIntegrate(func, 20.0, 80.0);
+
     return result;
 }
 
