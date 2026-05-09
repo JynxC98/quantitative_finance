@@ -9,31 +9,10 @@
 
 #include <iostream>
 #include <vector>
+#include "legendre_nodes.hpp"
 
 using namespace std;
 
-/**
- * @brief A struct for representing the weights and nodes.
- */
-struct LegendreNode
-{
-    double x; // node
-    double w; // weight
-};
-
-/**
- * @brief A function to store the weights and nodes for 5-point Gauss-Legendre quadrature
- */
-vector<LegendreNode> legendreQuadratureTable()
-{
-    static const vector<LegendreNode> table = {
-        {-0.90617984594, 0.23692688505},
-        {-0.53846931010, 0.47862867049},
-        {0.0, 0.56888888889},
-        {0.53846931010, 0.47862867049},
-        {0.90617984594, 0.23692688505}};
-    return table;
-}
 /**
  * @brief This function is used to calculate the area under the curve using Gauss-Legendre quadrature
  *
@@ -45,7 +24,7 @@ vector<LegendreNode> legendreQuadratureTable()
 template <typename Func>
 double legendreIntegrate(Func func, double lower_limit, double upper_limit)
 {
-    auto nodes = legendreQuadratureTable();
+    auto nodes = generateGaussLegendre(64); // Generating 32 point table
     double result = 0.0;
 
     // Scaling factors for the finite interval [lower_limit, upper_limit]
