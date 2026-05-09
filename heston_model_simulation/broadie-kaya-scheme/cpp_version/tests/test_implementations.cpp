@@ -228,7 +228,7 @@ void test_characteristic_function()
     std::cout << "\n--- Additional: Characteristic function for various u ---\n"
               << std::endl;
 
-    std::vector<double> u_values = {0.1, 0.5, 1.0, 2.0, 5.0};
+    std::vector<double> u_values = {0.1, 0.5, 1.0, 2.0, 5.0, 20.0, 30.0, 100.0, 10000.0};
 
     for (double u_val : u_values)
     {
@@ -393,9 +393,9 @@ int main()
     // test_generator();
 
     // test_heston_variance_moments();
-    // test_characteristic_function();
+    test_characteristic_function();
     // test_first_moment_sanity();
-    test_integrals();
+    // test_integrals();
 
     return 0;
 }
