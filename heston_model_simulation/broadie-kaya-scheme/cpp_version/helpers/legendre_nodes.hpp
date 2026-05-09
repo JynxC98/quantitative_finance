@@ -99,7 +99,7 @@ double findLegendreRoot(int n, int i, double tol = 1e-15)
 std::vector<LegendreNode> generateGaussLegendre(int n)
 {
     std::vector<LegendreNode> nodes;
-    nodes.reserve(n); // Reser
+    nodes.reserve(n); // Reserves memory for n values
 
     // Roots are symmetric: x_i = -x_{n+1-i}
     for (int i = 1; i <= n; i++)
