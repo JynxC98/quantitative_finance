@@ -51,12 +51,15 @@ double calculateIntegral(Func function, double x,
     {
         return function(x, u, p);
     };
-
+    double upper = 10.0 / (0.5 * (p.v_t + p.v_u) * p.dt);
+    // Finer segments where oscillation is rapid
+    std::vector<double> breakpoints = {0.0, 5.0, 20.0, 50.0,
+                                       100.0};
     double result = 0.0;
-    result += legendreIntegrate(func, 0.0, 10.0);    // Near-field
-    result += legendreIntegrate(func, 10.0, 100.0);  // Mid-field
-    result += legendreIntegrate(func, 100.0, 500.0); // Far-field
-
+    for (int k = 0; k + 1 < breakpoints.size(); k++)
+    {
+        result += legendreIntegrate(func, breakpoints[k], breakpoints[k + 1]);
+    }
     return result;
 }
 
