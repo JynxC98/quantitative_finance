@@ -1,6 +1,6 @@
 /**
  * @brief This function is used to generate the nodes and weights of the
- * Laguerre Polynomial function.
+ * Legendre Polynomial function.
  *
  * @author Harsh Parikh
  */

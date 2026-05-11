@@ -46,7 +46,7 @@ std::complex<double> PowerScheme(std::complex<double> z,
         if (std::abs(term) < tolerance * std::abs(sum))
         {
             // Returning the logarithmic variant
-            return log_space ? (alpha * std::log(0.5 * z) + sum) : std::pow(0.5 * z, alpha) * sum;
+            return log_space ? (alpha * std::log(0.5 * z) + std::log(sum)) : std::pow(0.5 * z, alpha) * sum;
         }
     }
     throw std::runtime_error("PowerScheme: Convergence not achieved within iteration limit");
