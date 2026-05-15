@@ -568,6 +568,117 @@ void test_quadrature()
     std::cout << "\n========== All quadrature tests completed ==========\n";
 }
 
+void test_oscillatory_quadrature()
+{
+    std::cout << "\n===== Testing Oscillatory Quadrature (CF-style) =====\n";
+    std::cout << std::setprecision(12);
+
+    // Test A: sin(ux) * e^(-u) — mimics sin(ux)*Im(φ) with exponential decay
+    // ∫₀^∞ sin(ux) * e^(-u) du = x / (1 + x²)  [Laplace transform]
+    {
+        std::vector<double> x_vals = {0.5, 1.0, 2.0, 5.0, 10.0};
+        std::cout << "\nTest A: ∫₀^∞ sin(ux)*e^(-u) du = x/(1+x²)\n";
+
+        for (double x : x_vals)
+        {
+            auto f = [x](double u)
+            { return std::sin(u * x) * std::exp(-u); };
+
+            double result = 0.0;
+            // Breakpoints scale with x to capture oscillations
+            std::vector<double> bp = {0.0, 5.0 / x, 20.0 / x, 50.0 / x, 100.0 / x};
+            for (int k = 0; k + 1 < bp.size(); k++)
+                result += legendreIntegrate(f, bp[k], bp[k + 1]);
+
+            double expected = x / (1.0 + x * x);
+            double error = std::abs(result - expected);
+            std::cout << "  x=" << x << ": result=" << result
+                      << " expected=" << expected
+                      << " error=" << error;
+            std::cout << (error < 1e-6 ? " ✅\n" : " ❌\n");
+        }
+    }
+
+    // Test B: cos(ux) * e^(-u) — mimics cos(ux)*Re(φ)
+    // ∫₀^∞ cos(ux) * e^(-u) du = 1 / (1 + x²)  [Laplace transform]
+    {
+        std::vector<double> x_vals = {0.5, 1.0, 2.0, 5.0, 10.0};
+        std::cout << "\nTest B: ∫₀^∞ cos(ux)*e^(-u) du = 1/(1+x²)\n";
+
+        for (double x : x_vals)
+        {
+            auto f = [x](double u)
+            { return std::cos(u * x) * std::exp(-u); };
+
+            double result = 0.0;
+            std::vector<double> bp = {0.0, 5.0 / x, 20.0 / x, 50.0 / x, 100.0 / x};
+            for (int k = 0; k + 1 < bp.size(); k++)
+                result += legendreIntegrate(f, bp[k], bp[k + 1]);
+
+            double expected = 1.0 / (1.0 + x * x);
+            double error = std::abs(result - expected);
+            std::cout << "  x=" << x << ": result=" << result
+                      << " expected=" << expected
+                      << " error=" << error;
+            std::cout << (error < 1e-6 ? " ✅\n" : " ❌\n");
+        }
+    }
+
+    // Test C: Harder — Gaussian decay mimics faster-decaying φ
+    // ∫₀^∞ sin(ux) * e^(-u²) du  [no closed form, use scipy as reference]
+    // Reference values precomputed: x=1 → 0.42440, x=2 → 0.18128
+    {
+        std::cout << "\nTest C: ∫₀^∞ sin(ux)*e^(-u²) du [Gaussian decay]\n";
+        std::map<double, double> references = {{1.0, 0.424400}, {2.0, 0.181282}};
+
+        for (auto &[x, expected] : references)
+        {
+            auto f = [x](double u)
+            { return std::sin(u * x) * std::exp(-u * u); };
+
+            double result = 0.0;
+            std::vector<double> bp = {0.0, 2.0 / x, 5.0 / x, 10.0 / x};
+            for (int k = 0; k + 1 < bp.size(); k++)
+                result += legendreIntegrate(f, bp[k], bp[k + 1]);
+
+            double error = std::abs(result - expected);
+            std::cout << "  x=" << x << ": result=" << result
+                      << " expected=" << expected
+                      << " error=" << error;
+            std::cout << (error < 1e-4 ? " ✅\n" : " ❌\n");
+        }
+    }
+
+    // Test D: Fixed breakpoints vs scaled breakpoints — the critical comparison
+    // This directly exposes your original bug
+    {
+        std::cout << "\nTest D: Fixed vs scaled breakpoints for high x\n";
+        double x = 20.0; // High x = rapid oscillation
+        auto f = [x](double u)
+        { return std::sin(u * x) * std::exp(-u); };
+        double expected = x / (1.0 + x * x); // 20/401 ≈ 0.04988
+
+        // Fixed breakpoints (your original approach)
+        double fixed_result = 0.0;
+        for (auto &[a, b] : std::vector<std::pair<double, double>>{{0, 5}, {5, 20}, {20, 50}, {50, 100}})
+            fixed_result += legendreIntegrate(f, a, b);
+
+        // Scaled breakpoints
+        double scaled_result = 0.0;
+        std::vector<double> bp = {0.0, 5.0 / x, 20.0 / x, 50.0 / x, 100.0 / x};
+        for (int k = 0; k + 1 < bp.size(); k++)
+            scaled_result += legendreIntegrate(f, bp[k], bp[k + 1]);
+
+        std::cout << "  expected:        " << expected << "\n";
+        std::cout << "  fixed result:    " << fixed_result
+                  << " error=" << std::abs(fixed_result - expected)
+                  << (std::abs(fixed_result - expected) < 1e-6 ? " ✅\n" : " ❌\n");
+        std::cout << "  scaled result:   " << scaled_result
+                  << " error=" << std::abs(scaled_result - expected)
+                  << (std::abs(scaled_result - expected) < 1e-6 ? " ✅\n" : " ❌\n");
+    }
+}
+
 int main()
 {
     // test_generator();
@@ -575,8 +686,9 @@ int main()
     // test_heston_variance_moments();
     // test_characteristic_function();
     // test_first_moment_sanity();
-    test_integrals();
+    // test_integrals();
     // test_quadrature();
+    test_oscillatory_quadrature();
 
     return 0;
 }
