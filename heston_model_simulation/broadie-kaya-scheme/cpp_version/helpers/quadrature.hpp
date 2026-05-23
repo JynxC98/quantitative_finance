@@ -24,7 +24,7 @@ using namespace std;
 template <typename Func>
 double legendreIntegrate(Func func, double lower_limit, double upper_limit)
 {
-    auto nodes = generateGaussLegendre(64); // Generating 32 point table
+    auto nodes = generateGaussLegendre(512); // Generating 256 point table
     double result = 0.0;
 
     // Scaling factors for the finite interval [lower_limit, upper_limit]

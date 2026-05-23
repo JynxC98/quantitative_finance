@@ -12,6 +12,7 @@
 #include "../helpers/gamma.hpp"
 #include "../helpers/bessel.hpp"
 #include "../helpers/char_function.hpp"
+#include "../helpers/bessel_parameters.hpp"
 
 std::complex<double> CharFunction(const HestonParams &p, double u)
 {
@@ -64,13 +65,13 @@ std::complex<double> CharFunction(const HestonParams &p, double u)
      * Evaluating the ratio of Modified Bessel functions.
      */
 
-    // Hard coding the parameters for Modified Bessel. Future fix will include
-    // Incorporating the variables as input parameters
+    BesselParams params; // These params are used for bessel params.
 
-    int num_iterations = 100;
-    double tolerance = 1e-8;
-    double threshold = 10.0;
-    bool log_space = true;
+    int num_iterations = params.num_iterations;
+    double tolerance = params.tolerance;
+    double threshold = params.threshold;
+    bool log_space = params.log_space;
+
     std::complex<double> log_numerator = ModifiedBessel(bessel_arg_num, alpha,
                                                         num_iterations, tolerance,
                                                         threshold, log_space);

@@ -15,7 +15,6 @@
 #include <iostream>
 #include <cmath>
 #include <complex>
-#include <map>
 #include <stdexcept>
 
 #include "quadrature.hpp"

@@ -6,6 +6,7 @@
 #include <cmath>
 #include <iomanip>
 #include <assert.h>
+#include <map>
 
 #include "../helpers/bessel.hpp"
 #include "../helpers/non_central_chi_sqd.hpp"
@@ -629,16 +630,19 @@ void test_oscillatory_quadrature()
     // Reference values precomputed: x=1 → 0.42440, x=2 → 0.18128
     {
         std::cout << "\nTest C: ∫₀^∞ sin(ux)*e^(-u²) du [Gaussian decay]\n";
-        std::map<double, double> references = {{1.0, 0.424400}, {2.0, 0.181282}};
+        std::map<double, double> references = {{1.0, 0.424400}, {2.0, 0.538079506}};
 
-        for (auto &[x, expected] : references)
+        for (auto &pair : references)
         {
+            double x = pair.first;
+            double expected = pair.second;
+
             auto f = [x](double u)
             { return std::sin(u * x) * std::exp(-u * u); };
 
             double result = 0.0;
             std::vector<double> bp = {0.0, 2.0 / x, 5.0 / x, 10.0 / x};
-            for (int k = 0; k + 1 < bp.size(); k++)
+            for (size_t k = 0; k + 1 < bp.size(); k++)
                 result += legendreIntegrate(f, bp[k], bp[k + 1]);
 
             double error = std::abs(result - expected);
@@ -660,8 +664,13 @@ void test_oscillatory_quadrature()
 
         // Fixed breakpoints (your original approach)
         double fixed_result = 0.0;
-        for (auto &[a, b] : std::vector<std::pair<double, double>>{{0, 5}, {5, 20}, {20, 50}, {50, 100}})
+        std::vector<std::pair<double, double>> intervals = {{0, 5}, {5, 20}, {20, 50}, {50, 100}};
+        for (const auto &interval : intervals)
+        {
+            double a = interval.first;
+            double b = interval.second;
             fixed_result += legendreIntegrate(f, a, b);
+        }
 
         // Scaled breakpoints
         double scaled_result = 0.0;
@@ -687,7 +696,7 @@ int main()
     // test_characteristic_function();
     // test_first_moment_sanity();
     // test_integrals();
-    // test_quadrature();
+    test_quadrature();
     test_oscillatory_quadrature();
 
     return 0;
