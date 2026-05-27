@@ -6,6 +6,7 @@
 #include <cmath>
 #include <iomanip>
 #include <assert.h>
+#include <cassert>
 #include <map>
 
 #include "../helpers/bessel.hpp"
@@ -339,15 +340,16 @@ void test_integrals()
 {
     HestonParams p = {
         .kappa = 2.0,
-        .theta = 0.45,
+        .theta = 0.20,
         .sigma = 0.45,
-        .v_u = 0.45,
-        .v_t = 0.20, // Almost same as V_u for very short dt
-        .dt = 1.0 / 365.0};
+        .v_u = 0.20,
+        .v_t = 0.10,
+        .dt = 0.25 // quarterly step
+    };
 
     // Checking the functioning of the integrals
 
-    double x = 1.0;
+    double x = 0.25;
 
     double u = 1.0;
 
@@ -369,18 +371,24 @@ void test_integrals()
 
     auto cdf_ep = calculateCDF(x + epsilon, p);
 
-    // ASSERT(cdf_ep > cdf_val - 1e-6, "The CDF is not exhibiting monotonicity");
+    for (double x : {0.01, 0.02, 0.03, 0.05, 0.08, 0.10, 0.15, 0.20})
+        std::cout << "CDF(" << x << ") = " << calculateCDF(x, p) << std::endl;
+
+    // assert(cdf_ep > cdf_val && "The CDF is not exhibiting monotonicity");
+
+    std::cout << cdf_ep << std::endl;
+    std::cout << cdf_val << std::endl;
 
     auto cdf_high = calculateCDF(6.0, p); // This should give a value close to 1
 
-    // ASSERT(approx_equal(cdf_high, 1.0), "The CDF should converge to 1 for high values of x");
+    std::cout << "The value of cdf at x = " << 6 << " is " << cdf_high << std::endl;
 
-    std::cout << cdf_high << std::endl;
+    // assert(approx_equal(cdf_high, 1.0) && "The CDF should converge to 1 for high values of x");
 
     auto cdf_low = calculateCDF(1e-7, p); // This should give a value close to 0
 
-    std::cout << cdf_low << std::endl;
-    // ASSERT(approx_equal(cdf_low, 0.0), "The CDF should converge to 0 for low values of X");
+    std::cout << "The value of cdf at x = " << 1e-7 << " is " << cdf_low << std::endl;
+    // assert(approx_equal(cdf_low, 0.0) && "The CDF should converge to 0 for low values of X");
 
     // PDF should approximately equal the finite difference of CDF
     double cdf_plus = calculateCDF(x + epsilon, p);
@@ -391,23 +399,14 @@ void test_integrals()
     std::cout << "PDF from finite diff : " << fd_pdf << std::endl;
 
     // Running the Newton Solver
-    double uniform = 1.0; // Assuming U = 0.5 for testing
-
-    auto result = runNewtonSolver(uniform, p);
-
-    std::cout << "The value of x for U = " << uniform << " is " << result << std::endl;
-
-    std::cout << "CDF(0.00279414) = " << calculateCDF(0.00279414, p) << std::endl;
-    std::cout << "CDF(0.037) = " << calculateCDF(0.037, p) << std::endl;
-    std::cout << "CDF(0.05) = " << calculateCDF(0.05, p) << std::endl;
-
-    std::cout << "Evaluating Fourier method" << std::endl;
-
-    CDFGrid fourier_grid = computeCDFGrid(p, 2048, 0.25);
-
-    double cdf_fft = sampleIntegratedVariance(uniform, fourier_grid);
-
-    std::cout << "The value of x for U = " << uniform << " is " << cdf_fft << std::endl;
+    for (double U : {0.1, 0.25, 0.5, 0.75, 0.9, 0.95, 0.99})
+    {
+        double x = runNewtonSolver(U, p);
+        double cdf_check = calculateCDF(x, p);
+        std::cout << "U = " << U
+                  << " x = " << x
+                  << " CDF(x) = " << cdf_check << std::endl;
+    }
 }
 
 void test_quadrature()
@@ -695,9 +694,9 @@ int main()
     // test_heston_variance_moments();
     // test_characteristic_function();
     // test_first_moment_sanity();
-    // test_integrals();
-    test_quadrature();
-    test_oscillatory_quadrature();
+    test_integrals();
+    // test_quadrature();
+    // test_oscillatory_quadrature();
 
     return 0;
 }

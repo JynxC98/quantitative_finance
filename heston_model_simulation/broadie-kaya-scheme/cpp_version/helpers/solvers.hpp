@@ -15,10 +15,13 @@
 #include <iostream>
 #include <cmath>
 #include <complex>
+#include <algorithm>
 #include <stdexcept>
 
 #include "quadrature.hpp"
 #include "char_function.hpp"
+
+#define damp 0.01 // Damping factor, hard coded for the time being
 
 /**
  * @brief Container for CDF, PDF, and its derivative at a point
@@ -50,12 +53,12 @@ double calculateIntegral(Func function, double x,
     {
         return function(x, u, p);
     };
-    double upper = 10.0 / (0.5 * (p.v_t + p.v_u) * p.dt);
     // Finer segments where oscillation is rapid
-    std::vector<double> breakpoints = {0.0, 5.0, 20.0, 50.0,
-                                       100.0};
+    std::vector<double> breakpoints = {
+        0.0, 5.0, 10.0, 20.0, 30.0, 40.0, 50.0,
+        75.0, 100.0, 150.0, 200.0, 300.0, 400.0, 500.0};
     double result = 0.0;
-    for (int k = 0; k + 1 < breakpoints.size(); k++)
+    for (int k = 0; k + 1 < breakpoints.size(); ++k)
     {
         result += legendreIntegrate(func, breakpoints[k], breakpoints[k + 1]);
     }
@@ -75,6 +78,7 @@ double calculateIntegral(Func function, double x,
  */
 double CDFIntegrand(double x, double u, const HestonParams &p)
 {
+
     auto phi = CharFunction(p, u);
 
     if (std::abs(u) < 1e-8)
@@ -84,11 +88,10 @@ double CDFIntegrand(double x, double u, const HestonParams &p)
         return x / M_PI;
     }
 
-    // Im[e^{-iux}φ(u)] = Im[(cos(ux) - i*sin(ux)) * (Re(φ) + i*Im(φ))]
-    // = cos(ux)*Im(φ) - sin(ux)*Re(φ)
-    double imag_part = std::cos(u * x) * std::imag(phi) - std::sin(u * x) * std::real(phi);
+    // Calculating the CDF as per the literature
+    double integrand = std::exp(-damp * u) * (std::sin(u * x) / u) * std::real(phi);
 
-    return -imag_part / (u * M_PI);
+    return integrand;
 }
 
 /**
@@ -96,7 +99,7 @@ double CDFIntegrand(double x, double u, const HestonParams &p)
  */
 double calculateCDF(double x, const HestonParams &p)
 {
-    return 0.5 + calculateIntegral(CDFIntegrand, x, p);
+    return 2.0 * M_1_PI * calculateIntegral(CDFIntegrand, x, p);
 }
 
 /**
@@ -107,25 +110,26 @@ double calculateCDF(double x, const HestonParams &p)
 double PDFIntegrand(double x, double u, const HestonParams &p)
 {
     auto phi = CharFunction(p, u);
-    // Re[e^{-iux}φ(u)] = Re[(cos(ux) - i*sin(ux)) * (Re(φ) + i*Im(φ))]
-    // = cos(ux)*Re(φ) + sin(ux)*Im(φ)
-    double real_part = std::cos(u * x) * std::real(phi) + std::sin(u * x) * std::imag(phi);
 
-    return (1.0 / M_PI) * real_part;
+    double alpha = 0.01;
+
+    double integrand = std::exp(-alpha * u) * std::cos(u * x) * std::real(phi);
+
+    return 2.0 * M_1_PI * integrand;
 }
 
 /**
  * @brief Integrand for computing the first derivative of the PDF (F''(x))
- *
- * d/dx PDF(x) = (1/π) ∫₀^∞ Re(-iu * e^{-iux} φ(u)) du
- * = (u/π) ∫₀^∞ Im(e^{-iux} φ(u)) du
  */
 double d_PDFIntegrand(double x, double u, const HestonParams &p)
 {
     auto phi = CharFunction(p, u);
-    double imag_part = std::cos(u * x) * std::imag(phi) - std::sin(u * x) * std::real(phi);
 
-    return (u / M_PI) * imag_part;
+    double alpha = 0.01;
+
+    double integrand = -std::exp(-alpha * u) * std::sin(u * x) * u * std::real(phi);
+
+    return 2.0 * M_1_PI * integrand;
 }
 
 /**

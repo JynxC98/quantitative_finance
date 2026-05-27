@@ -10,6 +10,7 @@
 #include <iostream>
 #include <cmath>
 #include <sstream>
+#include <cassert>
 
 #include <complex>
 #include "gamma.hpp"
@@ -70,6 +71,38 @@ int next_power_of_two(int n)
         res <<= 1; // This code shifts the bit to the left until the
                    // power of two is greater than the input number.
     return res;
+}
+
+/**
+ * @brief This function is used to fetch linearly seperated numbers between the
+ * two sets of inputs.
+ *
+ * @param a: The lower val
+ * @param b: The upper val
+ * @param num_points: The number of points required.
+ */
+template <typename T>
+std::vector<T> getLinspace(T a, T b, int num_points)
+{
+    assert(num_points > 0 && "The number of data points must be positive");
+
+    std::vector<T> result;
+    result.reserve(num_points);
+
+    if (num_points == 1)
+    {
+        result.push_back(a);
+        return result;
+    }
+
+    T step = (b - a) / static_cast<T>(num_points - 1);
+
+    for (int i = 0; i < num_points; ++i)
+    {
+        result.push_back(a + i * step);
+    }
+
+    return result;
 }
 
 double linear_interpolate(double K,
