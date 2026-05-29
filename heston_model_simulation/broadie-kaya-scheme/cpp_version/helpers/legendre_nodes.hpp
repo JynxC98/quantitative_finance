@@ -25,7 +25,7 @@ struct LegendreNode
  * Recurrence: (n+1)P_{n+1}(x) = (2n+1)x P_n(x) - n P_{n-1}(x)
  * Start: P_0(x) = 1, P_1(x) = x
  */
-double legendrePolynomial(int n, double x)
+inline double legendrePolynomial(int n, double x)
 {
     if (n == 0)
         return 1.0;
@@ -51,7 +51,7 @@ double legendrePolynomial(int n, double x)
  * Formula: P'_n(x) = n * (x*P_n(x) - P_{n-1}(x)) / (x^2 - 1)
  * Or use recurrence: (1-x^2)P'_n(x) = n(P_{n-1}(x) - x P_n(x))
  */
-double legendreDerivative(int n, double x)
+inline double legendreDerivative(int n, double x)
 {
     if (n == 0)
         return 0.0;
@@ -69,7 +69,7 @@ double legendreDerivative(int n, double x)
  *
  * Initial guess: cos(π * (4i - 1) / (4n + 2)) for i-th root
  */
-double findLegendreRoot(int n, int i, double tol = 1e-15)
+inline double findLegendreRoot(int n, int i, double tol = 1e-15)
 {
     // Initial approximation using cosine formula
     double x = std::cos(M_PI * (4.0 * i - 1.0) / (4.0 * n + 2.0));
@@ -96,7 +96,7 @@ double findLegendreRoot(int n, int i, double tol = 1e-15)
  * @param n Number of quadrature points (1 to ~100; higher needs more precision)
  * @return vector of (node, weight) pairs sorted by node
  */
-std::vector<LegendreNode> generateGaussLegendre(int n)
+inline std::vector<LegendreNode> generateGaussLegendre(int n)
 {
     std::vector<LegendreNode> nodes;
     nodes.reserve(n); // Reserves memory for n values

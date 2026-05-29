@@ -48,8 +48,8 @@ struct NewtonMethod
  * @return Numerical approximation of the definite integral
  */
 template <typename Func>
-double calculateIntegral(Func function, double x,
-                         const HestonParams &p)
+inline double calculateIntegral(Func function, double x,
+                                const HestonParams &p)
 {
     auto func = [&](double u)
     {
@@ -76,7 +76,7 @@ double calculateIntegral(Func function, double x,
  * @param p Heston model parameters
  * @return Integrand value -Im(e^{-iux} φ(u))/(u * π)
  */
-double CDFIntegrand(double x, double u, const HestonParams &p)
+inline double CDFIntegrand(double x, double u, const HestonParams &p)
 {
 
     auto phi = CharFunction(p, std::complex<double>(u, damp));
@@ -97,7 +97,7 @@ double CDFIntegrand(double x, double u, const HestonParams &p)
 /**
  * @brief This function calculates the integral of the CDF integrand.
  */
-double calculateCDF(double x, const HestonParams &p)
+inline double calculateCDF(double x, const HestonParams &p)
 {
     return 2.0 * M_1_PI * calculateIntegral(CDFIntegrand, x, p);
 }
@@ -107,7 +107,7 @@ double calculateCDF(double x, const HestonParams &p)
  *
  * f(x) = (1/π) ∫₀^∞ Re(e^{-iux} φ(u)) du
  */
-double PDFIntegrand(double x, double u, const HestonParams &p)
+inline double PDFIntegrand(double x, double u, const HestonParams &p)
 {
     auto phi = CharFunction(p, std::complex<double>(u, damp));
 
@@ -119,7 +119,7 @@ double PDFIntegrand(double x, double u, const HestonParams &p)
 /**
  * @brief Integrand for computing the first derivative of the PDF (F''(x))
  */
-double d_PDFIntegrand(double x, double u, const HestonParams &p)
+inline double d_PDFIntegrand(double x, double u, const HestonParams &p)
 {
     auto phi = CharFunction(p, std::complex<double>(u, damp));
 
@@ -139,8 +139,8 @@ double d_PDFIntegrand(double x, double u, const HestonParams &p)
  * @param max_iterations Maximum iterations
  * @return Quantile x such that F(x) = var
  */
-double runNewtonSolver(double var, const HestonParams &p,
-                       double tolerance = 1e-8, int max_iterations = 100)
+inline double runNewtonSolver(double var, const HestonParams &p,
+                              double tolerance = 1e-8, int max_iterations = 100)
 {
     double x = ((p.v_t + p.v_u) / 2) * p.dt; // Trapezoidal method for initial guess
 

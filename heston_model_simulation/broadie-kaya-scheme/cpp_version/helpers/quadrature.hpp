@@ -14,6 +14,21 @@
 using namespace std;
 
 /**
+ * @brief Returns a cached 512-point Gauss-Legendre node/weight table.
+ *
+ * The table is generated exactly once, on first call, and reused for the
+ * lifetime of the program. Because this is a non-template inline function,
+ * every translation unit shares the same static instance (so the expensive
+ * Newton solve over the Legendre roots runs only once total).
+ *
+ */
+inline const std::vector<LegendreNode> &gaussLegendre512()
+{
+    static const std::vector<LegendreNode> nodes = generateGaussLegendre(512);
+    return nodes;
+}
+
+/**
  * @brief This function is used to calculate the area under the curve using Gauss-Legendre quadrature
  *
  * @param function: The main function to be integrated
@@ -24,7 +39,7 @@ using namespace std;
 template <typename Func>
 double legendreIntegrate(Func func, double lower_limit, double upper_limit)
 {
-    auto nodes = generateGaussLegendre(512); // Generating 512 point table
+    const auto &nodes = gaussLegendre512(); // cached 512-point table
     double result = 0.0;
 
     // Scaling factors for the finite interval [lower_limit, upper_limit]
