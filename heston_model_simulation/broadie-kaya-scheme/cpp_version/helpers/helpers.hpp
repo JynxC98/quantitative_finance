@@ -11,6 +11,7 @@
 #include <cmath>
 #include <sstream>
 #include <cassert>
+#include <vector>
 
 #include <complex>
 #include "gamma.hpp"
@@ -140,4 +141,56 @@ double linear_interpolate(double K,
         }                                                                         \
     } while (false)
 
+struct StatisticalProperties
+{
+    double mean;
+    double std_dev;
+    double left_lc;
+    double right_lc;
+};
+
+/**
+ * @brief This function is used to calculate the mean, standard deviation, left
+ * confidence interval and right confidence interval of a underlying vector using
+ * the Welford's algorithm. The function inherently assumes 95% confidence interval.
+ *
+ * The input parameters are as follows:
+ *
+ * @param vals: The vector of the underlying input values
+ */
+StatisticalProperties calculateStatistics(const std::vector<double> &vals)
+{
+    StatisticalProperties results;
+
+    int n = 0;
+    double mean = 0.0;
+    double M2 = 0.0;
+
+    // Welford's online algorithm
+    for (const double x : vals)
+    {
+        n++;
+        double delta = x - mean; // The difference before the mean updates
+        mean += delta / n;
+
+        // `delta2` is the difference after multiplying them accumulates the variance numerator stably,
+        double delta2 = x - mean;
+        M2 += delta * delta2;
+    }
+
+    // n - 1 for sample variance
+    // Uses Bessel's correction since your Monte Carlo paths are a sample, not the full population.
+
+    double std_dev = std::sqrt(M2 / (n - 1));
+
+    // 95% CI: mean +/- 1.96 * (std_dev / sqrt(n))
+    double margin = 1.96 * (std_dev / std::sqrt(static_cast<double>(n)));
+
+    results.mean = mean;
+    results.std_dev = std_dev;
+    results.left_lc = mean - margin;
+    results.right_lc = mean + margin;
+
+    return results;
+}
 #endif

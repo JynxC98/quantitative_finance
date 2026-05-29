@@ -14,6 +14,8 @@
  * @param v_u: The variance value at timestep u
  * @param v_t: The variance value at timestep t (t > u)
  * @param dt: The value of timestep, t-u
+ * @param v0: The initial value of variance
+ * @param rho: The correlation between the asset price and the variance process.
  */
 struct HestonParams
 {
@@ -23,4 +25,6 @@ struct HestonParams
     double v_u;
     double v_t;
     double dt;
+    double v0;
+    double rho;
 };
