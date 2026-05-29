@@ -10,20 +10,23 @@
 
 void test_euler()
 {
+
+    // Choosing parameters from the paper itself
+
     HestonParams p = {
-        .kappa = 2.0,
-        .theta = 0.04,
-        .sigma = 0.3,
+        .kappa = 6.21,
+        .theta = 0.019,
+        .sigma = 0.61,
         .v_u = 0.04,
         .v_t = 0.04,
         .dt = 1.0 / 252.0,
-        .v0 = 0.04,
-        .rho = -0.6};
+        .v0 = 0.010201,
+        .rho = -0.7};
 
     OptionParams o = {
         .spot = 100.0,
         .strike = 100.0,
-        .r = 0.05,
+        .r = 0.0319,
         .T = 1.0};
 
     std::cout << "\n========== Testing Euler Scheme ==========\n";
