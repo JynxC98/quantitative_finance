@@ -407,15 +407,15 @@ void test_integrals()
     std::cout << "PDF from integration : " << pdf_val << std::endl;
     std::cout << "PDF from finite diff : " << fd_pdf << std::endl;
 
-    // // Running the Newton Solver
-    // for (double U : {0.1, 0.25, 0.5, 0.75, 0.9, 0.95, 0.99})
-    // {
-    //     double x = runNewtonSolver(U, p);
-    //     double cdf_check = calculateCDF(x, p);
-    //     std::cout << "U = " << U
-    //               << " x = " << x
-    //               << " CDF(x) = " << cdf_check << std::endl;
-    // }
+    // Running the Newton Solver
+    for (double U : {0.1, 0.25, 0.5, 0.75, 0.9, 0.95, 0.99})
+    {
+        double x = runNewtonSolver(U, p);
+        double cdf_check = calculateCDF(x, p);
+        std::cout << "U = " << U
+                  << " x = " << x
+                  << " CDF(x) = " << cdf_check << std::endl;
+    }
 }
 
 void test_quadrature()
@@ -698,14 +698,14 @@ void test_oscillatory_quadrature()
 
 int main()
 {
-    // test_generator();
+    test_generator();
 
-    // test_heston_variance_moments();
-    // test_characteristic_function();
-    // test_first_moment_sanity();
+    test_heston_variance_moments();
+    test_characteristic_function();
+    test_first_moment_sanity();
     test_integrals();
-    // test_quadrature();
-    // test_oscillatory_quadrature();
+    test_quadrature();
+    test_oscillatory_quadrature();
 
     return 0;
 }
