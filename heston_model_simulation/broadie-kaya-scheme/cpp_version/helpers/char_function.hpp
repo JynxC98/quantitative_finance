@@ -46,6 +46,19 @@ struct HestonParams
  * @param p: The Heston parameters defined as the structure above.
  * @param u: The characteristic variable
  */
+std::complex<double> CharFunction(const HestonParams &p,
+                                  std::complex<double> u);
+
+/**
+ * @brief CF evaluated at a real argument
+ *
+ * Promotes u to complex<double> and forwards to the primary overload.
+ * Used in unit tests and for the φ(0) = 1 sanity check.
+ *
+ * @param p  Heston model parameters
+ * @param u  Real CF argument
+ * @return   Φ(u) ∈ ℂ
+ */
 std::complex<double> CharFunction(const HestonParams &p, double u);
 
 #endif

@@ -14,7 +14,7 @@
 #include "../helpers/char_function.hpp"
 #include "../helpers/bessel_parameters.hpp"
 
-std::complex<double> CharFunction(const HestonParams &p, double u)
+std::complex<double> CharFunction(const HestonParams &p, std::complex<double> u)
 {
     // Initialising the complex number
     std::complex<double> i(0.0, 1.0);
@@ -83,4 +83,9 @@ std::complex<double> CharFunction(const HestonParams &p, double u)
     std::complex<double> third_term = std::exp(log_numerator - log_denominator);
 
     return first_term * second_term * third_term;
+}
+
+std::complex<double> CharFunction(const HestonParams &p, double u)
+{
+    return CharFunction(p, std::complex<double>(u, 0.0));
 }

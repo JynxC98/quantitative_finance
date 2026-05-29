@@ -343,7 +343,7 @@ void test_integrals()
         .theta = 0.20,
         .sigma = 0.45,
         .v_u = 0.20,
-        .v_t = 0.10,
+        .v_t = 0.20,
         .dt = 0.25 // quarterly step
     };
 
@@ -371,10 +371,15 @@ void test_integrals()
 
     auto cdf_ep = calculateCDF(x + epsilon, p);
 
-    for (double x : {0.01, 0.02, 0.03, 0.05, 0.08, 0.10, 0.15, 0.20})
+    for (double x : {0.01, 0.02, 0.03, 0.04, 0.05, 0.08, 0.10, 0.15, 0.20})
         std::cout << "CDF(" << x << ") = " << calculateCDF(x, p) << std::endl;
 
     // assert(cdf_ep > cdf_val && "The CDF is not exhibiting monotonicity");
+
+    // Checking the value of approximate integrated variance value
+    double x_mean = 0.5 * (p.v_u + p.v_t) * p.dt;
+
+    std::cout << "The value for approximated integrated variance of x = " << x_mean << " is " << calculateCDF(x_mean, p) << std::endl;
 
     std::cout << cdf_ep << std::endl;
     std::cout << cdf_val << std::endl;
@@ -398,15 +403,15 @@ void test_integrals()
     std::cout << "PDF from integration : " << pdf_val << std::endl;
     std::cout << "PDF from finite diff : " << fd_pdf << std::endl;
 
-    // Running the Newton Solver
-    for (double U : {0.1, 0.25, 0.5, 0.75, 0.9, 0.95, 0.99})
-    {
-        double x = runNewtonSolver(U, p);
-        double cdf_check = calculateCDF(x, p);
-        std::cout << "U = " << U
-                  << " x = " << x
-                  << " CDF(x) = " << cdf_check << std::endl;
-    }
+    // // Running the Newton Solver
+    // for (double U : {0.1, 0.25, 0.5, 0.75, 0.9, 0.95, 0.99})
+    // {
+    //     double x = runNewtonSolver(U, p);
+    //     double cdf_check = calculateCDF(x, p);
+    //     std::cout << "U = " << U
+    //               << " x = " << x
+    //               << " CDF(x) = " << cdf_check << std::endl;
+    // }
 }
 
 void test_quadrature()

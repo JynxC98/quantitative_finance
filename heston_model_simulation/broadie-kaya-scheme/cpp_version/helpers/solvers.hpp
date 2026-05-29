@@ -20,8 +20,9 @@
 
 #include "quadrature.hpp"
 #include "char_function.hpp"
+#include "helpers.hpp"
 
-#define damp 0.01 // Damping factor, hard coded for the time being
+#define damp 0.005 // Damping factor, hard coded for the time being
 
 /**
  * @brief Container for CDF, PDF, and its derivative at a point
@@ -54,9 +55,7 @@ double calculateIntegral(Func function, double x,
         return function(x, u, p);
     };
     // Finer segments where oscillation is rapid
-    std::vector<double> breakpoints = {
-        0.0, 5.0, 10.0, 20.0, 30.0, 40.0, 50.0,
-        75.0, 100.0, 150.0, 200.0, 300.0, 400.0, 500.0};
+    std::vector<double> breakpoints = getLinspace(0.0, 1000.0, 50.0);
     double result = 0.0;
     for (int k = 0; k + 1 < breakpoints.size(); ++k)
     {
@@ -79,7 +78,7 @@ double calculateIntegral(Func function, double x,
 double CDFIntegrand(double x, double u, const HestonParams &p)
 {
 
-    auto phi = CharFunction(p, u);
+    auto phi = CharFunction(p, std::complex<double>(u, damp));
 
     if (std::abs(u) < 1e-8)
     {
@@ -109,11 +108,9 @@ double calculateCDF(double x, const HestonParams &p)
  */
 double PDFIntegrand(double x, double u, const HestonParams &p)
 {
-    auto phi = CharFunction(p, u);
+    auto phi = CharFunction(p, std::complex<double>(u, damp));
 
-    double alpha = 0.01;
-
-    double integrand = std::exp(-alpha * u) * std::cos(u * x) * std::real(phi);
+    double integrand = std::exp(-damp * u) * std::cos(u * x) * std::real(phi);
 
     return 2.0 * M_1_PI * integrand;
 }
@@ -123,11 +120,9 @@ double PDFIntegrand(double x, double u, const HestonParams &p)
  */
 double d_PDFIntegrand(double x, double u, const HestonParams &p)
 {
-    auto phi = CharFunction(p, u);
+    auto phi = CharFunction(p, std::complex<double>(u, damp));
 
-    double alpha = 0.01;
-
-    double integrand = -std::exp(-alpha * u) * std::sin(u * x) * u * std::real(phi);
+    double integrand = -std::exp(-damp * u) * std::sin(u * x) * u * std::real(phi);
 
     return 2.0 * M_1_PI * integrand;
 }
@@ -146,7 +141,7 @@ double d_PDFIntegrand(double x, double u, const HestonParams &p)
 double runNewtonSolver(double var, const HestonParams &p,
                        double tolerance = 1e-8, int max_iterations = 100)
 {
-    double x = (p.v_t + p.v_u) / 2 * p.dt; // Trapezoidal method for initial guess
+    double x = ((p.v_t + p.v_u) / 2) * p.dt; // Trapezoidal method for initial guess
 
     for (int i = 0; i < max_iterations; ++i)
     {
