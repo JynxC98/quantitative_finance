@@ -12,6 +12,7 @@
 #include <sstream>
 #include <cassert>
 #include <vector>
+#include <cmath>
 
 #include <complex>
 #include "gamma.hpp"
@@ -192,5 +193,27 @@ inline StatisticalProperties calculateStatistics(const std::vector<double> &vals
     results.right_lc = mean + margin;
 
     return results;
+}
+
+inline double BlackScholesPrice(double spot,
+                                double strike,
+                                double sigma,
+                                double r,
+                                double T,
+                                bool isCall)
+{
+    auto N = [](double x)
+    {
+        return 0.5 * std::erfc(-x / std::sqrt(2.0));
+    };
+
+    double d1 = (std::log(spot / strike) + (r + 0.5 * sigma * sigma) * T) / (sigma * std::sqrt(T));
+
+    double d2 = d1 - sigma * std::sqrt(T);
+
+    if (isCall)
+        return spot * N(d1) - strike * std::exp(-r * T) * N(d2);
+    else
+        return strike * std::exp(-r * T) * N(-d2) - spot * N(-d1);
 }
 #endif

@@ -37,10 +37,6 @@ StatisticalProperties EulerScheme(const HestonParams &p,
 
     double dt = o.T / static_cast<double>(N);
 
-    // These variables store the evolution of the current spot and variance
-    double current_spot = o.spot;   // The spot at t = 0
-    double current_variance = p.v0; // The variance at t = 0
-
     // This variable stores the transformed variance based on the prevention
     // criteria
     double trans_var;
@@ -50,15 +46,18 @@ StatisticalProperties EulerScheme(const HestonParams &p,
 
     for (int i = 0; i < M; ++i)
     {
+        // These variables store the evolution of the current spot and variance
+        double current_spot = o.spot;   // The spot at t = 0
+        double current_variance = p.v0; // The variance at t = 0
 
-        for (int j = 1; j <= M; ++j)
+        for (int j = 1; j <= N; ++j)
         {
             // Initialzing the random variabbles dW1 and dW2 based on the
             // literature
 
-            dW1 = norm(seed);
+            dW1 = norm(gen);
 
-            dW2 = p.rho * dW1 + std::sqrt(1.0 - p.rho * p.rho) * norm(seed);
+            dW2 = p.rho * dW1 + std::sqrt(1.0 - p.rho * p.rho) * norm(gen);
 
             switch (prevention)
             {
@@ -74,7 +73,7 @@ StatisticalProperties EulerScheme(const HestonParams &p,
                 break;
             }
 
-            current_spot = current_spot * (1.0 + o.r * dt + trans_var * std::sqrt(dt) * dW1);
+            current_spot = current_spot * (1.0 + o.r * dt + std::sqrt(trans_var) * std::sqrt(dt) * dW1);
             current_variance = current_variance + p.kappa * (p.theta - current_variance) * dt + p.sigma * trans_var * std::sqrt(dt) * dW2;
         }
 
