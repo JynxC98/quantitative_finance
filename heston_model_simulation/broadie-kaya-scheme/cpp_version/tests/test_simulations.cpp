@@ -29,7 +29,7 @@ void test_euler()
     std::cout << "\n========== Testing Euler Scheme ==========\n";
 
     int M = 100000; // paths
-    int N = 252;    // timesteps (daily)
+    int N = 512;    // timesteps
 
     // =====================================================
     // TEST 1: Call price should be positive
