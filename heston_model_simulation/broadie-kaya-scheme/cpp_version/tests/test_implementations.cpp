@@ -16,6 +16,7 @@
 #include "../helpers/helpers.hpp"
 #include "../helpers/quadrature.hpp"
 #include "../helpers/fourier_transform.hpp"
+#include "../helpers/heston_params.hpp"
 
 void test_generator()
 {

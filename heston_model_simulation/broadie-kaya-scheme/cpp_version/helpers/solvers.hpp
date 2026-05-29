@@ -20,6 +20,7 @@
 
 #include "quadrature.hpp"
 #include "char_function.hpp"
+#include "heston_params.hpp"
 #include "helpers.hpp"
 
 #define damp 0.005 // Damping factor, hard coded for the time being

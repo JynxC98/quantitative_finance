@@ -13,6 +13,7 @@
 #include "../helpers/bessel.hpp"
 #include "../helpers/char_function.hpp"
 #include "../helpers/bessel_parameters.hpp"
+#include "../helpers/heston_params.hpp"
 
 std::complex<double> CharFunction(const HestonParams &p, std::complex<double> u)
 {
