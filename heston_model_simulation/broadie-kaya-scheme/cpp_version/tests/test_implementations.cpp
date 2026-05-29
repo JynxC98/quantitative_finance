@@ -165,13 +165,14 @@ void test_characteristic_function()
 
     // Initialize Heston parameters (typical values from literature)
     HestonParams heston_params = {
-        .kappa = 2.0,  // Mean reversion rate
-        .theta = 0.45, // Long-run variance
-        .sigma = 0.25, // Volatility of variance
-        .v_u = 0.2,    // Variance at time u
-        .v_t = 0.1,    // Variance at time t
-        .dt = 0.25     // One day in years
-    };
+        .kappa = 2.0,
+        .theta = 0.45,
+        .sigma = 0.25,
+        .v_u = 0.2,
+        .v_t = 0.1,
+        .dt = 0.25,
+        .v0 = 0.2, // Initial variance (same as v_u here)
+        .rho = -0.6};
 
     // =====================================================
     // TEST 1: u = 0 should return exactly 1
@@ -310,9 +311,10 @@ void test_first_moment_sanity()
         .theta = 0.45,
         .sigma = 0.25,
         .v_u = 0.2,
-        .v_t = 0.2, // Almost same as V_u for very short dt
-        .dt = 1e-6  // Very short time
-    };
+        .v_t = 0.2,
+        .dt = 1e-6,
+        .v0 = 0.2,
+        .rho = -0.6};
 
     double eps = 1e-6;
     auto phi_plus = CharFunction(very_short, eps);
@@ -345,8 +347,9 @@ void test_integrals()
         .sigma = 0.45,
         .v_u = 0.20,
         .v_t = 0.20,
-        .dt = 0.25 // quarterly step
-    };
+        .dt = 0.25,
+        .v0 = 0.20,
+        .rho = -0.6};
 
     // Checking the functioning of the integrals
 

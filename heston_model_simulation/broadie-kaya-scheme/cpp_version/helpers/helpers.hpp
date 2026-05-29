@@ -18,7 +18,7 @@
 
 constexpr double EPS = 1e-8;
 
-bool approx_equal(double a, double b, double tol = EPS)
+inline bool approx_equal(double a, double b, double tol = EPS)
 {
     return std::abs(a - b) < tol;
 }
@@ -37,7 +37,7 @@ struct BesselFunctionParams
     bool log_space;
 };
 
-std::vector<double> getLinSpace(double lower_val, double upper_val, int N)
+inline std::vector<double> getLinSpace(double lower_val, double upper_val, int N)
 {
     // Initialising an empty array of gridpoints.
     std::vector<double> grid_points;
@@ -65,7 +65,7 @@ std::vector<double> getLinSpace(double lower_val, double upper_val, int N)
  * @brief This function calculates the next greatest power of 2 using the
  * bitwise left shift operator.
  */
-int next_power_of_two(int n)
+inline int next_power_of_two(int n)
 {
     int res = 1;
     while (res < n)
@@ -106,9 +106,9 @@ std::vector<T> getLinspace(T a, T b, int num_points)
     return result;
 }
 
-double linear_interpolate(double K,
-                          const std::vector<double> &x,
-                          const std::vector<double> &y)
+inline double linear_interpolate(double K,
+                                 const std::vector<double> &x,
+                                 const std::vector<double> &y)
 {
     // Bounds check
     if (K <= x.front())
@@ -158,7 +158,7 @@ struct StatisticalProperties
  *
  * @param vals: The vector of the underlying input values
  */
-StatisticalProperties calculateStatistics(const std::vector<double> &vals)
+inline StatisticalProperties calculateStatistics(const std::vector<double> &vals)
 {
     StatisticalProperties results;
 
