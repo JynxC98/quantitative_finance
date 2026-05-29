@@ -74,12 +74,13 @@ StatisticalProperties EulerScheme(const HestonParams &p,
             }
 
             current_spot = current_spot * (1.0 + o.r * dt + std::sqrt(trans_var) * std::sqrt(dt) * dW1);
-            current_variance = current_variance + p.kappa * (p.theta - current_variance) * dt + p.sigma * trans_var * std::sqrt(dt) * dW2;
+            current_variance = current_variance + p.kappa * (p.theta - current_variance) * dt + p.sigma * std::sqrt(trans_var) * std::sqrt(dt) * dW2;
         }
 
         // Storing the evolution of the path
-        option_prices[i] = isCall ? std::max(current_spot - o.strike, 0.0)
-                                  : std::max(o.strike - current_spot, 0.0);
+        double payoff = isCall ? std::max(current_spot - o.strike, 0.0)
+                               : std::max(o.strike - current_spot, 0.0);
+        option_prices[i] = std::exp(-o.r * o.T) * payoff;
     }
 
     auto results = calculateStatistics(option_prices);
