@@ -13,6 +13,8 @@
 #include "../helpers/helpers.hpp"
 #include "../helpers/heston_params.hpp"
 #include "../helpers/models.hpp"
+#include "../helpers/integrated_variance.hpp"
+#include "../helpers/random_utils.hpp"
 
 StatisticalProperties EulerScheme(const HestonParams &p,
                                   const OptionParams &o,
@@ -21,15 +23,6 @@ StatisticalProperties EulerScheme(const HestonParams &p,
                                   bool isCall = true,
                                   VariancePrevention prevention = VariancePrevention::Truncation)
 {
-    // Fetching the seed value from the hardware for generating random numbers.
-    std::random_device seed;
-
-    // Initiazing the generator for the random numbers
-    std::mt19937 gen(seed());
-
-    // Initializng the standard normal distribution generator
-    std::normal_distribution<> norm(0.0, 1.0);
-
     // We only need to store the results at the end path
     std::vector<double> option_prices(M, 0.0);
 
@@ -55,9 +48,9 @@ StatisticalProperties EulerScheme(const HestonParams &p,
             // Initialzing the random variabbles dW1 and dW2 based on the
             // literature
 
-            dW1 = norm(gen);
+            dW1 = normal(gen);
 
-            dW2 = p.rho * dW1 + std::sqrt(1.0 - p.rho * p.rho) * norm(gen);
+            dW2 = p.rho * dW1 + std::sqrt(1.0 - p.rho * p.rho) * normal(gen);
 
             switch (prevention)
             {
@@ -84,6 +77,41 @@ StatisticalProperties EulerScheme(const HestonParams &p,
     }
 
     auto results = calculateStatistics(option_prices);
+
+    return results;
+}
+
+StatisticalProperties simulateBroadieKayaHeston(const HestonParams &p,
+                                                const OptionParams &o,
+                                                int M,
+                                                int N,
+                                                bool isCall = true)
+{
+    // Storing the final asset price evolution at each step.
+    std::vector<double> prices(M, 0.0);
+
+    for (int path = 0; path < M; ++path)
+    {
+        HestonParams params = p;
+        double S = o.spot;
+
+        for (int step = 0; step < N; ++step)
+        {
+            double v_t = sampleVt(params, params.v_u);
+            params.v_t = v_t;
+
+            double int_var = calculateIntegratedVariance(params);
+
+            S = priceStep(params, S, int_var, o.r);
+
+            params.v_u = v_t;
+        }
+
+        double payoff = isCall ? std::max(S - o.strike, 0.0) : std::max(o.strike - S, 0.0);
+        prices[path] = std::exp(-o.r * o.T) * payoff;
+    }
+
+    auto results = calculateStatistics(prices);
 
     return results;
 }

@@ -144,6 +144,29 @@ inline double runNewtonSolver(double var, const HestonParams &p,
 {
     double x = ((p.v_t + p.v_u) / 2) * p.dt; // Trapezoidal method for initial guess
 
+    // The authors use bisection method when the value of var is close to tails
+    if (var < 1e-2 || var > 0.99)
+    {
+        // Bracket the root first
+        double lo = 1e-7, hi = 1.0;
+
+        // Expand hi until CDF(hi) > var
+        while (calculateCDF(hi, p) < var)
+            hi *= 2.0;
+
+        for (int i = 0; i < max_iterations; ++i)
+        {
+            double mid = 0.5 * (lo + hi);
+            double f = calculateCDF(mid, p) - var;
+
+            if (std::abs(f) < tolerance)
+                return mid;
+
+            f > 0 ? hi = mid : lo = mid;
+        }
+        return 0.5 * (lo + hi);
+    }
+
     for (int i = 0; i < max_iterations; ++i)
     {
         double f = calculateCDF(x, p) - var;

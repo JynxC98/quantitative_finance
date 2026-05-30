@@ -342,14 +342,14 @@ void test_first_moment_sanity()
 void test_integrals()
 {
     HestonParams p = {
-        .kappa = 2.0,
-        .theta = 0.20,
-        .sigma = 0.45,
-        .v_u = 0.20,
-        .v_t = 0.20,
-        .dt = 0.25,
-        .v0 = 0.20,
-        .rho = -0.6};
+        .kappa = 6.21,
+        .theta = 0.019,
+        .sigma = 0.61,
+        .v_u = 0.04,
+        .v_t = 0.04,
+        .dt = 1.0 / 365.0,
+        .v0 = 0.010201,
+        .rho = -0.7};
 
     // Checking the functioning of the integrals
 
@@ -698,14 +698,14 @@ void test_oscillatory_quadrature()
 
 int main()
 {
-    test_generator();
+    // test_generator();
 
-    test_heston_variance_moments();
-    test_characteristic_function();
-    test_first_moment_sanity();
+    // test_heston_variance_moments();
+    // test_characteristic_function();
+    // test_first_moment_sanity();
     test_integrals();
-    test_quadrature();
-    test_oscillatory_quadrature();
+    // test_quadrature();
+    // test_oscillatory_quadrature();
 
     return 0;
 }

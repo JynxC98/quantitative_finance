@@ -7,23 +7,13 @@
 #include <iostream>
 #include <cmath>
 #include <random>
+#include <algorithm>
 
 #include "../helpers/heston_params.hpp"
 #include "../helpers/non_central_chi_sqd.hpp"
 #include "../helpers/solvers.hpp"
 #include "../helpers/integrated_variance.hpp"
-
-// Fetching the seed value from the hardware for generating random numbers.
-std::random_device seed;
-
-// Initiazing the generator for the random numbers
-std::mt19937 gen(seed());
-
-// Initializng uniform distribution generator
-std::uniform_real_distribution<> uniform(0.0, 1.0);
-
-// Initalizinf standard normal generator
-std::normal_distribution<> normal(0.0, 1.0);
+#include "../helpers/random_utils.hpp"
 
 double calculateIntegratedVariance(const HestonParams &p)
 {

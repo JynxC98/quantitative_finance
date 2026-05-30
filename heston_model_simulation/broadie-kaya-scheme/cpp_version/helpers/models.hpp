@@ -87,4 +87,23 @@ StatisticalProperties EulerScheme(const HestonParams &p,
                                   bool isCall,
                                   VariancePrevention prevention);
 
+/**
+ * @brief Simulates the Heston stochastic volatility model using the exact Broadie-Kaya scheme.
+ *
+ * This function implements the exact simulation scheme proposed by Broadie & Kaya (2006),
+ * which simulates the Heston model without discretization bias. The algorithm uses the
+ * non-central chi-squared distribution for variance transitions and the conditional
+ * distribution for the integrated variance and asset price.
+ *
+ * @param p    Heston model parameters
+ * @param o    Option contract parameters
+ * @param M    Number of simulation paths
+ * @param N    Number of time steps per path (discretization points)
+ */
+StatisticalProperties simulateBroadieKayaHeston(const HestonParams &p,
+                                                const OptionParams &o,
+                                                int M,
+                                                int N,
+                                                bool isCall);
+
 #endif

@@ -58,11 +58,9 @@ double VarianceBrownianIntegral(const HestonParams &p, double integrated_varianc
  * @param p        Heston model parameters (r, rho, sigma, kappa, theta, dt)
  * @param log_s_u  Log-price at time u (current)
  * @param r:        The risk-free rate
- * @param int_var  Integrated variance from u to t
- * @param Z        Standard normal random variable
+ * @param integrated_variance  Integrated variance from u to t
  *
  * @return         Asset price at time t (next step)
  */
-double priceStep(const HestonParams &p, double log_s_u, double r,
-                 double int_var, double Z);
+double priceStep(const HestonParams &p, double log_s_u, double integrated_variance, double r);
 #endif
