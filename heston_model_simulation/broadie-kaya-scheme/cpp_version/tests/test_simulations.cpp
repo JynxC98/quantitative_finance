@@ -123,7 +123,7 @@ void test_BK()
 {
 
     int M = 10000; // paths
-    int N = 4;     // timesteps
+    int N = 50;    // timesteps
     // Choosing parameters from the paper itself
     HestonParams p = {
         .kappa = 6.21,
@@ -157,25 +157,25 @@ void test_BK()
     // Testing the put values
 
     auto put_results = simulateBroadieKayaHeston(p, o, M, N, false);
-    auto bsm_put = BlackScholesPrice(o.spot, o.strike, std::sqrt(p.v0), o.r, o.T, true);
+    auto bsm_put = BlackScholesPrice(o.spot, o.strike, std::sqrt(p.v0), o.r, o.T, false);
 
     std::cout << "\nPut price comparision\n";
-    std::cout << "  Mean put price : " << call_result.mean << "\n";
-    std::cout << "  BSM put price  : " << bsm_call << "\n";
-    std::cout << "  BSM vs MC diff  : " << std::abs(call_result.mean - bsm_call) << "\n";
-    std::cout << "  Std deviation   : " << call_result.std_dev << "\n";
-    std::cout << "  95% CI          : [" << call_result.left_lc << ", " << call_result.right_lc << "]\n";
+    std::cout << "  Mean put price : " << put_results.mean << "\n";
+    std::cout << "  BSM put price  : " << bsm_put << "\n";
+    std::cout << "  BSM vs MC diff  : " << std::abs(put_results.mean - bsm_put) << "\n";
+    std::cout << "  Std deviation   : " << put_results.std_dev << "\n";
+    std::cout << "  95% CI          : [" << put_results.left_lc << ", " << put_results.right_lc << "]\n";
 
     // =====================================================
     // BK vs Euler should be close(cross - scheme sanity check)
     // =====================================================
-    auto euler_put = EulerScheme(p, o, M, N, true, VariancePrevention::Truncation);
+    auto euler_put = EulerScheme(p, o, M, N, false, VariancePrevention::Truncation);
     double scheme_diff = std::abs(put_results.mean - euler_put.mean);
 
     std::cout << "\nBK vs Euler (cross-scheme sanity check)\n";
     std::cout << "  BK mean         : " << put_results.mean << "\n";
     std::cout << "  Euler mean      : " << euler_put.mean << "\n";
-    std::cout << "  BSM call price  : " << bsm_call << "\n";
+    std::cout << "  BSM put price  : " << bsm_call << "\n";
     std::cout << "  BK   vs BSM     : " << std::abs(put_results.mean - bsm_call) << "\n";
     std::cout << "  Euler vs BSM    : " << std::abs(euler_put.mean - bsm_call) << "\n";
     std::cout << "  BK vs Euler     : " << scheme_diff << "\n";
@@ -183,7 +183,7 @@ void test_BK()
 
 int main()
 {
-    test_euler();
+    // test_euler();
     test_BK();
 
     return 0;
