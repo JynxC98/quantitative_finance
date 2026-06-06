@@ -197,7 +197,7 @@ StatisticalProperties simulateBroadieKayaHeston(const HestonParams &p,
             params.v_u = v_t;
         }
 
-        if (path % 500 == 0)
+        if (path % 1000 == 0)
             std::cout << "Currently on path " << path << std::endl;
 
         double payoff = isCall ? std::max(S - o.strike, 0.0)
