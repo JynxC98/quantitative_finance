@@ -38,30 +38,6 @@ struct BesselFunctionParams
     bool log_space;
 };
 
-inline std::vector<double> getLinSpace(double lower_val, double upper_val, int N)
-{
-    // Initialising an empty array of gridpoints.
-    std::vector<double> grid_points;
-
-    // Base condition (Excluding negative elements for the sake of simplicity)
-    if (N <= 1)
-    {
-        // If N <= 1, just return lower_val
-        grid_points.push_back(lower_val);
-        return grid_points;
-    }
-
-    // Calculating the step size
-    double step = (upper_val - lower_val) / (N - 1);
-
-    for (int i = 0; i < N; ++i)
-    {
-        grid_points.push_back(lower_val + i * step);
-    }
-
-    return grid_points;
-}
-
 /**
  * @brief This function calculates the next greatest power of 2 using the
  * bitwise left shift operator.
@@ -84,7 +60,7 @@ inline int next_power_of_two(int n)
  * @param num_points: The number of points required.
  */
 template <typename T>
-std::vector<T> getLinspace(T a, T b, int num_points)
+inline std::vector<T> getLinspace(T a, T b, int num_points)
 {
     assert(num_points > 0 && "The number of data points must be positive");
 
@@ -107,6 +83,16 @@ std::vector<T> getLinspace(T a, T b, int num_points)
     return result;
 }
 
+/**
+ * @brief This function is used to linearly interpolate the value between two
+ * datapoints.
+ *
+ * @param K: The value at which the interpolation is required.
+ * @param x: The x-axis grid
+ * @param y: The y-axis grid
+ *
+ * @returns: The linearly interpolated value
+ */
 inline double linear_interpolate(double K,
                                  const std::vector<double> &x,
                                  const std::vector<double> &y)

@@ -22,9 +22,9 @@ using namespace std;
  * Newton solve over the Legendre roots runs only once total).
  *
  */
-inline const std::vector<LegendreNode> &gaussLegendre512()
+inline const std::vector<LegendreNode> &gaussLegendre()
 {
-    static const std::vector<LegendreNode> nodes = generateGaussLegendre(512);
+    static const std::vector<LegendreNode> nodes = generateGaussLegendre(32);
     return nodes;
 }
 
@@ -39,7 +39,7 @@ inline const std::vector<LegendreNode> &gaussLegendre512()
 template <typename Func>
 double legendreIntegrate(Func func, double lower_limit, double upper_limit)
 {
-    const auto &nodes = gaussLegendre512(); // cached 512-point table
+    const auto &nodes = gaussLegendre();
     double result = 0.0;
 
     // Scaling factors for the finite interval [lower_limit, upper_limit]

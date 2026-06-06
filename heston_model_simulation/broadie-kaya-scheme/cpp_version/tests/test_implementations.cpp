@@ -17,6 +17,7 @@
 #include "../helpers/quadrature.hpp"
 #include "../helpers/fourier_transform.hpp"
 #include "../helpers/heston_params.hpp"
+#include "../helpers/cdf_table.hpp"
 
 void test_generator()
 {
@@ -347,7 +348,7 @@ void test_integrals()
         .sigma = 0.61,
         .v_u = 0.04,
         .v_t = 0.04,
-        .dt = 1.0 / 365.0,
+        .dt = 1.0 / 4.0,
         .v0 = 0.010201,
         .rho = -0.7};
 
@@ -362,6 +363,9 @@ void test_integrals()
     auto cdf_int = CDFIntegrand(x, u, p);
     auto pdf_int = PDFIntegrand(x, u, p);
     auto d_pdf_int = d_PDFIntegrand(x, u, p);
+
+    for (double xtest : {1e-6, 1e-5, 1e-4, 5e-4, 1e-3, 5e-3, 0.01, 0.05, 0.1})
+        std::cout << "CDF(" << xtest << ") = " << calculateCDF(xtest, p) << std::endl;
 
     std::cout << "The value of cdf integrand at x = " << x << " is " << cdf_int << std::endl;
     std::cout << "The value of pdf integrand at x = " << x << " is " << pdf_int << std::endl;
@@ -696,6 +700,83 @@ void test_oscillatory_quadrature()
     }
 }
 
+void CalculateUEpsilon()
+{
+    HestonParams p = {
+        .kappa = 6.21,
+        .theta = 0.019,
+        .sigma = 0.61,
+        .v_u = 0.04,
+        .v_t = 0.04,
+        .dt = 1.0 / 365.0,
+        .v0 = 0.010201,
+        .rho = -0.7};
+
+    // Analytical mean of integrated variance for small dt
+    double mu1 = 0.5 * (p.v_u + p.v_t) * p.dt;
+
+    // Analytical variance of integrated variance
+    double var = (p.sigma * p.sigma * p.v_u * p.dt * p.dt) / 2.0;
+    double std_dev = std::sqrt(var);
+
+    // Conservative upper bound
+    double val = mu1 + 10.0 * std_dev; // use 10 instead of 5 for Feller violation
+
+    std::cout << "The epison is as follows " << val << std::endl;
+}
+
+void test_interpolation()
+{
+    std::cout << "=======Testing Interpolation=========" << std::endl;
+
+    HestonParams p = {
+        .kappa = 6.21,
+        .theta = 0.019,
+        .sigma = 0.61,
+        .v_u = 0.04,
+        .v_t = 0.04,
+        .dt = 1.0 / 4.0,
+        .v0 = 0.010201,
+        .rho = -0.7};
+
+    // Build table once
+    CDFTable table = buildCDFTable(p, 500);
+
+    std::cout << "u_epsilon = " << table.x_grid.back() << std::endl;
+    std::cout << "CDF(u_epsilon) = " << table.cdf_vals.back() << std::endl;
+
+    std::cout << "\n--- Halley solver ---" << std::endl;
+    for (double U : {0.1, 0.25, 0.5, 0.75, 0.9, 0.95, 0.99})
+    {
+        double x = runNewtonSolver(U, p);
+        double cdf_check = calculateCDF(x, p);
+        std::cout << "U = " << U
+                  << " x = " << x
+                  << " CDF(x) = " << cdf_check << std::endl;
+    }
+
+    std::cout << "\n--- Interpolation ---" << std::endl;
+    for (double U : {0.1, 0.25, 0.5, 0.75, 0.9, 0.95, 0.99})
+    {
+        double x = sampleFromTable(U, table);
+        double cdf_check = calculateCDF(x, p);
+        std::cout << "U = " << U
+                  << " x = " << x
+                  << " CDF(x) = " << cdf_check << std::endl;
+    }
+
+    std::cout << "\n--- Error comparison ---" << std::endl;
+    for (double U : {0.1, 0.25, 0.5, 0.75, 0.9, 0.95, 0.99})
+    {
+        double x_halley = runNewtonSolver(U, p);
+        double x_interp = sampleFromTable(U, table);
+        std::cout << "U = " << U
+                  << " halley = " << x_halley
+                  << " interp = " << x_interp
+                  << " error = " << std::abs(x_halley - x_interp)
+                  << std::endl;
+    }
+}
 int main()
 {
     // test_generator();
@@ -704,8 +785,9 @@ int main()
     // test_characteristic_function();
     // test_first_moment_sanity();
     test_integrals();
-    // test_quadrature();
+    // test_interpolation();
     // test_oscillatory_quadrature();
+    // CalculateUEpsilon();
 
     return 0;
 }

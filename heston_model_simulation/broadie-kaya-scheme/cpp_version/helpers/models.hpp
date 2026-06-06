@@ -102,8 +102,8 @@ StatisticalProperties EulerScheme(const HestonParams &p,
  */
 StatisticalProperties simulateBroadieKayaHeston(const HestonParams &p,
                                                 const OptionParams &o,
-                                                int M,
-                                                int N,
-                                                bool isCall);
+                                                int M, int N,
+                                                bool isCall,
+                                                const std::string &cache_path = "cdf_cache.bin");
 
 #endif

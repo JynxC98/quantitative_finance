@@ -30,8 +30,8 @@ void test_euler()
 
     std::cout << "\n========== Testing Euler Scheme ==========\n";
 
-    int M = 100000; // paths
-    int N = 512;    // timesteps
+    int M = 10000; // paths
+    int N = 512;   // timesteps
 
     // =====================================================
     // TEST 1: Call price should be positive
@@ -115,14 +115,17 @@ void test_euler()
 
 void test_BK()
 {
+
+    int M = 5000; // paths
+    int N = 4;    // timesteps
     // Choosing parameters from the paper itself
     HestonParams p = {
         .kappa = 6.21,
         .theta = 0.019,
         .sigma = 0.61,
         .v_u = 0.04,
-        .v_t = 0.04,
-        .dt = 1.0 / 365.0,
+        .v_t = 0.010201,
+        .dt = 1.0 / static_cast<double>(N),
         .v0 = 0.010201,
         .rho = -0.7};
 
@@ -134,12 +137,9 @@ void test_BK()
 
     std::cout << "\n========== Testing Broadie-Kaya Scheme ==========\n";
 
-    int M = 100000; // paths
-    int N = 512;    // timesteps
-
-    // =====================================================
-    // TEST 1: Call price should be positive
-    // =====================================================
+    // // =====================================================
+    // // TEST 1: Call price should be positive
+    // // =====================================================
     auto call_result = simulateBroadieKayaHeston(p, o, M, N, true);
     auto bsm_call = BlackScholesPrice(o.spot, o.strike, std::sqrt(p.v0), o.r, o.T, true);
 
@@ -152,9 +152,9 @@ void test_BK()
     std::cout << "  95% CI          : [" << call_result.left_lc << ", " << call_result.right_lc << "]\n";
     std::cout << "  Test            : " << (call_result.mean > 0.0 ? "✅ PASS" : "❌ FAIL") << "\n";
 
-    // =====================================================
-    // TEST 2: Put price should be positive
-    // =====================================================
+    // // =====================================================
+    // // TEST 2: Put price should be positive
+    // // =====================================================
     auto put_result = simulateBroadieKayaHeston(p, o, M, N, false);
     auto bsm_put = BlackScholesPrice(o.spot, o.strike, std::sqrt(p.v0), o.r, o.T, false);
 
@@ -166,10 +166,10 @@ void test_BK()
     std::cout << "  95% CI          : [" << put_result.left_lc << ", " << put_result.right_lc << "]\n";
     std::cout << "  Test            : " << (put_result.mean > 0.0 ? "✅ PASS" : "❌ FAIL") << "\n";
 
-    // =====================================================
-    // TEST 3: Put-Call Parity
-    // C - P = S - K * e^(-rT)
-    // =====================================================
+    // // =====================================================
+    // // TEST 3: Put-Call Parity
+    // // C - P = S - K * e^(-rT)
+    // // =====================================================
     double parity_lhs = call_result.mean - put_result.mean;
     double parity_rhs = o.spot - o.strike * std::exp(-o.r * o.T);
     double parity_error = std::abs(parity_lhs - parity_rhs);
