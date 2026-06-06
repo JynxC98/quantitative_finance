@@ -185,6 +185,9 @@ test.cpp
 *.dll
 *.lib
 
+# Adding the Cache files 
+*.bin
+
 # Ignore binaries without extensions (like ./test or ./main)
 test
 main

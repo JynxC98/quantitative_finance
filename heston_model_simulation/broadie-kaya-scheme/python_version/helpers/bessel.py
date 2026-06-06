@@ -16,7 +16,7 @@ Reference:
     https://en.wikipedia.org/wiki/Bessel_function
     Abramowitz & Stegun, Chapter 9
 
-Author: Harsh Parikh 
+Author: Harsh Parikh
 """
 
 import numpy as np
@@ -66,7 +66,7 @@ def _power_scheme(
         If the series does not converge within num_iterations.
     """
     # First term k=0: 1 / Γ(α+1)
-    term = complex(1.0 / gamma_real(alpha + 1.0))
+    term = np.complex64(1.0 / gamma_real(alpha + 1.0))
     total = term
 
     for k in range(1, num_iterations):
@@ -87,12 +87,12 @@ def _power_scheme(
 
 
 def _asymptotic_expansion(
-    z: complex,
+    z: np.complex64,
     alpha: float,
     tolerance: float = 1e-8,
     num_iterations: int = 100,
     log_space: bool = True,
-) -> complex:
+) -> np.complex64:
     """
     Evaluate I_α(z) via asymptotic expansion (large |z| regime).
 
@@ -111,7 +111,7 @@ def _asymptotic_expansion(
 
     Parameters
     ----------
-    z : complex
+    z : np.complex64
         Argument of I_α (should satisfy |z| >> 1 for accuracy).
     alpha : float
         Order of the Bessel function.
@@ -124,10 +124,10 @@ def _asymptotic_expansion(
 
     Returns
     -------
-    complex
+    np.complex64
         log(I_α(z)) if log_space=True, else I_α(z).
     """
-    term = complex(1.0)
+    term = np.complex64(1.0)
     total = term
     prev_abs = abs(term)
 
@@ -155,13 +155,13 @@ def _asymptotic_expansion(
 
 
 def modified_bessel(
-    z: complex,
+    z: np.complex64,
     alpha: float,
     num_iterations: int = 100,
     tolerance: float = 1e-10,
     threshold: float = 10.0,
     log_space: bool = True,
-) -> complex:
+) -> np.complex64:
     """
     Evaluate the modified Bessel function of the first kind I_α(z).
 
@@ -177,7 +177,7 @@ def modified_bessel(
 
     Parameters
     ----------
-    z : complex
+    z : np.complex64
         Argument of I_α. For Broadie-Kaya, this is a positive real number
         scaled by variance parameters.
     alpha : float
@@ -194,7 +194,7 @@ def modified_bessel(
 
     Returns
     -------
-    complex
+    np.complex64
         log(I_α(z)) if log_space=True, else I_α(z).
 
     Raises
@@ -212,7 +212,7 @@ def modified_bessel(
     >>> abs(result - expected) < 1e-6
     True
     """
-    z = complex(z)
+    z = np.complex64(z)
 
     if log_space and alpha == 0:
         raise ValueError("log_space=True is undefined at alpha=0 when z=0.")
@@ -228,7 +228,7 @@ def modified_bessel(
         if alpha < 0:
             raise ValueError("I_α(0) diverges for α < 0")
         # I_0(0) = 1 → log = 0; I_α(0) = 0 for α > 0 → log = -inf
-        return complex(0.0)
+        return np.complex64(0.0)
 
     if abs(z) <= threshold:
         return _power_scheme(z, alpha, tolerance, num_iterations, log_space)

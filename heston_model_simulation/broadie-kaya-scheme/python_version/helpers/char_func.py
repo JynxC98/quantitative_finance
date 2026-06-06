@@ -105,11 +105,11 @@ def char_function(p: HestonParams, u: float) -> complex:
     >>> abs(char_function(p, 1.0)) <= 1.0  # |φ(u)| ≤ 1
     True
     """
-    i = complex(0.0, 1.0)
+    i = np.complex64(0.0, 1.0)
 
     # φ(0) = 1 by definition (guard against 0/0)
-    if abs(u) < 1e-12:
-        return complex(1.0, 0.0)
+    if np.absolute(u) < 1e-12:
+        return np.complex64(1.0, 0.0)
 
     # γ = √(κ² - 2σ²iu) — the fundamental frequency of the CF
     const_gamma = np.sqrt(p.kappa**2 - 2.0 * p.sigma**2 * i * u)

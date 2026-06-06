@@ -1,0 +1,36 @@
+/**
+ * @brief This is to test the pricing engine
+ */
+#include "src/pricing_engine.hpp"
+#include <cmath>
+#include <algorithm>
+
+int main()
+{
+    // Black-Scholes analytical prices for reference
+    // Test 1: 10.4506
+    // Test 2: 10.1788
+    // Test 3: 16.0050
+    // Test 4: Must be > 10.1788
+
+    // Test 1: ATM European call, no dividends
+    PricingEngine<double> engine1(100.0, 100.0, 1.0, 0.05, 0.2, 0.0, 200, 1000, true, "european");
+    std::cout << "Test 1 - ATM European Call: " << engine1.computePrice() << std::endl;
+
+    // Test 2: OTM European put, no dividends
+    PricingEngine<double> engine2(100.0, 110.0, 1.0, 0.05, 0.2, 0.0, 200, 1000, false, "european");
+    std::cout << "Test 2 - OTM European Put: " << engine2.computePrice() << std::endl;
+
+    // Test 3: ITM European call, with dividends
+    PricingEngine<double> engine3(100.0, 90.0, 1.0, 0.05, 0.2, 0.03, 200, 1000, true, "european");
+    std::cout << "Test 3 - ITM European Call with dividends: " << engine3.computePrice() << std::endl;
+
+    // Test 4: American put, no dividends — must exceed Test 2
+    PricingEngine<double> engine4(100.0, 110.0, 1.0, 0.05, 0.2, 0.0, 200, 1000, false, "american");
+    std::cout << "Test 4 - American Put: " << engine4.computePrice() << std::endl;
+
+    // Early exercise premium — must be positive
+    std::cout << "Early exercise premium: " << engine4.computePrice() - engine2.computePrice() << std::endl;
+
+    return 0;
+}
