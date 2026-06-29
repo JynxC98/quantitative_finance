@@ -216,7 +216,7 @@ inline double runNewtonSolver(double var, const HestonParams &p,
     double x = ((p.v_t + p.v_u) / 2) * p.dt; // Trapezoidal method for initial guess
 
     // // The authors use bisection method when the value of var is close to tails
-    if (var < 0.05 || var > 0.95)
+    if (var < 0.05 || var > 0.90)
     {
         // Bracket the root first
         double lo = 1e-7, hi = 1.0;

@@ -80,12 +80,12 @@ struct SimulationResults
  *
  * @returns: A map with left CL, right CL, mean, and std deviation of the process.
  */
-StatisticalProperties EulerScheme(const HestonParams &p,
-                                  const OptionParams &o,
-                                  int M,
-                                  int N,
-                                  bool isCall,
-                                  VariancePrevention prevention);
+std::pair<StatisticalProperties, StatisticalProperties> EulerScheme(const HestonParams &p,
+                                                                    const OptionParams &o,
+                                                                    int M,
+                                                                    int N,
+                                                                    bool isCall,
+                                                                    VariancePrevention prevention);
 
 /**
  * @brief Simulates the Heston stochastic volatility model using the exact Broadie-Kaya scheme.
@@ -100,10 +100,10 @@ StatisticalProperties EulerScheme(const HestonParams &p,
  * @param M    Number of simulation paths
  * @param N    Number of time steps per path (discretization points)
  */
-StatisticalProperties simulateBroadieKayaHeston(const HestonParams &p,
-                                                const OptionParams &o,
-                                                int M, int N,
-                                                bool isCall,
-                                                const std::string &cache_path = "cdf_cache.bin");
+std::pair<StatisticalProperties, StatisticalProperties> simulateBroadieKayaHeston(const HestonParams &p,
+                                                                                  const OptionParams &o,
+                                                                                  int M, int N,
+                                                                                  bool isCall,
+                                                                                  const std::string &cache_path = "cdf_cache.bin");
 
 #endif

@@ -21,15 +21,16 @@
 #include "../helpers/random_utils.hpp"
 #include "../helpers/cdf_table.hpp"
 
-StatisticalProperties EulerScheme(const HestonParams &p,
-                                  const OptionParams &o,
-                                  int M,
-                                  int N,
-                                  bool isCall = true,
-                                  VariancePrevention prevention = VariancePrevention::Truncation)
+std::pair<StatisticalProperties, StatisticalProperties> EulerScheme(const HestonParams &p,
+                                                                    const OptionParams &o,
+                                                                    int M,
+                                                                    int N,
+                                                                    bool isCall = true,
+                                                                    VariancePrevention prevention = VariancePrevention::Truncation)
 {
     // We only need to store the results at the end path
-    std::vector<double> option_prices(M, 0.0);
+    std::vector<double> call_prices(M, 0.0);
+    std::vector<double> put_prices(M, 0.0);
 
     // Calculating the value of the timestep
 
@@ -78,14 +79,15 @@ StatisticalProperties EulerScheme(const HestonParams &p,
         }
 
         // Storing the evolution of the path
-        double payoff = isCall ? std::max(current_spot - o.strike, 0.0)
-                               : std::max(o.strike - current_spot, 0.0);
-        option_prices[i] = std::exp(-o.r * o.T) * payoff;
+
+        call_prices[i] = std::exp(-o.r * o.T) * std::max(current_spot - o.strike, 0.0);
+        put_prices[i] = std::exp(-o.r * o.T) * std::max(o.strike - current_spot, 0.0);
     }
 
-    auto results = calculateStatistics(option_prices);
+    auto results_call = calculateStatistics(call_prices);
+    auto results_put = calculateStatistics(put_prices);
 
-    return results;
+    return {results_call, results_put};
 }
 
 /**
@@ -113,17 +115,27 @@ StatisticalProperties EulerScheme(const HestonParams &p,
  *          combination used during construction. Delete the cache file
  *          whenever any of these change.
  */
-StatisticalProperties simulateBroadieKayaHeston(const HestonParams &p,
-                                                const OptionParams &o,
-                                                int M, int N,
-                                                bool isCall,
-                                                const std::string &cache_path)
+std::pair<StatisticalProperties, StatisticalProperties> simulateBroadieKayaHeston(const HestonParams &p,
+                                                                                  const OptionParams &o,
+                                                                                  int M, int N,
+                                                                                  bool isCall,
+                                                                                  const std::string &cache_path)
 {
-    int n_v = 15;
-    double v_min = 1e-6;
-    double v_max = 5.0 * p.theta;
+    int n_v = 50;
+    double v_min = 1e-8;
+    double v_max = 20.0 * p.theta;
 
-    auto v_nodes = getLinspace(v_min, v_max, n_v);
+    // Introducing log-spacing for grid refinement.
+    auto logspace = [](double lo, double hi, int n)
+    {
+        std::vector<double> v(n);
+        double log_lo = std::log(lo), log_hi = std::log(hi);
+        for (int i = 0; i < n; ++i)
+            v[i] = std::exp(log_lo + i * (log_hi - log_lo) / (n - 1));
+        return v;
+    };
+
+    auto v_nodes = getLinspace(1e-12, v_max, n_v);
 
     std::vector<std::vector<CDFTable>> tables(n_v, std::vector<CDFTable>(n_v));
 
@@ -162,9 +174,8 @@ StatisticalProperties simulateBroadieKayaHeston(const HestonParams &p,
         return tables[clampIndex(v_u)][clampIndex(v_t)];
     };
 
-    // ── Monte Carlo path simulation ───────────────────────────────────────
-
-    std::vector<double> prices(M, 0.0);
+    std::vector<double> call_prices(M, 0.0);
+    std::vector<double> put_prices(M, 0.0);
 
     std::cout << "Starting Simulation" << std::endl;
 
@@ -173,6 +184,7 @@ StatisticalProperties simulateBroadieKayaHeston(const HestonParams &p,
         HestonParams params = p;
         double S = o.spot;
         params.v_u = params.v0;
+        double sum_ST = 0.0;
 
         for (int step = 0; step < N; ++step)
         {
@@ -182,8 +194,13 @@ StatisticalProperties simulateBroadieKayaHeston(const HestonParams &p,
             double U = uniform(gen);
             double int_var;
 
-            if (v_t >= v_min && v_t <= v_max &&
-                params.v_u >= v_min && params.v_u <= v_max)
+            if (v_t < v_min)
+            {
+                int_var = 0.0;
+            }
+
+            else if (v_t >= v_min && v_t <= v_max &&
+                     params.v_u >= v_min && params.v_u <= v_max)
             {
                 const CDFTable &table = getTable(params.v_u, v_t);
                 int_var = sampleFromTable(U, table);
@@ -195,15 +212,20 @@ StatisticalProperties simulateBroadieKayaHeston(const HestonParams &p,
 
             S = priceStep(params, S, int_var, o.r);
             params.v_u = v_t;
+
+            sum_ST += S;
         }
 
         if (path % 1000 == 0)
+        {
             std::cout << "Currently on path " << path << std::endl;
+            std::cout << "Mean S_T:  " << sum_ST / M << std::endl;
+            std::cout << "Expected:  " << o.spot * std::exp(o.r * o.T) << std::endl;
+        }
 
-        double payoff = isCall ? std::max(S - o.strike, 0.0)
-                               : std::max(o.strike - S, 0.0);
-        prices[path] = std::exp(-o.r * o.T) * payoff;
+        call_prices[path] = std::exp(-o.r * o.T) * std::max(S - o.strike, 0.0);
+        put_prices[path] = std::exp(-o.r * o.T) * std::max(o.strike - S, 0.0);
     }
 
-    return calculateStatistics(prices);
+    return {calculateStatistics(call_prices), calculateStatistics(put_prices)};
 }
