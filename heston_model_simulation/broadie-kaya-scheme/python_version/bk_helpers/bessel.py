@@ -20,7 +20,7 @@ Author: Harsh Parikh
 """
 
 import numpy as np
-from gamma import gamma_real
+from .gamma import gamma_real
 
 
 def _power_scheme(

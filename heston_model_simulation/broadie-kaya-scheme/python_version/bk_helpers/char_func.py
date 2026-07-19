@@ -22,10 +22,22 @@ Author: Harsh Parikh
 
 import numpy as np
 from dataclasses import dataclass
-from bessel import modified_bessel
+from .bessel import modified_bessel
+
+from numba import float64
+from numba.experimental import jitclass
+
+heston_params_spec = [
+    ("kappa", float64),  # Mean reversion speed
+    ("theta", float64),  # Long-run variance
+    ("sigma", float64),  # Vol of vol
+    ("v_t", float64),  # Variance at time t (start)
+    ("v_u", float64),  # Variance at time u (end)
+    ("dt", float64),  # Time step
+]
 
 
-@dataclass
+@jitclass(heston_params_spec)
 class HestonParams:
     """
     Container for Heston model parameters used in Broadie-Kaya simulation.
@@ -52,12 +64,13 @@ class HestonParams:
     Feller avoids degenerate behaviour near zero.
     """
 
-    kappa: float  # Mean reversion speed
-    theta: float  # Long-run variance
-    sigma: float  # Vol of vol
-    v_t: float  # Variance at time t (start)
-    v_u: float  # Variance at time u (end)
-    dt: float  # Time step
+    def __init__(self, kappa, theta, sigma, v_t, v_u, dt):
+        self.kappa = kappa
+        self.theta = theta
+        self.sigma = sigma
+        self.v_t = v_t
+        self.v_u = v_u
+        self.dt = dt
 
 
 def char_function(p: HestonParams, u: float) -> complex:
@@ -105,29 +118,21 @@ def char_function(p: HestonParams, u: float) -> complex:
     >>> abs(char_function(p, 1.0)) <= 1.0  # |φ(u)| ≤ 1
     True
     """
-    i = np.complex64(0.0, 1.0)
+    i = np.complex128(0.0, 1.0)
 
-    # φ(0) = 1 by definition (guard against 0/0)
     if np.absolute(u) < 1e-12:
-        return np.complex64(1.0, 0.0)
+        return np.complex128(1.0, 0.0)
 
-    # γ = √(κ² - 2σ²iu) — the fundamental frequency of the CF
     const_gamma = np.sqrt(p.kappa**2 - 2.0 * p.sigma**2 * i * u)
-
-    # Precompute exponentials shared across terms
     exp_kappa_dt = np.exp(-p.kappa * p.dt)
     exp_gamma_dt = np.exp(-const_gamma * p.dt)
 
-    # --- First term ---
-    # Scaling factor relating CIR transition under u-tilted measure to original
     first_term = (
         const_gamma
         * np.exp(-0.5 * (const_gamma - p.kappa) * p.dt)
         * (1.0 - exp_kappa_dt)
     ) / (p.kappa * (1.0 - exp_gamma_dt))
 
-    # --- Second term ---
-    # Exponential moment of (v_t + v_u) weighted by cotangent-like expressions
     coth_kappa = (1.0 + exp_kappa_dt) / (1.0 - exp_kappa_dt)
     coth_gamma = (1.0 + exp_gamma_dt) / (1.0 - exp_gamma_dt)
 
@@ -136,17 +141,13 @@ def char_function(p: HestonParams, u: float) -> complex:
         * (p.kappa * coth_kappa - const_gamma * coth_gamma)
     )
 
-    # --- Third term: ratio of modified Bessel functions in log-space ---
-    d = 4.0 * p.kappa * p.theta / p.sigma**2  # degrees of freedom
-    alpha = 0.5 * d - 1.0  # Bessel order
+    d = 4.0 * p.kappa * p.theta / p.sigma**2
+    alpha = 0.5 * d - 1.0
 
-    # Bessel argument under the u-tilted measure (numerator)
     bessel_arg_num = np.sqrt(p.v_u * p.v_t) * (
         (4.0 * const_gamma * np.exp(-0.5 * const_gamma * p.dt))
         / (p.sigma**2 * (1.0 - exp_gamma_dt))
     )
-
-    # Bessel argument under the original measure (denominator)
     bessel_arg_den = np.sqrt(p.v_u * p.v_t) * (
         (4.0 * p.kappa * np.exp(-0.5 * p.kappa * p.dt))
         / (p.sigma**2 * (1.0 - exp_kappa_dt))
@@ -155,7 +156,6 @@ def char_function(p: HestonParams, u: float) -> complex:
     log_bessel_num = modified_bessel(bessel_arg_num, alpha, log_space=True)
     log_bessel_den = modified_bessel(bessel_arg_den, alpha, log_space=True)
 
-    # Ratio in log-space → exp(log_num - log_den)
     third_term = np.exp(log_bessel_num - log_bessel_den)
 
     return first_term * second_term * third_term

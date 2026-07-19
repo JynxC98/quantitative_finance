@@ -24,7 +24,7 @@ Author: Harsh Parikh (Python port)
 """
 
 import numpy as np
-from helpers.bessel import modified_bessel
+from .bessel import modified_bessel
 
 
 def noncentral_chi2_pdf(

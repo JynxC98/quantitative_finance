@@ -10,7 +10,7 @@ formula Γ(z)Γ(1-z) = π/sin(πz) is applied first.
 Reference:
     https://en.wikipedia.org/wiki/Lanczos_approximation
 
-Author: Harsh Parikh 
+Author: Harsh Parikh
 """
 
 import numpy as np
@@ -32,7 +32,6 @@ _P = [
 ]
 
 
-@jit(nopython=True)
 def gamma(z: complex) -> complex:
     """
     Evaluate the Gamma function Γ(z) for complex z using Lanczos approximation.
