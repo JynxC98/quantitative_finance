@@ -121,8 +121,8 @@ std::pair<StatisticalProperties, StatisticalProperties> simulateBroadieKayaHesto
                                                                                   bool isCall,
                                                                                   const std::string &cache_path)
 {
-    int n_v = 50;
-    double v_min = 1e-8;
+    int n_v = 20;
+    double v_min = 0.001;
     double v_max = 20.0 * p.theta;
 
     // Introducing log-spacing for grid refinement.
@@ -135,7 +135,7 @@ std::pair<StatisticalProperties, StatisticalProperties> simulateBroadieKayaHesto
         return v;
     };
 
-    auto v_nodes = getLinspace(1e-12, v_max, n_v);
+    auto v_nodes = getLinspace(v_min, v_max, n_v);
 
     std::vector<std::vector<CDFTable>> tables(n_v, std::vector<CDFTable>(n_v));
 
@@ -153,7 +153,7 @@ std::pair<StatisticalProperties, StatisticalProperties> simulateBroadieKayaHesto
             for (int j = 0; j < n_v; ++j)
             {
                 temp.v_t = v_nodes[j];
-                tables[i][j] = buildCDFTable(temp, 50);
+                tables[i][j] = buildCDFTable(temp, n_v);
             }
         }
         saveCDFTableGrid(tables, cache_path);
@@ -179,12 +179,13 @@ std::pair<StatisticalProperties, StatisticalProperties> simulateBroadieKayaHesto
 
     std::cout << "Starting Simulation" << std::endl;
 
+    double running_sum_ST = 0.0;
+
     for (int path = 0; path < M; ++path)
     {
         HestonParams params = p;
         double S = o.spot;
         params.v_u = params.v0;
-        double sum_ST = 0.0;
 
         for (int step = 0; step < N; ++step)
         {
@@ -212,14 +213,14 @@ std::pair<StatisticalProperties, StatisticalProperties> simulateBroadieKayaHesto
 
             S = priceStep(params, S, int_var, o.r);
             params.v_u = v_t;
-
-            sum_ST += S;
         }
+
+        running_sum_ST += S;
 
         if (path % 1000 == 0)
         {
             std::cout << "Currently on path " << path << std::endl;
-            std::cout << "Mean S_T:  " << sum_ST / M << std::endl;
+            std::cout << "Mean S_T so far: " << running_sum_ST / (path + 1) << std::endl;
             std::cout << "Expected:  " << o.spot * std::exp(o.r * o.T) << std::endl;
         }
 

@@ -786,7 +786,7 @@ int main()
     // test_first_moment_sanity();
     test_integrals();
     // test_interpolation();
-    // test_oscillatory_quadrature();
+    test_oscillatory_quadrature();
     // CalculateUEpsilon();
 
     return 0;

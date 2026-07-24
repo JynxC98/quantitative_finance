@@ -50,7 +50,7 @@ inline CDFTable buildCDFTable(const HestonParams &p, int n_points = 100)
     CDFTable table;
     table.v_u = p.v_u;
     table.v_t = p.v_t;
-    table.x_grid = getLinspace(1e-10, u_eps, n_points);
+    table.x_grid = getLinspace(0.001, u_eps, n_points);
     table.cdf_vals.resize(n_points);
 
     for (int i = 0; i < n_points; ++i)

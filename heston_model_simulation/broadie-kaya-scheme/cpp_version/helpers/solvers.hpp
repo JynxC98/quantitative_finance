@@ -23,7 +23,7 @@
 #include "heston_params.hpp"
 #include "helpers.hpp"
 
-#define damp 0.0005 // Damping factor, hard coded for the time being
+#define damp 0.00005 // Damping factor, hard coded for the time being
 
 /**
  * @brief Container for CDF, PDF, and its derivative at a point
@@ -81,7 +81,14 @@ inline double calculateIntegral(Func function, double x,
     auto func = [&](double u)
     { return function(x, u, p); };
 
-    const static double critical_freq = findCriticalfreq(p);
+    // NOTE: critical_freq depends on p (kappa, theta, sigma, v_u, v_t, dt) and
+    // must be recomputed for every call. A `static` cache here would freeze
+    // the integration range to whatever `p` happened to be passed on the
+    // *first* call of this template instantiation and silently reuse it for
+    // every other (v_u, v_t) pair for the rest of the program — producing
+    // badly wrong, non-monotonic CDF/PDF values for any parameters other
+    // than the first ones seen.
+    double critical_freq = findCriticalfreq(p);
 
     // Upper limit where damped CF is negligible
     double upper = critical_freq;
@@ -182,10 +189,10 @@ inline double fetch_interpolated_value(const double &U, const HestonParams &p)
     // The values of x will always be between 0 and 1.
 
     double u_eps = calculateUEpsilon(p);
-    static const auto x_grid = getLinspace(0.0, u_eps, 101.0); // Need 100 points
+    const auto x_grid = getLinspace(0.0, u_eps, 101.0); // Need 100 points
 
     // Storing the char function values of the CDF
-    static std::vector<double> integral_vals(x_grid.size(), 0.0);
+    std::vector<double> integral_vals(x_grid.size(), 0.0);
 
     for (size_t i = 0; i < x_grid.size(); ++i)
     {

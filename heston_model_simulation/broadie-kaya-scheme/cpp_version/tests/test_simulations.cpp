@@ -163,7 +163,7 @@ void test_BK()
 int main()
 {
     test_euler();
-    // test_BK();
+    test_BK();
 
     return 0;
 }
