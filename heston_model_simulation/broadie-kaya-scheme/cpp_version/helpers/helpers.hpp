@@ -174,7 +174,7 @@ inline StatisticalProperties calculateStatistics(const std::vector<double> &vals
     double margin = 1.96 * (std_dev / std::sqrt(static_cast<double>(n)));
 
     results.mean = mean;
-    results.std_dev = std_dev;
+    results.std_dev = std_dev / std::sqrt(n);
     results.left_lc = mean - margin;
     results.right_lc = mean + margin;
 

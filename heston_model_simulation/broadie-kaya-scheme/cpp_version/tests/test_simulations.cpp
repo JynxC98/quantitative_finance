@@ -43,7 +43,7 @@ void test_euler()
     // =====================================================
     // TEST 1: Call price should be positive
     // =====================================================
-    auto [call_result, put_result] = EulerScheme(p, o, M, N, true, VariancePrevention::Truncation);
+    auto [call_result, put_result] = EulerScheme(p, o, M, N, VariancePrevention::Truncation);
     auto bsm_call = BlackScholesPrice(o.spot, o.strike, std::sqrt(p.v0), o.r, o.T, true);
 
     std::cout << std::fixed << std::setprecision(6);
@@ -87,7 +87,7 @@ void test_euler()
     // =====================================================
     // TEST 4: Reflection vs Truncation should be close
     // =====================================================
-    auto [refl_result_call, refl_result_put] = EulerScheme(p, o, M, N, true, VariancePrevention::Reflection);
+    auto [refl_result_call, refl_result_put] = EulerScheme(p, o, M, N, VariancePrevention::Reflection);
     double scheme_diff = std::abs(call_result.mean - refl_result_call.mean);
 
     std::cout << "\nTest 4: Reflection vs Truncation\n";
@@ -106,15 +106,6 @@ void test_BK()
     int M = 10000; // paths
     int N = 1;     // timesteps
     // Choosing parameters from the paper itself
-    HestonParams p = {
-        .kappa = 6.21,
-        .theta = 0.019,
-        .sigma = 0.61,
-        .v_u = 0.04,
-        .v_t = 0.010201,
-        .dt = 1.0 / static_cast<double>(N),
-        .v0 = 0.010201,
-        .rho = -0.7};
 
     OptionParams o = {
         .spot = 100.0,
@@ -122,9 +113,19 @@ void test_BK()
         .r = 0.0319,
         .T = 1.0};
 
+    HestonParams p = {
+        .kappa = 6.21,
+        .theta = 0.019,
+        .sigma = 0.61,
+        .v_u = 0.04,
+        .v_t = 0.010201,
+        .dt = o.T / static_cast<double>(N),
+        .v0 = 0.010201,
+        .rho = -0.7};
+
     std::cout << "\n========== Testing Broadie-Kaya Scheme ==========\n";
 
-    auto [call_result, put_result] = simulateBroadieKayaHeston(p, o, M, N, true);
+    auto [call_result, put_result] = simulateBroadieKayaHeston(p, o, M, N);
     auto bsm_call = BlackScholesPrice(o.spot, o.strike, std::sqrt(p.v0), o.r, o.T, true);
 
     std::cout << std::fixed << std::setprecision(6);
@@ -148,15 +149,15 @@ void test_BK()
     // =====================================================
     // BK vs Euler should be close(cross - scheme sanity check)
     // =====================================================
-    auto [euler_call, euler_put] = EulerScheme(p, o, M, N, false, VariancePrevention::Truncation);
+    auto [euler_call, euler_put] = EulerScheme(p, o, M, N, VariancePrevention::Truncation);
     double scheme_diff = std::abs(put_result.mean - euler_put.mean);
 
     std::cout << "\nBK vs Euler (cross-scheme sanity check)\n";
     std::cout << "  BK mean         : " << put_result.mean << "\n";
     std::cout << "  Euler mean      : " << euler_put.mean << "\n";
-    std::cout << "  BSM put price  : " << bsm_call << "\n";
-    std::cout << "  BK   vs BSM     : " << std::abs(put_result.mean - bsm_call) << "\n";
-    std::cout << "  Euler vs BSM    : " << std::abs(euler_put.mean - bsm_call) << "\n";
+    std::cout << "  BSM put price  : " << bsm_put << "\n";
+    std::cout << "  BK vs BSM     : " << std::abs(put_result.mean - bsm_put) << "\n";
+    std::cout << "  Euler vs BSM    : " << std::abs(euler_put.mean - bsm_put) << "\n";
     std::cout << "  BK vs Euler     : " << scheme_diff << "\n";
 }
 

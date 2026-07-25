@@ -25,7 +25,6 @@ std::pair<StatisticalProperties, StatisticalProperties> EulerScheme(const Heston
                                                                     const OptionParams &o,
                                                                     int M,
                                                                     int N,
-                                                                    bool isCall = true,
                                                                     VariancePrevention prevention = VariancePrevention::Truncation)
 {
     // We only need to store the results at the end path
@@ -118,7 +117,6 @@ std::pair<StatisticalProperties, StatisticalProperties> EulerScheme(const Heston
 std::pair<StatisticalProperties, StatisticalProperties> simulateBroadieKayaHeston(const HestonParams &p,
                                                                                   const OptionParams &o,
                                                                                   int M, int N,
-                                                                                  bool isCall,
                                                                                   const std::string &cache_path)
 {
     int n_v = 20;
@@ -217,12 +215,12 @@ std::pair<StatisticalProperties, StatisticalProperties> simulateBroadieKayaHesto
 
         running_sum_ST += S;
 
-        if (path % 1000 == 0)
-        {
-            std::cout << "Currently on path " << path << std::endl;
-            std::cout << "Mean S_T so far: " << running_sum_ST / (path + 1) << std::endl;
-            std::cout << "Expected:  " << o.spot * std::exp(o.r * o.T) << std::endl;
-        }
+        // if (path % 1000 == 0)
+        // {
+        //     std::cout << "Currently on path " << path << std::endl;
+        //     std::cout << "Mean S_T so far: " << running_sum_ST / (path + 1) << std::endl;
+        //     std::cout << "Expected:  " << o.spot * std::exp(o.r * o.T) << std::endl;
+        // }
 
         call_prices[path] = std::exp(-o.r * o.T) * std::max(S - o.strike, 0.0);
         put_prices[path] = std::exp(-o.r * o.T) * std::max(o.strike - S, 0.0);

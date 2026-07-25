@@ -84,7 +84,6 @@ std::pair<StatisticalProperties, StatisticalProperties> EulerScheme(const Heston
                                                                     const OptionParams &o,
                                                                     int M,
                                                                     int N,
-                                                                    bool isCall,
                                                                     VariancePrevention prevention);
 
 /**
@@ -103,7 +102,6 @@ std::pair<StatisticalProperties, StatisticalProperties> EulerScheme(const Heston
 std::pair<StatisticalProperties, StatisticalProperties> simulateBroadieKayaHeston(const HestonParams &p,
                                                                                   const OptionParams &o,
                                                                                   int M, int N,
-                                                                                  bool isCall,
                                                                                   const std::string &cache_path = "cdf_cache.bin");
 
 #endif
