@@ -26,7 +26,7 @@ double calculateIntegratedVariance(const HestonParams &p)
     return integrated_variance;
 }
 
-double sampleVt(const HestonParams &p, double v_u)
+double sampleVt(const HestonParams &p)
 {
 
     // Calculating the exponential factor
@@ -39,7 +39,7 @@ double sampleVt(const HestonParams &p, double v_u)
     double dof = 4.0 * p.kappa * p.theta / (p.sigma * p.sigma);
 
     // Calculating the non-centrality parameter
-    double lambda_ = ((4.0 * p.kappa * kappa_exp) / (p.sigma * p.sigma * (1.0 - kappa_exp))) * v_u;
+    double lambda_ = ((4.0 * p.kappa * kappa_exp) / (p.sigma * p.sigma * (1.0 - kappa_exp))) * p.v_u;
 
     return scaling_factor * SampleNonCentralChi2(dof, lambda_);
 }

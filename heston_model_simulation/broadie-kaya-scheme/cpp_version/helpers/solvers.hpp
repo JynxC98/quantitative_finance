@@ -44,8 +44,17 @@ struct NewtonMethod
  *
  * @returns: The value at u at which char function decays below the required tolerance.
  */
-inline double findCriticalfreq(const HestonParams &p, double tolerance = 1e-6)
+inline double findCriticalfreq(const HestonParams &p, double tolerance = 1e-3)
 {
+    // NOTE: tolerance is deliberately looser than machine/CDF precision
+    // (1e-3, not 1e-6). The CDF/PDF integrands additionally divide phi(u)
+    // by u (and, for the CDF, damp with exp(-damp*u)), so contributions
+    // from u beyond where |phi(u)| ~ 1e-3 are already negligible to the
+    // integral itself. A 1e-6 threshold pushed critical_freq out to ~5000
+    // for Feller-violated parameter sets, and since calculateIntegral must
+    // keep its panel width bounded to resolve sin(u*x)/cos(u*x) oscillation
+    // (see below), a needlessly large critical_freq made every CDF/PDF/
+    // Halley-solver call enormously (and pointlessly) more expensive.
 
     // Evaluating the u grid
     auto u_grid = getLinspace(0.0, 5000.0, 50);
@@ -93,7 +102,22 @@ inline double calculateIntegral(Func function, double x,
     // Upper limit where damped CF is negligible
     double upper = critical_freq;
 
-    std::vector<double> breakpoints = getLinspace(0.0, upper, 50.0);
+    // The integrand oscillates as sin(u*x)/cos(u*x) with period 2*pi/x, but
+    // a FIXED panel count (previously a hardcoded 50, independent of both
+    // `upper` and `x`) does not scale with either. For parameter regimes
+    // where critical_freq is large (e.g. slowly-decaying CF near a violated
+    // Feller condition) and/or x is not tiny, each of the 50 panels can span
+    // several full oscillation periods, which a 32-point Gauss-Legendre rule
+    // cannot resolve -- this under-resolution biased the CDF's implied
+    // variance (confirmed empirically: sampled integrated-variance draws had
+    // ~80% excess variance relative to the true conditional distribution,
+    // even though the CDF's mean/first-moment happened to stay close).
+    // Bound the panel width in u-space instead, so resolution automatically
+    // scales with the integration range.
+    double max_panel_width = 2.5;
+    int n_breakpoints = std::max(50, static_cast<int>(std::ceil(upper / max_panel_width)) + 1);
+
+    std::vector<double> breakpoints = getLinspace(0.0, upper, n_breakpoints);
     double result = 0.0;
     for (int k = 0; k + 1 < breakpoints.size(); ++k)
     {
@@ -223,7 +247,7 @@ inline double runNewtonSolver(double var, const HestonParams &p,
     double x = ((p.v_t + p.v_u) / 2) * p.dt; // Trapezoidal method for initial guess
 
     // // The authors use bisection method when the value of var is close to tails
-    if (var < 0.05 || var > 0.90)
+    if (var <= 0.05 || var >= 0.95)
     {
         // Bracket the root first
         double lo = 1e-7, hi = 1.0;

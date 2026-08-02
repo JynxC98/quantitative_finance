@@ -39,22 +39,37 @@ struct CDFTable
  * @param n_points Number of grid points (default: 100).
  * @return         Populated CDFTable over [1e-10, u_eps].
  */
-inline CDFTable buildCDFTable(const HestonParams &p, int n_points = 100)
+inline CDFTable buildCDFTable(const HestonParams &p, double v_min, int n_points = 100)
 {
     double mu1 = 0.5 * (p.v_u + p.v_t) * p.dt;
     double var = p.sigma * p.sigma * p.v_u * p.dt * p.dt / 2.0;
     double std1 = std::sqrt(std::max(var, 0.0));
     double u_eps = mu1 + 10.0 * std1;
-    u_eps = std::max(u_eps, 1e-6);
 
     CDFTable table;
     table.v_u = p.v_u;
     table.v_t = p.v_t;
-    table.x_grid = getLinspace(0.001, u_eps, n_points);
+    table.x_grid = getLinspace(v_min, u_eps, n_points);
     table.cdf_vals.resize(n_points);
 
     for (int i = 0; i < n_points; ++i)
         table.cdf_vals[i] = calculateCDF(table.x_grid[i], p);
+
+    // The Gil-Pelaez inversion integral is truncated at a finite frequency
+    // and evaluated with fixed-width quadrature panels, which leaves ~1%
+    // oscillatory numerical noise in calculateCDF -- large enough that raw
+    // cdf_vals is not actually monotonic (values are observed to wobble
+    // around 1.0, occasionally exceeding it, once the true CDF has already
+    // saturated). sampleFromTable inverts this table with linear_interpolate,
+    // which does a binary search assuming cdf_vals is sorted; on a
+    // non-monotonic array that search silently returns wrong quantiles (an
+    // observed 2x error at U=0.99 in one case). Enforce monotonicity via a
+    // running maximum and clamp to [0, 1], the standard fix for a noisy
+    // empirical CDF, so interpolation is always well-defined.
+    for (int i = 1; i < n_points; ++i)
+        table.cdf_vals[i] = std::max(table.cdf_vals[i], table.cdf_vals[i - 1]);
+    for (int i = 0; i < n_points; ++i)
+        table.cdf_vals[i] = std::min(1.0, std::max(0.0, table.cdf_vals[i]));
 
     return table;
 }
@@ -78,7 +93,7 @@ inline double sampleFromTable(double U, const CDFTable &table)
  * Layout: [n_v | n_points | v_u | v_t | x_grid... | cdf_vals...] per cell,
  * written in row-major order.
  *
- * @param tables    2D grid of CDFTable objects, assumed square (n_v x n_v).
+ * @param tables    2D grid of CDFTable objects (rows x cols, need not be square).
  * @param path      Output file path.
  *
  * @warning The cache is only valid for the exact (p.theta, n_v, n_points)
@@ -91,8 +106,10 @@ inline void saveCDFTableGrid(const std::vector<std::vector<CDFTable>> &tables,
                              const std::string &path)
 {
     std::ofstream f(path, std::ios::binary);
-    size_t n_v = tables.size();
-    f.write(reinterpret_cast<const char *>(&n_v), sizeof(n_v));
+    size_t n_rows = tables.size();
+    size_t n_cols = tables.empty() ? 0 : tables[0].size();
+    f.write(reinterpret_cast<const char *>(&n_rows), sizeof(n_rows));
+    f.write(reinterpret_cast<const char *>(&n_cols), sizeof(n_cols));
 
     for (const auto &row : tables)
         for (const auto &table : row)
@@ -124,9 +141,10 @@ inline void loadCDFTableGrid(std::vector<std::vector<CDFTable>> &tables,
                              const std::string &path)
 {
     std::ifstream f(path, std::ios::binary);
-    size_t n_v;
-    f.read(reinterpret_cast<char *>(&n_v), sizeof(n_v));
-    tables.assign(n_v, std::vector<CDFTable>(n_v));
+    size_t n_rows, n_cols;
+    f.read(reinterpret_cast<char *>(&n_rows), sizeof(n_rows));
+    f.read(reinterpret_cast<char *>(&n_cols), sizeof(n_cols));
+    tables.assign(n_rows, std::vector<CDFTable>(n_cols));
 
     for (auto &row : tables)
         for (auto &table : row)

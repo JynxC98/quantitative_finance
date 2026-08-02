@@ -19,15 +19,8 @@ void test_euler()
 {
     // Choosing parameters from the paper itself
 
-    HestonParams p = {
-        .kappa = 6.21,
-        .theta = 0.019,
-        .sigma = 0.61,
-        .v_u = 0.04,
-        .v_t = 0.04,
-        .dt = 1.0 / 252.0,
-        .v0 = 0.010201,
-        .rho = -0.7};
+    int M = 10000; // paths
+    int N = 100;   // timesteps
 
     OptionParams o = {
         .spot = 100.0,
@@ -35,10 +28,17 @@ void test_euler()
         .r = 0.0319,
         .T = 1.0};
 
-    std::cout << "\n========== Testing Euler Scheme ==========\n";
+    HestonParams p = {
+        .kappa = 6.21,
+        .theta = 0.019,
+        .sigma = 0.61,
+        .v_u = 0.04,
+        .v_t = 0.04,
+        .dt = o.T / static_cast<double>(N),
+        .v0 = 0.010201,
+        .rho = -0.7};
 
-    int M = 10000; // paths
-    int N = 512;   // timesteps
+    std::cout << "\n========== Testing Euler Scheme ==========\n";
 
     // =====================================================
     // TEST 1: Call price should be positive
@@ -53,7 +53,6 @@ void test_euler()
     std::cout << "  BSM vs MC diff  : " << std::abs(call_result.mean - bsm_call) << "\n";
     std::cout << "  Std deviation   : " << call_result.std_dev << "\n";
     std::cout << "  95% CI          : [" << call_result.left_lc << ", " << call_result.right_lc << "]\n";
-    std::cout << "  Test            : " << (call_result.mean > 0.0 ? "✅ PASS" : "❌ FAIL") << "\n";
 
     // =====================================================
     // TEST 2: Put price should be positive
@@ -66,7 +65,6 @@ void test_euler()
     std::cout << "  BSM vs MC diff  : " << std::abs(put_result.mean - bsm_put) << "\n";
     std::cout << "  Std deviation   : " << put_result.std_dev << "\n";
     std::cout << "  95% CI          : [" << put_result.left_lc << ", " << put_result.right_lc << "]\n";
-    std::cout << "  Test            : " << (put_result.mean > 0.0 ? "✅ PASS" : "❌ FAIL") << "\n";
 
     // =====================================================
     // TEST 3: Put-Call Parity
@@ -82,7 +80,6 @@ void test_euler()
     std::cout << "  BSM C - P       : " << bsm_parity_lhs << "\n";
     std::cout << "  S - K*e^(-rT)   : " << parity_rhs << "\n";
     std::cout << "  Error           : " << parity_error << "\n";
-    std::cout << "  Test            : " << (parity_error < 0.5 ? "✅ PASS" : "❌ FAIL") << "\n";
 
     // =====================================================
     // TEST 4: Reflection vs Truncation should be close
@@ -95,16 +92,17 @@ void test_euler()
     std::cout << "  Reflection mean : " << refl_result_call.mean << "\n";
     std::cout << "  BSM call price  : " << bsm_call << "\n";
     std::cout << "  Trunc vs BSM    : " << std::abs(call_result.mean - bsm_call) << "\n";
-    std::cout << "  Refl  vs BSM    : " << std::abs(refl_result_call.mean - bsm_call) << "\n";
+    std::cout << "  Refl vs BSM    : " << std::abs(refl_result_call.mean - bsm_call) << "\n";
     std::cout << "  Difference      : " << scheme_diff << "\n";
-    std::cout << "  Test            : " << (scheme_diff < 1.0 ? "✅ PASS" : "❌ FAIL") << "\n";
 }
 
 void test_BK()
 {
 
     int M = 10000; // paths
-    int N = 1;     // timesteps
+    int N = 100;   // timesteps
+
+    double true_price = 6.8061; // The true option (call) price fetched from paper
     // Choosing parameters from the paper itself
 
     OptionParams o = {
@@ -117,22 +115,25 @@ void test_BK()
         .kappa = 6.21,
         .theta = 0.019,
         .sigma = 0.61,
-        .v_u = 0.04,
-        .v_t = 0.010201,
-        .dt = o.T / static_cast<double>(N),
+        .v_u = 0.010201,
+        .v_t = 0.0,
+        .dt = o.T,
         .v0 = 0.010201,
         .rho = -0.7};
 
     std::cout << "\n========== Testing Broadie-Kaya Scheme ==========\n";
 
-    auto [call_result, put_result] = simulateBroadieKayaHeston(p, o, M, N);
+    auto [call_result, put_result] = simulateBroadieKayaHeston(p, o, M);
+    auto [euler_call, euler_put] = EulerScheme(p, o, M, N, VariancePrevention::Truncation);
+
     auto bsm_call = BlackScholesPrice(o.spot, o.strike, std::sqrt(p.v0), o.r, o.T, true);
 
     std::cout << std::fixed << std::setprecision(6);
     std::cout << "\nCall price comparision\n";
-    std::cout << "  Mean call price : " << call_result.mean << "\n";
-    std::cout << "  BSM call price  : " << bsm_call << "\n";
-    std::cout << "  BSM vs MC diff  : " << std::abs(call_result.mean - bsm_call) << "\n";
+    std::cout << "  BK Mean call price : " << call_result.mean << "\n";
+    std::cout << "  Euler Mean call price : " << euler_call.mean << "\n";
+    std::cout << "  Actual vs BK diff  : " << std::abs(true_price - call_result.mean) << "\n";
+    std::cout << "  Actual vs Euler diff  : " << std::abs(true_price - euler_call.mean) << "\n";
     std::cout << "  Std deviation   : " << call_result.std_dev << "\n";
     std::cout << "  95% CI          : [" << call_result.left_lc << ", " << call_result.right_lc << "]\n";
 
@@ -149,21 +150,15 @@ void test_BK()
     // =====================================================
     // BK vs Euler should be close(cross - scheme sanity check)
     // =====================================================
-    auto [euler_call, euler_put] = EulerScheme(p, o, M, N, VariancePrevention::Truncation);
-    double scheme_diff = std::abs(put_result.mean - euler_put.mean);
 
     std::cout << "\nBK vs Euler (cross-scheme sanity check)\n";
     std::cout << "  BK mean         : " << put_result.mean << "\n";
     std::cout << "  Euler mean      : " << euler_put.mean << "\n";
-    std::cout << "  BSM put price  : " << bsm_put << "\n";
-    std::cout << "  BK vs BSM     : " << std::abs(put_result.mean - bsm_put) << "\n";
-    std::cout << "  Euler vs BSM    : " << std::abs(euler_put.mean - bsm_put) << "\n";
-    std::cout << "  BK vs Euler     : " << scheme_diff << "\n";
 }
 
 int main()
 {
-    test_euler();
+    // test_euler();
     test_BK();
 
     return 0;

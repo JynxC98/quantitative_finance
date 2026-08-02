@@ -101,7 +101,7 @@ std::pair<StatisticalProperties, StatisticalProperties> EulerScheme(const Heston
  */
 std::pair<StatisticalProperties, StatisticalProperties> simulateBroadieKayaHeston(const HestonParams &p,
                                                                                   const OptionParams &o,
-                                                                                  int M, int N,
+                                                                                  int M,
                                                                                   const std::string &cache_path = "cdf_cache.bin");
 
 #endif

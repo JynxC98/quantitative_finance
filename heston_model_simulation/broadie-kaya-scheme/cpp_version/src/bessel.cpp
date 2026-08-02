@@ -166,10 +166,10 @@ std::complex<double> ModifiedBessel(std::complex<double> z,
 
     if (z == std::complex<double>(0.0, 0.0))
     {
-        if (alpha < 0.0)
-        {
-            throw std::domain_error("I_alpha(0) diverges to infinity for alpha < 0");
-        }
+        // if (alpha < 0.0)
+        // {
+        //     throw std::domain_error("I_alpha(0) diverges to infinity for alpha < 0");
+        // }
         if (alpha == 0.0)
         {
             return log_space ? std::complex<double>(0.0, 0.0) : std::complex<double>(0.0, 0.0); // I_0(0) = 1

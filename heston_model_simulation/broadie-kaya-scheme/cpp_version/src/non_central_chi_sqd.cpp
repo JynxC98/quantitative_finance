@@ -13,6 +13,7 @@
 #include <random>
 
 #include "../helpers/bessel.hpp"
+#include "../helpers/random_utils.hpp"
 
 double NonCentralChi2PDF(double z,
                          double dof,
@@ -31,8 +32,8 @@ double NonCentralChi2PDF(double z,
     // Evaluating the exponential term
     double exp_term = 0.5L * std::exp(-0.5L * (z + lambda_));
 
-    // Evaluating the centrality term (now safe since z > 0, lambda_ > 0)
-    double cent_term = std::exp((dof / 4.0 - 0.5) * std::log(z / lambda_));
+    // Evaluating the centrality term
+    double cent_term = std::exp(((dof / 4.0) - 0.5) * std::log(z / lambda_));
 
     // Evaluating the Bessel term
     double sqrt_term = std::sqrt(lambda_ * z);
@@ -67,10 +68,6 @@ double NonCentralChi2PDF(double z,
 double SampleNonCentralChi2(double dof,
                             double lambda_)
 {
-    // Initialising the random number engine
-    static std::random_device dev;
-    static std::mt19937 rng(dev());
-
     // Edge cases for negative values of lambda and dof
     if (dof <= 0.0)
         throw std::domain_error("Degrees of freedom must be positive");
@@ -92,13 +89,13 @@ double SampleNonCentralChi2(double dof,
     // Poisson Generator
     double lambda_new = lambda_ / 2.0;
     std::poisson_distribution<int> Poisson(lambda_new);
-    int n = Poisson(rng);
+    int n = Poisson(gen);
 
     // A Central Chi-Squared(k) is equivalent to Gamma(shape=k/2, scale=2)
     double k_shape = (dof + 2.0 * n) / 2.0;
     double theta_scale = 2.0; // Scaling factor, usually kept as `2`in the implementation.
 
-    // More details and references can be found in `CALCULATIONS.md`.
+    // More details and references can be found in `THEORY.md`.
 
     // Step 3: Draw a sample from the Gamma distribution
     std::gamma_distribution<double> GammaDist(k_shape, theta_scale);
@@ -108,5 +105,5 @@ double SampleNonCentralChi2(double dof,
     the stochastic component of the variance transition before the final
     Heston-specific scaling factor is applied.
     */
-    return GammaDist(rng);
+    return GammaDist(gen);
 }

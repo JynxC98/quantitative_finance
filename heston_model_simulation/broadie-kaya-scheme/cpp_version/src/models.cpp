@@ -116,14 +116,18 @@ std::pair<StatisticalProperties, StatisticalProperties> EulerScheme(const Heston
  */
 std::pair<StatisticalProperties, StatisticalProperties> simulateBroadieKayaHeston(const HestonParams &p,
                                                                                   const OptionParams &o,
-                                                                                  int M, int N,
+                                                                                  int M,
                                                                                   const std::string &cache_path)
 {
     int n_v = 20;
-    double v_min = 0.001;
+    int n_cdf_points = 50; // resolution of each per-cell CDF table (x_grid/cdf_vals length)
+    double v_min = 1e-6;
     double v_max = 20.0 * p.theta;
 
-    // Introducing log-spacing for grid refinement.
+    // Log-spacing for grid refinement: the CIR/non-central-chi-squared
+    // density concentrates near v=0 for parameters violating the Feller
+    // condition (as here), so a linearly spaced grid under-resolves exactly
+    // the region most samples land in.
     auto logspace = [](double lo, double hi, int n)
     {
         std::vector<double> v(n);
@@ -133,9 +137,18 @@ std::pair<StatisticalProperties, StatisticalProperties> simulateBroadieKayaHesto
         return v;
     };
 
-    auto v_nodes = getLinspace(v_min, v_max, n_v);
+    auto v_nodes = logspace(v_min, v_max, n_v);
 
-    std::vector<std::vector<CDFTable>> tables(n_v, std::vector<CDFTable>(n_v));
+    // This is a single-step scheme (dt = T, the N-step loop was removed), so
+    // v_u is p.v0 for every single path -- it never varies. Discretizing it
+    // onto a 20-node log grid (as a 2D v_u x v_t table would) snaps the one
+    // value shared by every path onto the nearest node, which can be tens of
+    // percent off (e.g. v0=0.010201 snaps to 0.012925, a 26.7% error) and
+    // biases every path identically -- a systematic error that more paths
+    // cannot average away. Building the table at the exact v_u = p.v0 with
+    // only v_t discretized removes that bias entirely, and is 20x cheaper
+    // to boot.
+    std::vector<std::vector<CDFTable>> tables(1, std::vector<CDFTable>(n_v));
 
     if (std::filesystem::exists(cache_path))
     {
@@ -144,32 +157,36 @@ std::pair<StatisticalProperties, StatisticalProperties> simulateBroadieKayaHesto
     }
     else
     {
+        std::cout << "Computing the Cache" << std::endl;
         HestonParams temp = p;
-        for (int i = 0; i < n_v; ++i)
+        temp.v_u = p.v0;
+        for (int j = 0; j < n_v; ++j)
         {
-            temp.v_u = v_nodes[i];
-            for (int j = 0; j < n_v; ++j)
-            {
-                temp.v_t = v_nodes[j];
-                tables[i][j] = buildCDFTable(temp, n_v);
-            }
+            temp.v_t = v_nodes[j];
+            tables[0][j] = buildCDFTable(temp, v_min, n_cdf_points);
         }
         saveCDFTableGrid(tables, cache_path);
         std::cout << "CDF table precomputation complete. Cache saved." << std::endl;
     }
 
     // ── Index helpers ─────────────────────────────────────────────────────
+    // v_nodes is log-spaced, so the nearest-node lookup must also work in
+    // log-space, or it silently maps back onto a linear (and therefore
+    // wrong) node index.
+
+    double log_v_min = std::log(v_min), log_v_max = std::log(v_max);
 
     auto clampIndex = [&](double v) -> int
     {
+        double log_v = std::log(std::max(v, v_min));
         int idx = static_cast<int>(
-            (v - v_min) / (v_max - v_min) * (n_v - 1));
+            (log_v - log_v_min) / (log_v_max - log_v_min) * (n_v - 1) + 0.5);
         return std::max(0, std::min(idx, n_v - 1));
     };
 
-    auto getTable = [&](double v_u, double v_t) -> const CDFTable &
+    auto getTable = [&](double v_t) -> const CDFTable &
     {
-        return tables[clampIndex(v_u)][clampIndex(v_t)];
+        return tables[0][clampIndex(v_t)];
     };
 
     std::vector<double> call_prices(M, 0.0);
@@ -177,53 +194,79 @@ std::pair<StatisticalProperties, StatisticalProperties> simulateBroadieKayaHesto
 
     std::cout << "Starting Simulation" << std::endl;
 
-    double running_sum_ST = 0.0;
+    double spot_new; // For storing updated spot price
+
+    HestonParams current_params = p;
+
+    current_params.v_u = p.v0;
+
+    // v_u is fixed at p.v0 for every path, so this range check only needs to
+    // run once rather than being re-evaluated (identically) on every path.
+    bool v_u_in_range = (current_params.v_u >= v_min) && (current_params.v_u <= v_max);
 
     for (int path = 0; path < M; ++path)
     {
-        HestonParams params = p;
-        double S = o.spot;
-        params.v_u = params.v0;
+        double spot_prev = o.spot;
 
-        for (int step = 0; step < N; ++step)
+        double v_t = sampleVt(current_params);
+        current_params.v_t = v_t;
+
+        double U = uniform(gen);
+        double int_var;
+
+        const CDFTable *table = nullptr;
+
+        if (v_t < v_min)
         {
-            double v_t = sampleVt(params, params.v_u);
-            params.v_t = v_t;
-
-            double U = uniform(gen);
-            double int_var;
-
-            if (v_t < v_min)
-            {
-                int_var = 0.0;
-            }
-
-            else if (v_t >= v_min && v_t <= v_max &&
-                     params.v_u >= v_min && params.v_u <= v_max)
-            {
-                const CDFTable &table = getTable(params.v_u, v_t);
-                int_var = sampleFromTable(U, table);
-            }
-            else
-            {
-                int_var = runNewtonSolver(U, params);
-            }
-
-            S = priceStep(params, S, int_var, o.r);
-            params.v_u = v_t;
+            int_var = 0.0;
         }
 
-        running_sum_ST += S;
+        else if ((v_t >= v_min) && (v_t <= v_max) && v_u_in_range)
+        {
+            table = &getTable(v_t);
+            int_var = sampleFromTable(U, *table);
+        }
+        else
+        {
+            std::cout << "Currently on path " << path << std::endl;
+            std::cout << "The value of v_u " << current_params.v_u << std::endl;
+            std::cout << "The value of v_t " << current_params.v_t << std::endl;
+            int_var = runNewtonSolver(U, current_params);
+        }
 
-        // if (path % 1000 == 0)
-        // {
-        //     std::cout << "Currently on path " << path << std::endl;
-        //     std::cout << "Mean S_T so far: " << running_sum_ST / (path + 1) << std::endl;
-        //     std::cout << "Expected:  " << o.spot * std::exp(o.r * o.T) << std::endl;
-        // }
+        // Guard against pathological quantile-inversion outliers (coarse
+        // table interpolation or Newton-solver misconvergence in the tails)
+        // that would otherwise send a single path's log-price to +/-inf.
+        // calculateUEpsilon gives the same generous (mean + 10*std) bound
+        // used to size the CDF table itself, so this only clips samples
+        // that are already far outside the distribution's effective support.
+        double int_var_bound = calculateUEpsilon(current_params);
+        int_var = std::max(0.0, std::min(int_var, int_var_bound));
 
-        call_prices[path] = std::exp(-o.r * o.T) * std::max(S - o.strike, 0.0);
-        put_prices[path] = std::exp(-o.r * o.T) * std::max(o.strike - S, 0.0);
+        spot_new = priceStep(current_params, spot_prev, int_var, o.r);
+
+        if (path < 3 && table != nullptr)
+        {
+            std::cout << "Table lookup: v_u=" << current_params.v_u
+                      << " v_t=" << v_t << std::endl;
+            std::cout << "Table x_grid range: [" << table->x_grid.front()
+                      << ", " << table->x_grid.back() << "]" << std::endl;
+            std::cout << "Table CDF range: [" << table->cdf_vals.front()
+                      << ", " << table->cdf_vals.back() << "]" << std::endl;
+            std::cout << "U = " << U << std::endl;
+            std::cout << "int_var from table = " << int_var << std::endl;
+        }
+
+        if (path % 2000 == 0)
+        {
+            std::cout << "Currently on path " << path << std::endl;
+            // std::cout << "V_t on path " << path << " is " << v_t << std::endl;
+            std::cout << "Current S so far: " << spot_new << std::endl;
+            std::cout << "Expected:  " << o.spot * std::exp(o.r * o.T) << std::endl;
+        }
+
+        call_prices[path] = std::exp(-o.r * o.T) * std::max(spot_new - o.strike, 0.0);
+        put_prices[path] = std::exp(-o.r * o.T) * std::max(o.strike - spot_new, 0.0);
     }
 
     return {calculateStatistics(call_prices), calculateStatistics(put_prices)};

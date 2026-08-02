@@ -31,7 +31,7 @@ double calculateIntegratedVariance(const HestonParams &p);
  * @param v_u  Current variance
  * @return     Next variance value (exact sample, no discretization error)
  */
-double sampleVt(const HestonParams &p, double v_u);
+double sampleVt(const HestonParams &p);
 
 /**
  * @brief Computes the variance Brownian integral analytically
