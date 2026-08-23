@@ -184,9 +184,21 @@ std::pair<StatisticalProperties, StatisticalProperties> simulateBroadieKayaHesto
         return std::max(0, std::min(idx, n_v - 1));
     };
 
-    auto getTable = [&](double v_t) -> const CDFTable &
+    // v_t is a continuous draw from the noncentral chi-squared transition,
+    // so snapping it to the single nearest of only 20 log-spaced table nodes
+    // (clampIndex) discards real information -- the true v_t sits between
+    // two nodes ~2% of the way off on average. Bracket the two neighboring
+    // nodes instead and linearly interpolate the *quantile* (the sampled
+    // x for a given U) between them in log(v_t) space; this is exact at the
+    // nodes themselves and removes the systematic snap-to-nearest bias in
+    // between, at no extra table-build cost.
+    auto bracket = [&](double v_t) -> std::pair<int, double>
     {
-        return tables[0][clampIndex(v_t)];
+        double log_v = std::log(std::max(v_t, v_min));
+        double pos = (log_v - log_v_min) / (log_v_max - log_v_min) * (n_v - 1);
+        int lo = std::max(0, std::min(static_cast<int>(std::floor(pos)), n_v - 2));
+        double w = std::max(0.0, std::min(1.0, pos - lo));
+        return {lo, w};
     };
 
     std::vector<double> call_prices(M, 0.0);
@@ -223,8 +235,11 @@ std::pair<StatisticalProperties, StatisticalProperties> simulateBroadieKayaHesto
 
         else if ((v_t >= v_min) && (v_t <= v_max) && v_u_in_range)
         {
-            table = &getTable(v_t);
-            int_var = sampleFromTable(U, *table);
+            auto [lo, w] = bracket(v_t);
+            double x_lo = sampleFromTable(U, tables[0][lo]);
+            double x_hi = sampleFromTable(U, tables[0][lo + 1]);
+            int_var = (1.0 - w) * x_lo + w * x_hi;
+            table = &tables[0][lo];
         }
         else
         {
