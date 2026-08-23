@@ -102,9 +102,6 @@ void test_BK()
     int M = 10000; // paths
     int N = 100;   // timesteps
 
-    double true_price = 6.8061; // The true option (call) price fetched from paper
-    // Choosing parameters from the paper itself
-
     OptionParams o = {
         .spot = 100.0,
         .strike = 100.0,
@@ -121,6 +118,12 @@ void test_BK()
         .v0 = 0.010201,
         .rho = -0.7};
 
+    double true_call = 6.8061; // The true option (call) price fetched from paper
+    // Choosing parameters from the paper itself
+
+    // Calculating the put option price using put call parity.
+    double true_put = true_call - (o.spot - o.strike * std::exp(-o.r * o.T));
+
     std::cout << "\n========== Testing Broadie-Kaya Scheme ==========\n";
 
     auto [call_result, put_result] = simulateBroadieKayaHeston(p, o, M);
@@ -130,11 +133,11 @@ void test_BK()
 
     std::cout << std::fixed << std::setprecision(6);
     std::cout << "\nCall price comparision\n";
-    std::cout << "  Actual Call price : " << true_price << std::endl;
+    std::cout << "  Actual Call price : " << true_call << "\n";
     std::cout << "  BK Mean call price : " << call_result.mean << "\n";
     std::cout << "  Euler Mean call price : " << euler_call.mean << "\n";
-    std::cout << "  Actual vs BK diff  : " << std::abs(true_price - call_result.mean) << "\n";
-    std::cout << "  Actual vs Euler diff  : " << std::abs(true_price - euler_call.mean) << "\n";
+    std::cout << "  Actual vs BK diff  : " << std::abs(true_call - call_result.mean) << "\n";
+    std::cout << "  Actual vs Euler diff  : " << std::abs(true_call - euler_call.mean) << "\n";
     std::cout << "  Std deviation   : " << call_result.std_dev << "\n";
     std::cout << "  95% CI          : [" << call_result.left_lc << ", " << call_result.right_lc << "]\n";
 
@@ -142,9 +145,11 @@ void test_BK()
     auto bsm_put = BlackScholesPrice(o.spot, o.strike, std::sqrt(p.v0), o.r, o.T, false);
 
     std::cout << "\nPut price comparision\n";
-    std::cout << "  Mean put price : " << put_result.mean << "\n";
-    std::cout << "  BSM put price  : " << bsm_put << "\n";
-    std::cout << "  BSM vs MC diff  : " << std::abs(put_result.mean - bsm_put) << "\n";
+    std::cout << "  BK put price : " << put_result.mean << "\n";
+    std::cout << "  Euler put price : " << euler_put.mean << "\n";
+    std::cout << "  Actual put price  : " << true_put << "\n";
+    std::cout << "  Actual put vs BK MC diff  : " << std::abs(put_result.mean - true_put) << "\n";
+    std::cout << "  Actual put vs Euler MC diff  : " << std::abs(euler_put.mean - true_put) << "\n";
     std::cout << "  Std deviation   : " << put_result.std_dev << "\n";
     std::cout << "  95% CI          : [" << put_result.left_lc << ", " << put_result.right_lc << "]\n";
 
