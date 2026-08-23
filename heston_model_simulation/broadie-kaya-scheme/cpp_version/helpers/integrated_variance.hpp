@@ -59,8 +59,11 @@ double VarianceBrownianIntegral(const HestonParams &p, double integrated_varianc
  * @param log_s_u  Log-price at time u (current)
  * @param r:        The risk-free rate
  * @param integrated_variance  Integrated variance from u to t
+ * @param Z        Standard normal draw for the terminal log-price innovation.
+ *                 Taken as a parameter (rather than drawn internally) so
+ *                 callers can pair it antithetically (Z, -Z) across paths.
  *
  * @return         Asset price at time t (next step)
  */
-double priceStep(const HestonParams &p, double log_s_u, double integrated_variance, double r);
+double priceStep(const HestonParams &p, double log_s_u, double integrated_variance, double r, double Z);
 #endif

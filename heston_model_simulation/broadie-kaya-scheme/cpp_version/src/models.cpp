@@ -216,7 +216,14 @@ std::pair<StatisticalProperties, StatisticalProperties> simulateBroadieKayaHesto
     // run once rather than being re-evaluated (identically) on every path.
     bool v_u_in_range = (current_params.v_u >= v_min) && (current_params.v_u <= v_max);
 
-    for (int path = 0; path < M; ++path)
+    // Antithetic variates: v_t comes from a Poisson-Gamma mixture, which
+    // isn't cheaply invertible, so it's drawn once and shared within a pair.
+    // U (the integrated-variance quantile) and Z (the terminal log-price
+    // normal) are each directly invertible/negatable and are both monotonic
+    // drivers of the payoff -- exactly where antithetic pairing (U, 1-U)
+    // and (Z, -Z) buys variance reduction. simulatePath resamples only the
+    // U/Z-dependent parts for a given shared v_t.
+    for (int pair = 0; pair < M; pair += 2)
     {
         double spot_prev = o.spot;
 
@@ -224,65 +231,97 @@ std::pair<StatisticalProperties, StatisticalProperties> simulateBroadieKayaHesto
         current_params.v_t = v_t;
 
         double U = uniform(gen);
-        double int_var;
+        double Z = normal(gen);
 
-        const CDFTable *table = nullptr;
-
-        if (v_t < v_min)
+        auto simulatePath = [&](double U_draw, double Z_draw, int display_path) -> double
         {
-            int_var = 0.0;
-        }
+            double int_var;
+            const CDFTable *table = nullptr;
 
-        else if ((v_t >= v_min) && (v_t <= v_max) && v_u_in_range)
+            if (v_t < v_min)
+            {
+                int_var = 0.0;
+            }
+            else if ((v_t >= v_min) && (v_t <= v_max) && v_u_in_range)
+            {
+                auto [lo, w] = bracket(v_t);
+                double x_lo = sampleFromTable(U_draw, tables[0][lo]);
+                double x_hi = sampleFromTable(U_draw, tables[0][lo + 1]);
+                int_var = (1.0 - w) * x_lo + w * x_hi;
+                table = &tables[0][lo];
+            }
+            else
+            {
+                std::cout << "Currently on path " << display_path << std::endl;
+                std::cout << "The value of v_u " << current_params.v_u << std::endl;
+                std::cout << "The value of v_t " << current_params.v_t << std::endl;
+                int_var = runNewtonSolver(U_draw, current_params);
+            }
+
+            // Guard against pathological quantile-inversion outliers (coarse
+            // table interpolation or Newton-solver misconvergence in the
+            // tails) that would otherwise send a single path's log-price to
+            // +/-inf. calculateUEpsilon gives the same generous (mean +
+            // 10*std) bound used to size the CDF table itself, so this only
+            // clips samples that are already far outside the distribution's
+            // effective support.
+            double int_var_bound = calculateUEpsilon(current_params);
+            int_var = std::max(0.0, std::min(int_var, int_var_bound));
+
+            double spot = priceStep(current_params, spot_prev, int_var, o.r, Z_draw);
+
+            if (display_path < 3 && table != nullptr)
+            {
+                std::cout << "Table lookup: v_u=" << current_params.v_u
+                          << " v_t=" << v_t << std::endl;
+                std::cout << "Table x_grid range: [" << table->x_grid.front()
+                          << ", " << table->x_grid.back() << "]" << std::endl;
+                std::cout << "Table CDF range: [" << table->cdf_vals.front()
+                          << ", " << table->cdf_vals.back() << "]" << std::endl;
+                std::cout << "U = " << U_draw << std::endl;
+                std::cout << "int_var from table = " << int_var << std::endl;
+            }
+
+            return spot;
+        };
+
+        spot_new = simulatePath(U, Z, pair);
+
+        if (pair % 2000 == 0)
         {
-            auto [lo, w] = bracket(v_t);
-            double x_lo = sampleFromTable(U, tables[0][lo]);
-            double x_hi = sampleFromTable(U, tables[0][lo + 1]);
-            int_var = (1.0 - w) * x_lo + w * x_hi;
-            table = &tables[0][lo];
-        }
-        else
-        {
-            std::cout << "Currently on path " << path << std::endl;
-            std::cout << "The value of v_u " << current_params.v_u << std::endl;
-            std::cout << "The value of v_t " << current_params.v_t << std::endl;
-            int_var = runNewtonSolver(U, current_params);
-        }
-
-        // Guard against pathological quantile-inversion outliers (coarse
-        // table interpolation or Newton-solver misconvergence in the tails)
-        // that would otherwise send a single path's log-price to +/-inf.
-        // calculateUEpsilon gives the same generous (mean + 10*std) bound
-        // used to size the CDF table itself, so this only clips samples
-        // that are already far outside the distribution's effective support.
-        double int_var_bound = calculateUEpsilon(current_params);
-        int_var = std::max(0.0, std::min(int_var, int_var_bound));
-
-        spot_new = priceStep(current_params, spot_prev, int_var, o.r);
-
-        if (path < 3 && table != nullptr)
-        {
-            std::cout << "Table lookup: v_u=" << current_params.v_u
-                      << " v_t=" << v_t << std::endl;
-            std::cout << "Table x_grid range: [" << table->x_grid.front()
-                      << ", " << table->x_grid.back() << "]" << std::endl;
-            std::cout << "Table CDF range: [" << table->cdf_vals.front()
-                      << ", " << table->cdf_vals.back() << "]" << std::endl;
-            std::cout << "U = " << U << std::endl;
-            std::cout << "int_var from table = " << int_var << std::endl;
-        }
-
-        if (path % 2000 == 0)
-        {
-            std::cout << "Currently on path " << path << std::endl;
-            // std::cout << "V_t on path " << path << " is " << v_t << std::endl;
+            std::cout << "Currently on path " << pair << std::endl;
             std::cout << "Current S so far: " << spot_new << std::endl;
             std::cout << "Expected:  " << o.spot * std::exp(o.r * o.T) << std::endl;
         }
 
-        call_prices[path] = std::exp(-o.r * o.T) * std::max(spot_new - o.strike, 0.0);
-        put_prices[path] = std::exp(-o.r * o.T) * std::max(o.strike - spot_new, 0.0);
+        call_prices[pair] = std::exp(-o.r * o.T) * std::max(spot_new - o.strike, 0.0);
+        put_prices[pair] = std::exp(-o.r * o.T) * std::max(o.strike - spot_new, 0.0);
+
+        if (pair + 1 < M)
+        {
+            double spot_anti = simulatePath(1.0 - U, -Z, pair + 1);
+            call_prices[pair + 1] = std::exp(-o.r * o.T) * std::max(spot_anti - o.strike, 0.0);
+            put_prices[pair + 1] = std::exp(-o.r * o.T) * std::max(o.strike - spot_anti, 0.0);
+        }
     }
 
-    return {calculateStatistics(call_prices), calculateStatistics(put_prices)};
+    // Antithetic pairs are negatively correlated by construction, so feeding
+    // all M raw prices straight into calculateStatistics (which assumes iid
+    // samples) would understate the actual precision gain: the mean comes
+    // out the same either way, but the reported std_dev/CI would be the
+    // naive iid figure, not the true (tighter) variance of the antithetic
+    // estimator. Average each pair first, then compute statistics over the
+    // n/2 pair-means -- the correct standard error for antithetic sampling.
+    auto pairMeans = [](const std::vector<double> &v)
+    {
+        std::vector<double> means;
+        means.reserve((v.size() + 1) / 2);
+        for (size_t k = 0; k + 1 < v.size(); k += 2)
+            means.push_back(0.5 * (v[k] + v[k + 1]));
+        if (v.size() % 2 == 1)
+            means.push_back(v.back());
+        return means;
+    };
+
+    return {calculateStatistics(pairMeans(call_prices)), calculateStatistics(pairMeans(put_prices))};
 }
