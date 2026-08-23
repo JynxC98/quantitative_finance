@@ -269,19 +269,6 @@ std::pair<StatisticalProperties, StatisticalProperties> simulateBroadieKayaHesto
             int_var = std::max(0.0, std::min(int_var, int_var_bound));
 
             double spot = priceStep(current_params, spot_prev, int_var, o.r, Z_draw);
-
-            if (display_path < 3 && table != nullptr)
-            {
-                std::cout << "Table lookup: v_u=" << current_params.v_u
-                          << " v_t=" << v_t << std::endl;
-                std::cout << "Table x_grid range: [" << table->x_grid.front()
-                          << ", " << table->x_grid.back() << "]" << std::endl;
-                std::cout << "Table CDF range: [" << table->cdf_vals.front()
-                          << ", " << table->cdf_vals.back() << "]" << std::endl;
-                std::cout << "U = " << U_draw << std::endl;
-                std::cout << "int_var from table = " << int_var << std::endl;
-            }
-
             return spot;
         };
 

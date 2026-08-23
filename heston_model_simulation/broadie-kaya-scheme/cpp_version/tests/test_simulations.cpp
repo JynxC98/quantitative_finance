@@ -130,6 +130,7 @@ void test_BK()
 
     std::cout << std::fixed << std::setprecision(6);
     std::cout << "\nCall price comparision\n";
+    std::cout << "  Actual Call price : " << true_price << std::endl;
     std::cout << "  BK Mean call price : " << call_result.mean << "\n";
     std::cout << "  Euler Mean call price : " << euler_call.mean << "\n";
     std::cout << "  Actual vs BK diff  : " << std::abs(true_price - call_result.mean) << "\n";
