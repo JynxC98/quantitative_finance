@@ -51,7 +51,7 @@ double VarianceBrownianIntegral(const HestonParams &p, double integrated_varianc
     return val;
 }
 
-double priceStep(const HestonParams &p, double S_u, double integrated_variance, double r, double Z)
+double priceStep(const HestonParams &p, double S_u, double integrated_variance, double r)
 {
     // Calculating the mean of the process
 
@@ -66,6 +66,9 @@ double priceStep(const HestonParams &p, double S_u, double integrated_variance, 
 
     // Calculated the std-dev of the process
     double std_dev = (integrated_variance > 1e-12) ? std::sqrt((1.0 - p.rho * p.rho) * integrated_variance) : 0.0;
+
+    // Fetching the standard normal variable
+    double Z = normal(gen);
 
     double price = std::exp(mean + std_dev * Z);
 

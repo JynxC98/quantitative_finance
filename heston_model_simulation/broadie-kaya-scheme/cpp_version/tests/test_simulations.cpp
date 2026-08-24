@@ -99,8 +99,8 @@ void test_euler()
 void test_BK()
 {
 
-    int M = 10000; // paths
-    int N = 100;   // timesteps
+    int M = 100000; // paths
+    int N = 252;    // timesteps
 
     OptionParams o = {
         .spot = 100.0,
