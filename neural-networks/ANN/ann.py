@@ -154,9 +154,7 @@ class NeuralNetworks:
                 self.weights_[j] -= self.learning_rate_ * gradients["weights"][j]
                 self.bias_[j] -= self.learning_rate_ * gradients["bias"][j]
 
-    def _stochastic_gradient_descent(
-        self, X: NDArray, y: NDArray
-    ) -> None:  # Placeholder, do not use it for the time being.
+    def _stochastic_gradient_descent(self, X: NDArray, y: NDArray) -> None:
         """
         An implementation of stochastic gradient descent.
         """
@@ -314,6 +312,9 @@ class NeuralNetworks:
 
             elif self.optimiser_ == "batch":
                 _ = self._batch_gradient_descent(X=X, y=y)
+
+            elif self.optimiser_ == "sgd":
+                _ = self._stochastic_gradient_descent(X=X, y=y)
 
             # Predicting the output for the current epoch
             y_pred = self.predict(X)
