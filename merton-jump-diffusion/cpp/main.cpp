@@ -67,7 +67,7 @@ std::map<std::string, double> CalculateOptionPrice(const MertonJumpDiffusion &p,
     double k = std::exp(p.muJ + 0.5 * p.sigmaJ * p.sigmaJ) - 1;
 
     // Developing the overall grid
-    std::vector<std::vector<double>> grid(M, std::vector<double>(N, 0.0));
+    std::vector<double> grid(M, 0.0);
 
     // Generating Normal distribution
     std::normal_distribution norm(0.0, 1.0);
@@ -78,28 +78,16 @@ std::map<std::string, double> CalculateOptionPrice(const MertonJumpDiffusion &p,
     // Generating Poission's distribution
     std::poisson_distribution poisson(p.lambdaJ * dt);
     // Populating the grid
-    for (int m = 0; m < M; ++m)
+    for (int m = 0; m < M / 2; ++m)
     {
         // Calculating the drift of the path.
         // The drift will remain the same throughout the paths.
         auto drift = (p.r - 0.5 * (p.sigma * p.sigma) - p.lambdaJ * k) * dt;
 
-        for (int n = 0; n < N; ++n)
+        double running_spot_log = std::log(p.spot);
+
+        for (int n = 1; n <= N; ++n)
         {
-
-            double previous_spot_log;
-
-            if (n == 0)
-            {
-                // Storing the log-evolution of the underlying spot
-                previous_spot_log = std::log(p.spot);
-            }
-            else
-            {
-                previous_spot_log = grid[m][n - 1]; // Fetching the spot price from
-                                                    // the previous iteration.
-            }
-
             // Calculating the random variables
             // Generating the Brownian increment.
 
@@ -118,8 +106,10 @@ std::map<std::string, double> CalculateOptionPrice(const MertonJumpDiffusion &p,
                 Y_t += jump;
             }
 
-            grid[m][n] = previous_spot_log + drift + p.sigma * std::sqrt(dt) * dZ + Y_t;
+            running_spot_log = running_spot_log + drift + p.sigma * std::sqrt(dt) * dZ + Y_t;
         }
+
+        grid[m] = running_spot_log;
     }
 
     // Fetching the payoff
@@ -129,7 +119,7 @@ std::map<std::string, double> CalculateOptionPrice(const MertonJumpDiffusion &p,
 
     for (int m = 0; m < M; ++m)
     {
-        double final_price = std::exp(grid[m][N - 1]);
+        double final_price = std::exp(grid[m]);
 
         double payoff = isCall
                             ? std::max(final_price - p.strike, 0.0)
@@ -139,14 +129,17 @@ std::map<std::string, double> CalculateOptionPrice(const MertonJumpDiffusion &p,
         mean += delta / (m + 1);
         M2 += delta * (payoff - mean);
     }
-    double discounted_mean = mean * std::exp(-p.r * p.T);
 
     double variance = M2 / (M - 1);
     double std_dev = std::sqrt(variance);
     double std_error = std_dev / std::sqrt(M);
 
-    double left_error = discounted_mean - 1.96 * std_error;
-    double right_error = discounted_mean + 1.96 * std_error;
+    double discount = std::exp(-p.r * p.T);
+    double discounted_mean = mean * discount;
+    double discounted_std_error = std_error * discount;
+
+    double left_error = discounted_mean - 1.96 * discounted_std_error;
+    double right_error = discounted_mean + 1.96 * discounted_std_error;
 
     std::map<std::string, double> results;
 

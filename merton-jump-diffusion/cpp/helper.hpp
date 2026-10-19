@@ -75,7 +75,7 @@ double BlackScholesPrice(
     // Generating the Normal CDF
     auto N = [](double x)
     {
-        return 0.5 * std::erfc(-x / std::sqrt(2));
+        return 0.5 * std::erfc(-x / std::sqrt(2.0));
     };
 
     // Calculating d1 and d2
@@ -88,7 +88,7 @@ double BlackScholesPrice(
 
     int sign = isCall ? 1 : -1;
 
-    double price = sign * spot * N(sign * d1) - sign * strike * std::exp(-r * T) * N(sign * -d2);
+    double price = sign * spot * N(sign * d1) - sign * strike * std::exp(-r * T) * N(sign * d2);
 
     return price;
 }
