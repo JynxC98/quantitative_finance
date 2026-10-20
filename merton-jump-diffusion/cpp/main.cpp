@@ -78,7 +78,7 @@ std::map<std::string, double> CalculateOptionPrice(const MertonJumpDiffusion &p,
     // Generating Poission's distribution
     std::poisson_distribution poisson(p.lambdaJ * dt);
     // Populating the grid
-    for (int m = 0; m < M / 2; ++m)
+    for (int m = 0; m < M; ++m)
     {
         // Calculating the drift of the path.
         // The drift will remain the same throughout the paths.
